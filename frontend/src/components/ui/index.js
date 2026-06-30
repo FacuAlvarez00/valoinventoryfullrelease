@@ -1,4 +1,5 @@
 export { default as HomePage } from './HomePage';
+export { default as LandingPage } from './LandingPage';
 export { default as PlayerCard } from './PlayerCard';
 export { default as LanguageSwitcher } from './LanguageSwitcher';
 export { default as LanguageFlagButton } from './LanguageFlagButton';

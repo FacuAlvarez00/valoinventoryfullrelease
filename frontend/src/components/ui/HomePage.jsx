@@ -28,12 +28,12 @@ export default function HomePage() {
   const [sortBy, setSortBy] = useState(() => localStorage.getItem('filters_sortBy') || '');
   const [sortDir, setSortDir] = useState(() => localStorage.getItem('filters_sortDir') || 'desc');
   const [addLoading, setAddLoading] = useState(false);
-  const [copiedIdx, setCopiedIdx] = useState(null);
   const [sharedIdx, setSharedIdx] = useState(null);
   const [sharingIdx, setSharingIdx] = useState(null);
   const [deleteStep, setDeleteStep] = useState(1);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showSharesPanel, setShowSharesPanel] = useState(false);
+  const [copiedSharePuuid, setCopiedSharePuuid] = useState(null);
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { refreshAccount, catalog, weaponSkins } = useInventory();
@@ -342,13 +342,6 @@ export default function HomePage() {
         ));
       } else alert(data.message);
     } catch { alert('Error de red'); }
-  };
-
-  const handleCopyPuuid = (e, puuid, idx) => {
-    e.stopPropagation();
-    copyToClipboard(puuid);
-    setCopiedIdx(idx);
-    setTimeout(() => setCopiedIdx(null), 2000);
   };
 
   const filteredAccounts = riotAccounts.filter(acc => {
@@ -893,82 +886,126 @@ export default function HomePage() {
                 <div style={{
                   background: '#0c1520',
                   border: '1px solid #1e2e40',
-                  borderRadius: 3,
-                  overflow: 'hidden',
+                  borderRadius: 10,
+                  padding: sharedAccounts.length === 0 ? 0 : 10,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
                 }}>
                   {sharedAccounts.length === 0 ? (
                     <div style={{ padding: '24px', textAlign: 'center', color: '#6b7a8d', fontSize: 13 }}>
                       No tenés links activos. Tocá "Compartir" en una cuenta para generar uno.
                     </div>
                   ) : (
-                    <>
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr 1fr auto auto',
-                        gap: 0,
-                        borderBottom: '1px solid #1e2e40',
-                        padding: '8px 16px',
-                        fontSize: 10,
-                        color: '#6b7a8d',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        fontWeight: 'bold',
-                      }}>
-                        <span>Cuenta</span>
-                        <span>Link</span>
-                        <span>Generado</span>
-                        <span></span>
-                        <span></span>
-                      </div>
-                      {sharedAccounts.map((acc, i) => {
-                        const riotId = acc.userInfo?.acct?.game_name
-                          ? `${acc.userInfo.acct.game_name}#${acc.userInfo.acct.tag_line}`
-                          : null;
-                        const shareUrl = `${window.location.origin}/share/${acc.puuid}`;
-                        const sharedDate = acc.sharedAt
-                          ? new Date(acc.sharedAt).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-                          : '—';
-                        return (
-                          <div
-                            key={acc.puuid}
+                    sharedAccounts.map((acc) => {
+                      const riotId = acc.userInfo?.acct?.game_name
+                        ? `${acc.userInfo.acct.game_name}#${acc.userInfo.acct.tag_line}`
+                        : null;
+                      const shareUrl = `${window.location.origin}/share/${acc.puuid}`;
+                      const sharedDate = acc.sharedAt
+                        ? new Date(acc.sharedAt).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                        : '—';
+                      const justCopied = copiedSharePuuid === acc.puuid;
+                      return (
+                        <div
+                          key={acc.puuid}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 14,
+                            padding: '12px 14px',
+                            borderRadius: 8,
+                            background: '#0a121c',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                          }}
+                        >
+                          {/* Avatar */}
+                          <div style={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #ff4655 0%, #c53030 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 14,
+                            fontWeight: 'bold',
+                            color: '#fff',
+                            flexShrink: 0,
+                          }}>
+                            {acc.name.charAt(0).toUpperCase()}
+                          </div>
+
+                          {/* Nombre + riot id */}
+                          <div style={{ minWidth: 0, width: 150, flexShrink: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 'bold', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{acc.name}</div>
+                            {riotId && <div style={{ fontSize: 11, color: '#6b7a8d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{riotId}</div>}
+                          </div>
+
+                          {/* Link */}
+                          <button
+                            onClick={() => { copyToClipboard(shareUrl); setCopiedSharePuuid(acc.puuid); setTimeout(() => setCopiedSharePuuid(null), 2000); }}
                             style={{
-                              display: 'grid',
-                              gridTemplateColumns: '1fr 1fr 1fr auto auto',
-                              gap: 0,
+                              flex: 1,
+                              minWidth: 0,
+                              display: 'flex',
                               alignItems: 'center',
-                              padding: '12px 16px',
-                              borderBottom: i < sharedAccounts.length - 1 ? '1px solid #111e2c' : 'none',
-                              background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)',
+                              gap: 8,
+                              background: '#131c27',
+                              border: `1px solid ${justCopied ? '#4caf50' : '#1e2e40'}`,
+                              borderRadius: 8,
+                              padding: '8px 12px',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              transition: 'border-color 0.2s',
                             }}
                           >
-                            <div>
-                              <div style={{ fontSize: 13, fontWeight: 'bold', color: '#fff' }}>{acc.name}</div>
-                              {riotId && <div style={{ fontSize: 11, color: '#6b7a8d' }}>{riotId}</div>}
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ fontSize: 11, color: '#6b7a8d', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>
-                                {shareUrl}
-                              </span>
-                            </div>
-                            <div style={{ fontSize: 12, color: '#6b7a8d' }}>{sharedDate}</div>
-                            <button
-                              onClick={() => copyToClipboard(shareUrl)}
-                              style={{ background: '#131c27', border: '1px solid #1e2e40', borderRadius: 4, color: '#aaa', fontSize: 11, padding: '5px 10px', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                            >
-                              Copiar link
-                            </button>
-                            <button
-                              onClick={() => handleRevokeShare(acc.puuid)}
-                              style={{ marginLeft: 8, background: 'rgba(255,70,85,0.08)', border: '1px solid rgba(255,70,85,0.25)', borderRadius: 4, color: '#ff4655', fontSize: 11, padding: '5px 10px', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                              onMouseEnter={e => { e.target.style.background = 'rgba(255,70,85,0.2)'; }}
-                              onMouseLeave={e => { e.target.style.background = 'rgba(255,70,85,0.08)'; }}
-                            >
-                              Dar de baja
-                            </button>
+                            <span style={{
+                              flex: 1,
+                              minWidth: 0,
+                              fontSize: 12,
+                              color: '#8a9ab0',
+                              fontFamily: 'monospace',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}>
+                              {shareUrl}
+                            </span>
+                            <span style={{ fontSize: 11, fontWeight: 'bold', color: justCopied ? '#4caf50' : '#6b7a8d', flexShrink: 0 }}>
+                              {justCopied ? '✓ Copiado' : '⎘ Copiar'}
+                            </span>
+                          </button>
+
+                          {/* Fecha */}
+                          <div style={{ fontSize: 11, color: '#6b7a8d', width: 110, flexShrink: 0, textAlign: 'right' }}>
+                            {sharedDate}
                           </div>
-                        );
-                      })}
-                    </>
+
+                          {/* Dar de baja */}
+                          <button
+                            onClick={() => handleRevokeShare(acc.puuid)}
+                            style={{
+                              flexShrink: 0,
+                              background: 'rgba(255,70,85,0.08)',
+                              border: '1px solid rgba(255,70,85,0.25)',
+                              borderRadius: 8,
+                              color: '#ff4655',
+                              fontSize: 11,
+                              fontWeight: 'bold',
+                              padding: '8px 12px',
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                              transition: 'background 0.2s',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,70,85,0.2)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,70,85,0.08)'; }}
+                          >
+                            Dar de baja
+                          </button>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               )}
@@ -982,7 +1019,28 @@ export default function HomePage() {
           </div>
         ) : (
           displayedAccounts.length === 0 ? (
-            <div style={{ color: '#fff', textAlign: 'center' }}>{riotAccounts.length === 0 ? t.noAccounts : 'Sin resultados'}</div>
+            <div style={{ textAlign: 'center', paddingTop: 24 }}>
+              <div style={{ color: '#fff', marginBottom: riotAccounts.length === 0 ? 20 : 0 }}>
+                {riotAccounts.length === 0 ? t.noAccounts : 'Sin resultados'}
+              </div>
+              {riotAccounts.length === 0 && (
+                <button
+                  style={{
+                    padding: '10px 20px',
+                    background: '#ff4655',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 10,
+                    fontWeight: 'bold',
+                    fontSize: 14,
+                    cursor: 'pointer',
+                  }}
+                  onClick={handleOpenPopup}
+                >
+                  {t.addAccount}
+                </button>
+              )}
+            </div>
           ) : (
             <div className="accounts-container">
               <div className="accounts-grid">
@@ -1113,32 +1171,6 @@ export default function HomePage() {
                             <div style={{ fontSize: 10, color: '#6b7a8d', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>Radiant Buddies</div>
                             <div style={{ fontSize: 20, color: '#FFD700', fontWeight: 'bold' }}>{radiantBuddies}</div>
                           </div>
-                        </div>
-
-                        {/* UUID */}
-                        <div
-                          onClick={e => handleCopyPuuid(e, acc.puuid, idx)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 8,
-                            background: '#07101a',
-                            border: '1px solid rgba(255,255,255,0.05)',
-                            borderRadius: 8,
-                            padding: '7px 10px',
-                            cursor: 'pointer',
-                            transition: 'border-color 0.2s',
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,70,85,0.5)'}
-                          onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
-                        >
-                          <span style={{ fontSize: 10, color: '#ff4655', fontWeight: 'bold', flexShrink: 0 }}>UUID:</span>
-                          <span style={{ fontSize: 10, color: '#6b7a8d', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
-                            {acc.puuid}
-                          </span>
-                          <span style={{ fontSize: 12, flexShrink: 0, color: copiedIdx === idx ? '#4caf50' : '#6b7a8d' }}>
-                            {copiedIdx === idx ? '✓' : '⎘'}
-                          </span>
                         </div>
 
                         {/* Action buttons */}

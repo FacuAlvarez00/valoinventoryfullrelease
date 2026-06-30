@@ -3,7 +3,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { InventoryProvider, useInventory } from "./context/InventoryContext";
 import { LanguageProvider, useLanguage } from "./context/LanguageContext";
 import { AuthPage } from "./components/auth";
-import { HomePage, PageWrapper, LoadingScreen } from "./components/ui";
+import { HomePage, LandingPage, PageWrapper, LoadingScreen } from "./components/ui";
 import { WeaponDetail } from "./components/weapons";
 import { MySkins } from './components/inventory';
 import { Inventory } from './components/inventory';
@@ -221,6 +221,8 @@ function AppContent() {
   const [selectedWeapon, setSelectedWeapon] = useState(null);
   const [equippedSkins, setEquippedSkins] = useState({}); // { weaponUuid: skinObj }
   const [loading, setLoading] = useState(true);
+  const [authView, setAuthView] = useState('landing'); // 'landing' | 'auth'
+  const [authInitialLogin, setAuthInitialLogin] = useState(true);
   const { user, loading: authLoading, logout } = useAuth();
   const { riotAccount, catalog } = useInventory();
   const { t } = useLanguage();
@@ -250,9 +252,22 @@ function AppContent() {
 
   if (authLoading) return <LoadingScreen fullscreen text="Iniciando sesión..." />;
 
-  // Si no está autenticado, mostrar página de auth
+  // Si no está autenticado, mostrar landing o login/register
   if (!user) {
-    return <AuthPage />;
+    if (authView === 'landing') {
+      return (
+        <LandingPage
+          onLogin={() => { setAuthInitialLogin(true); setAuthView('auth'); }}
+          onRegister={() => { setAuthInitialLogin(false); setAuthView('auth'); }}
+        />
+      );
+    }
+    return (
+      <AuthPage
+        initialIsLogin={authInitialLogin}
+        onBack={() => setAuthView('landing')}
+      />
+    );
   }
 
   if (loading) return <LoadingScreen fullscreen text="Cargando datos..." />;
