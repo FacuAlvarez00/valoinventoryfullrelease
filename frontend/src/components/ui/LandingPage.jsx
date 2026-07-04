@@ -2,21 +2,40 @@ import React, { useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { TacticalButton } from './kit';
 import styles from './LandingPage.module.css';
+import landingBackgroundGif from '../../assets/landing/tour-de-force-console.gif';
 
-const HERO_HUES = [355, 200, 35, 280, 160, 10];
+const SKIN_ICONS = {
+  primeVandal: 'https://media.valorant-api.com/weaponskins/b9ee2457-481c-6776-3f5b-0ca8e8f90c89/displayicon.png',
+  sovereignGhost: 'https://media.valorant-api.com/weaponskins/a9890917-41ea-eb55-47e7-ee990a87fa4e/displayicon.png',
+  reaverVandal: 'https://media.valorant-api.com/weaponskins/30388628-42f0-606c-82c0-73ad43de997f/displayicon.png',
+  reaverOperator: 'https://media.valorant-api.com/weaponskins/aecab890-43b7-d719-06bc-9295e3d116dc/displayicon.png',
+  glitchpopDagger: 'https://media.valorant-api.com/weaponskins/ddc025b2-475f-889a-2800-80b4215582bc/displayicon.png',
+  stinger: 'https://media.valorant-api.com/weapons/f7e1b454-4ad4-1063-ec0a-159e56b58941/displayicon.png',
+  primeClassic: 'https://media.valorant-api.com/weaponskins/d653f4a7-4e92-2559-0a97-2c9d46d009b3/displayicon.png',
+  ionPhantom: 'https://media.valorant-api.com/weaponskins/e86bf7e4-4dd3-fbee-533b-fa875344bbaf/displayicon.png',
+};
 
-const FILTERS = ['ALL', 'RIFLE', 'SNIPER', 'SIDEARM', 'SMG', 'MELEE'];
+const HERO_PREVIEW = [
+  { icon: SKIN_ICONS.primeVandal },
+  { icon: SKIN_ICONS.reaverOperator },
+  { icon: SKIN_ICONS.sovereignGhost },
+  { icon: SKIN_ICONS.reaverVandal },
+  { icon: SKIN_ICONS.glitchpopDagger },
+  { icon: SKIN_ICONS.stinger },
+];
 
 const INVENTORY_ITEMS = [
-  { id: 1, name: 'Nova Pulse', type: 'RIFLE', rarity: 'EXOTIC', status: 'featured', hue: 355 },
-  { id: 2, name: 'Static Fang', type: 'SIDEARM', rarity: 'RARE', status: 'owned', hue: 200 },
-  { id: 3, name: 'Crimson Vector', type: 'RIFLE', rarity: 'EXOTIC', status: 'owned', hue: 12 },
-  { id: 4, name: 'Glacier Bloom', type: 'SNIPER', rarity: 'RARE', status: 'owned', hue: 190 },
-  { id: 5, name: 'Voidline', type: 'MELEE', rarity: 'EXOTIC', status: 'featured', hue: 280 },
-  { id: 6, name: 'Iron Ember', type: 'SMG', rarity: 'STANDARD', status: 'locked', hue: 32 },
-  { id: 7, name: 'Neon Wraith', type: 'SIDEARM', rarity: 'EXOTIC', status: 'owned', hue: 320 },
-  { id: 8, name: 'Titan Frame', type: 'SNIPER', rarity: 'STANDARD', status: 'locked', hue: 160 },
+  { id: 1, name: 'Prime Vandal', type: 'RIFLE', rarity: 'EXOTIC', status: 'featured', icon: SKIN_ICONS.primeVandal },
+  { id: 2, name: 'Sovereign Ghost', type: 'SIDEARM', rarity: 'RARE', status: 'owned', icon: SKIN_ICONS.sovereignGhost },
+  { id: 3, name: 'Reaver Vandal', type: 'RIFLE', rarity: 'EXOTIC', status: 'owned', icon: SKIN_ICONS.reaverVandal },
+  { id: 4, name: 'Reaver Operator', type: 'SNIPER', rarity: 'EXOTIC', status: 'owned', icon: SKIN_ICONS.reaverOperator },
+  { id: 5, name: 'Glitchpop Dagger', type: 'MELEE', rarity: 'EXOTIC', status: 'featured', icon: SKIN_ICONS.glitchpopDagger },
+  { id: 6, name: 'Stinger', type: 'SMG', rarity: 'STANDARD', status: 'locked', icon: SKIN_ICONS.stinger },
+  { id: 7, name: 'Prime Classic', type: 'SIDEARM', rarity: 'EXOTIC', status: 'owned', icon: SKIN_ICONS.primeClassic },
+  { id: 8, name: 'Ion Phantom', type: 'RIFLE', rarity: 'EXOTIC', status: 'locked', icon: SKIN_ICONS.ionPhantom },
 ];
+
+const FILTERS = ['ALL', 'RIFLE', 'SNIPER', 'SIDEARM', 'SMG', 'MELEE'];
 
 const COLLECTIONS = [
   { name: 'GHOSTLINE', locked: false },
@@ -25,17 +44,6 @@ const COLLECTIONS = [
   { name: 'ONYX', locked: false },
   { name: 'TREMOR', locked: true },
   { name: 'BLACKOUT', locked: true },
-];
-
-const STREAKS = [
-  { left: '6%', duration: '7s', delay: '0s' },
-  { left: '18%', duration: '9s', delay: '2s' },
-  { left: '34%', duration: '6.5s', delay: '4s' },
-  { left: '48%', duration: '8s', delay: '1s' },
-  { left: '62%', duration: '7.5s', delay: '3s' },
-  { left: '76%', duration: '9.5s', delay: '5s' },
-  { left: '88%', duration: '6s', delay: '2.5s' },
-  { left: '96%', duration: '8.5s', delay: '0.5s' },
 ];
 
 const fadeUp = (reduced) => ({
@@ -47,13 +55,12 @@ const fadeUp = (reduced) => ({
   }),
 });
 
-function MiniCard({ hue, idx }) {
+function MiniCard({ icon, idx }) {
   return (
     <div className={styles.miniCard}>
-      <div
-        className={styles.miniCardArt}
-        style={{ background: `linear-gradient(135deg, hsla(${hue},70%,55%,0.4) 0%, hsla(${hue},70%,28%,0.15) 100%)` }}
-      />
+      <div className={styles.miniCardArt}>
+        {icon && <img src={icon} alt="" className={styles.miniCardImg} />}
+      </div>
       <div className={styles.miniCardBar} style={{ width: `${55 + (idx % 3) * 14}%` }} />
     </div>
   );
@@ -73,10 +80,8 @@ function InventoryCard({ item, index, reduced }) {
       whileInView="visible"
       viewport={{ once: true, amount: 0.3 }}
     >
-      <div
-        className={styles.cardArt}
-        style={{ background: `linear-gradient(135deg, hsla(${item.hue},70%,52%,0.45) 0%, hsla(${item.hue},70%,22%,0.18) 100%)` }}
-      >
+      <div className={styles.cardArt}>
+        {item.icon && <img src={item.icon} alt={item.name} className={styles.cardArtImg} />}
         <span className={styles.cardSheen} aria-hidden="true" />
       </div>
       <span className={`${styles.badge} ${badgeClass}`}>{badgeText}</span>
@@ -135,8 +140,8 @@ const AUDIENCE = [
   {
     key: 'managers',
     icon: IconManagers,
-    title: 'Sellers & Managers',
-    desc: 'Present large, high-volume catalogs clearly — built for scale, not spreadsheets.',
+    title: 'Sellers & Multi-Account',
+    desc: 'Present large collections and multiple accounts clearly — built for scale, not spreadsheets.',
   },
 ];
 
@@ -156,18 +161,7 @@ export default function LandingPage({ onLogin, onRegister }) {
   return (
     <div className={styles.landing}>
       <div className={styles.backdrop} aria-hidden="true">
-        <div className={styles.backdropBase} />
-        <div className={styles.backdropGlow} />
-        <div className={styles.backdropGrid} />
-        <div className={styles.backdropScan} />
-        {!reduced && STREAKS.map((s, i) => (
-          <span
-            key={i}
-            className={styles.streak}
-            style={{ left: s.left, animationDuration: s.duration, animationDelay: s.delay }}
-          />
-        ))}
-        <div className={styles.backdropNoise} />
+        <img className={styles.backdropGif} src={landingBackgroundGif} alt="" loading="eager" />
         <div className={styles.backdropVignette} />
       </div>
 
@@ -195,8 +189,8 @@ export default function LandingPage({ onLogin, onRegister }) {
               <span className={styles.heroHeadlineAccent}>Finally cataloged.</span>
             </h1>
             <p className={styles.heroSub}>
-              ValoInventory turns your skins, agents, and gear into one clean, shareable
-              showcase — built for players who take their loadout seriously.
+              ValoInventory turns skins, agents, and gear into clean, shareable showcases —
+              built for personal collections, rare loadouts, sellers, and multiple accounts.
             </p>
             <div className={styles.heroCtas}>
               <TacticalButton size="lg" onClick={onRegister}>Open App</TacticalButton>
@@ -223,8 +217,8 @@ export default function LandingPage({ onLogin, onRegister }) {
                 <div className={styles.heroPanelCount}>1,204 Items</div>
               </div>
               <div className={styles.heroGrid}>
-                {HERO_HUES.map((hue, idx) => (
-                  <MiniCard key={idx} hue={hue} idx={idx} />
+                {HERO_PREVIEW.map((item, idx) => (
+                  <MiniCard key={idx} icon={item.icon} idx={idx} />
                 ))}
               </div>
             </div>
@@ -290,8 +284,8 @@ export default function LandingPage({ onLogin, onRegister }) {
                   <span className={styles.livedot} aria-hidden="true" />
                 </div>
                 <div className={styles.cleanCardGrid}>
-                  {[190, 355, 160].map((hue, idx) => (
-                    <MiniCard key={idx} hue={hue} idx={idx} />
+                  {HERO_PREVIEW.slice(0, 3).map((item, idx) => (
+                    <MiniCard key={idx} icon={item.icon} idx={idx} />
                   ))}
                 </div>
               </div>
@@ -400,7 +394,6 @@ export default function LandingPage({ onLogin, onRegister }) {
 
       {/* FINAL CTA */}
       <section className={styles.finalCta}>
-        <div className={styles.finalCtaGlow} aria-hidden="true" />
         <motion.div
           variants={fadeUp(reduced)}
           custom={0}

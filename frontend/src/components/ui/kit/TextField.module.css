@@ -10,13 +10,13 @@
   font-weight: 600;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: rgba(236, 232, 225, 0.7);
+  color: rgba(236, 232, 225, 0.82);
 }
 
 .input {
-  background: var(--vi-black-soft);
-  border: 1px solid var(--vi-border);
-  color: var(--vi-white);
+  background: #0f1923;
+  border: 1px solid rgba(236, 232, 225, 0.18);
+  color: #fafafa;
   font-family: var(--vi-font-body);
   font-size: 15px;
   padding: 12px 14px;
@@ -28,11 +28,11 @@
 }
 
 .input::placeholder {
-  color: rgba(236, 232, 225, 0.3);
+  color: rgba(236, 232, 225, 0.46);
 }
 
 .input:focus {
-  border-color: var(--vi-red);
+  border-color: #ff4654;
 }
 
 .input:disabled {

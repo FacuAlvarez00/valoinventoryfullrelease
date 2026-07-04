@@ -69,67 +69,78 @@ export default function Register({ onSwitchToLogin }) {
 
   return (
     <div className={styles.page}>
-      <div className={styles.backdrop} aria-hidden="true">
-        <div className={styles.backdropGrid} />
-      </div>
-
       <motion.div
         initial={{ opacity: 0, y: reduced ? 0 : 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: reduced ? 0.01 : 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className={styles.panel}
+        className={styles.split}
       >
-        <div className={styles.header}>
-          <div className={styles.eyebrow}>New Operative</div>
-          <h1 className={styles.heading}>Register</h1>
+        <div className={styles.heroSide}>
+          <div>
+            <p className={styles.heroEyebrow}>New Operative</p>
+            <h1 className={styles.heroHeading}>
+              Join the roster.<br />
+              <span className={styles.heroHeadingDark}>Track everything.</span>
+            </h1>
+            <p className={styles.heroCopy}>
+              Create your account and start building a shareable inventory showcase in seconds.
+            </p>
+          </div>
+          <div className={styles.wordmark}>ValoInventory</div>
         </div>
 
-        {error && <div className={styles.error}>{error}</div>}
+        <div className={styles.formSide}>
+          <div className={styles.header}>
+            <h2 className={styles.heading}>Register</h2>
+          </div>
 
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <TextField
-            label="Username"
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            placeholder="Enter your username"
-          />
-          <TextField
-            label="Email"
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Enter your email"
-          />
-          <TextField
-            label="Password"
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Enter your password"
-          />
-          <TextField
-            label="Confirm Password"
-            type="password"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            placeholder="Confirm your password"
-          />
+          {error && <div className={styles.error}>{error}</div>}
 
-          <TacticalButton type="submit" size="lg" fullWidth disabled={loading} className={styles.submit}>
-            {loading ? 'Creating account...' : 'Register'}
-          </TacticalButton>
-        </form>
+          <form className={styles.form} onSubmit={handleSubmit}>
+            <TextField
+              label="Username"
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              placeholder="Enter your username"
+            />
+            <TextField
+              label="Email"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+            />
+            <TextField
+              label="Password"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+            />
+            <TextField
+              label="Confirm Password"
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Confirm your password"
+            />
 
-        <div className={styles.switchRow}>
-          <span>Already have an account? </span>
-          <button type="button" className={styles.switchBtn} onClick={onSwitchToLogin}>
-            Login here
-          </button>
+            <TacticalButton type="submit" size="lg" fullWidth disabled={loading} className={styles.submit}>
+              {loading ? 'Creating account...' : 'Register'}
+            </TacticalButton>
+          </form>
+
+          <div className={styles.switchRow}>
+            <span>Already have an account? </span>
+            <button type="button" className={styles.switchBtn} onClick={onSwitchToLogin}>
+              Login here
+            </button>
+          </div>
         </div>
       </motion.div>
     </div>

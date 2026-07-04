@@ -1,0 +1,45 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.fullscreen {
+  min-height: 100vh;
+  background: var(--vi-black);
+}
+
+.inline {
+  padding: 80px 0;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 70, 84, 0.15);
+  border-top-color: var(--vi-red);
+  animation: viSpin 0.9s linear infinite;
+}
+
+.label {
+  color: rgba(236, 232, 225, 0.5);
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+}
+
+@keyframes viSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+    border-top-color: var(--vi-red);
+  }
+}

@@ -1,6 +1,5 @@
 .page {
   padding: 32px;
-  padding-top: 90px;
   min-height: 100vh;
   background: var(--vi-black);
   color: var(--vi-offwhite);
@@ -10,7 +9,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 28px;
+  margin-bottom: 30px;
   flex-wrap: wrap;
   gap: 16px;
 }
@@ -29,8 +28,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--vi-red);
-  color: var(--vi-black);
+  background: rgba(255, 70, 84, 0.14);
+  border: 1px solid rgba(255, 70, 84, 0.48);
+  color: var(--vi-red);
   padding: 9px 18px;
   border-radius: 2px;
   font-family: var(--vi-font-heading);
@@ -46,7 +46,7 @@
 
 .tile {
   position: relative;
-  background: rgba(54, 49, 53, 0.5);
+  background: rgba(15, 25, 35, 0.62);
   border: 1px solid var(--vi-border);
   border-radius: 4px;
   min-height: 180px;
@@ -84,7 +84,7 @@
 
 .tileLabel {
   font-family: var(--vi-font-heading);
-  color: var(--vi-red);
+  color: var(--vi-offwhite);
   font-weight: 700;
   font-size: 22px;
   letter-spacing: 1px;
@@ -94,7 +94,7 @@
 
 .tileCount {
   font-family: var(--vi-font-heading);
-  color: var(--vi-white);
+  color: var(--vi-red);
   font-size: 30px;
   font-weight: 700;
 }

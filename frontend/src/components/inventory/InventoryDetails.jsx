@@ -1,14 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import InventoryNavbar from './InventoryNavbar';
 import { useInventory } from '../../context/InventoryContext';
-import { useNavigate } from 'react-router-dom';
 import LoadingScreen from '../ui/LoadingScreen';
-import { BackButton } from '../ui/kit';
 import { calcAccountStats } from '../../utils/pricing';
 import styles from './InventoryDetails.module.css';
 
 export default function InventoryDetails() {
-  const navigate = useNavigate();
   const { riotAccount, loading, error, catalog, weaponSkins } = useInventory();
   const [copiedUuid, setCopiedUuid] = useState(false);
 
@@ -91,10 +88,11 @@ export default function InventoryDetails() {
       <InventoryNavbar />
       <div className={styles.page}>
         <div className={styles.headerRow}>
-          <BackButton onClick={() => navigate('/inventory')}>Volver al Dashboard</BackButton>
+          <div>
+            <div className={styles.headerEyebrow}>Account</div>
+            <h2 className={styles.pageTitle}>Inventory Details</h2>
+          </div>
         </div>
-
-        <h2 className={styles.pageTitle}>DETAILS - UserInfo Raw Data</h2>
 
         {loading && <LoadingScreen fullscreen={false} text="Cargando datos de la cuenta..." />}
 

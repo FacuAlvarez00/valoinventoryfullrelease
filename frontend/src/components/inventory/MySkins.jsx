@@ -803,7 +803,7 @@ export default function MySkins() {
       <div className={styles.headerBar}>
         <div>
           <div className={styles.headerEyebrow}>Loadout</div>
-          <h1 className={styles.headerTitle}>Collection</h1>
+          <h1 className={styles.headerTitle}>Current Loadout</h1>
           <p className={styles.headerSub}>
             {riotAccount.name} ({riotAccount.nickname || riotAccount.puuid})
           </p>

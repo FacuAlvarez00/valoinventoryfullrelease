@@ -71,9 +71,9 @@
 }
 
 .btnPrimary {
-  background: var(--vi-red);
-  color: var(--vi-black);
-  border: 1px solid var(--vi-red);
+  background: #ff4654;
+  color: #fafafa;
+  border: 1px solid #ff4654;
 }
 
 .btnPrimary::before {
@@ -94,7 +94,7 @@
 
 .btnPrimary .btnTickL,
 .btnPrimary .btnTickR {
-  background: var(--vi-black);
+  background: #fafafa;
 }
 
 .btnGhost {

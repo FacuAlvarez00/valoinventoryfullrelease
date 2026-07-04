@@ -131,7 +131,7 @@ const translations = {
     
     // HomePage específico
     welcome: 'Bienvenido',
-    valorantCollection: 'Colección Valorant',
+    valorantCollection: 'Inventario Valorant',
     updateAccount: 'Actualizar Cuenta',
     deleteAccount: 'Eliminar Cuenta',
     addAccount: 'Agregar Cuenta'
@@ -263,7 +263,7 @@ const translations = {
     
     // HomePage specific
     welcome: 'Welcome',
-    valorantCollection: 'Valorant Collection',
+    valorantCollection: 'Valorant Inventory',
     updateAccount: 'Update Account',
     deleteAccount: 'Delete Account',
     addAccount: 'Add Account'

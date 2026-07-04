@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { InventoryProvider, useInventory } from "./context/InventoryContext";
-import { LanguageProvider, useLanguage } from "./context/LanguageContext";
+import { LanguageProvider } from "./context/LanguageContext";
 import { AuthPage } from "./components/auth";
-import { HomePage, LandingPage, PageWrapper, LoadingScreen } from "./components/ui";
-import { TacticalButton } from "./components/ui/kit";
+import { HomePage, LandingPage, PageWrapper, LoadingScreen, AppHeader } from "./components/ui";
 import appStyles from "./App.module.css";
 import { WeaponDetail } from "./components/weapons";
 import { MySkins } from './components/inventory';
@@ -225,9 +224,8 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
   const [authView, setAuthView] = useState('landing'); // 'landing' | 'auth'
   const [authInitialLogin, setAuthInitialLogin] = useState(true);
-  const { user, loading: authLoading, logout } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { riotAccount, catalog } = useInventory();
-  const { t } = useLanguage();
 
   useEffect(() => {
     async function fetchData() {
@@ -316,14 +314,7 @@ function AppContent() {
 
   return (
     <div className={appStyles.shell}>
-      {/* Header con información del usuario y botón de logout */}
-      <div className={appStyles.header}>
-        <h1 className={appStyles.headerTitle}>{t.valorantCollection}</h1>
-        <div className={appStyles.headerUser}>
-          <span className={appStyles.headerWelcome}>{t.welcome}, {user.username}!</span>
-          <TacticalButton variant="ghost" size="sm" onClick={logout}>{t.logout}</TacticalButton>
-        </div>
-      </div>
+      <AppHeader />
 
       <HomePage
         weaponsByCategory={weaponsByCategory}

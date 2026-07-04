@@ -6,7 +6,7 @@
 .landing {
   position: relative;
   min-height: 100vh;
-  background: var(--vi-black);
+  background: #0F1923;
   color: var(--vi-offwhite);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow-x: clip;
@@ -78,93 +78,24 @@
   overflow: hidden;
 }
 
-.backdropBase {
+.backdropGif {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse 60% 46% at 82% 6%, var(--vi-red-soft) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 10% 90%, rgba(63, 199, 149, 0.08) 0%, transparent 60%),
-    linear-gradient(180deg, var(--vi-black) 0%, #101b26 45%, var(--vi-black) 100%);
-}
-
-.backdropGlow {
-  position: absolute;
-  top: -10%;
-  right: -10%;
-  width: 46vw;
-  height: 46vw;
-  min-width: 420px;
-  min-height: 420px;
-  background: radial-gradient(circle, rgba(255, 70, 84, 0.32) 0%, rgba(255, 70, 84, 0) 70%);
-  filter: blur(40px);
-  animation: pulseGlow 7s ease-in-out infinite;
-}
-
-.backdropGrid {
-  position: absolute;
-  inset: -2px;
-  background-image:
-    linear-gradient(rgba(236, 232, 225, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(236, 232, 225, 0.05) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 70% 60% at 60% 0%, #000 0%, transparent 75%);
-  animation: gridDrift 30s linear infinite;
-}
-
-.backdropScan {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 140px;
-  background: linear-gradient(180deg, transparent 0%, rgba(255, 70, 84, 0.05) 50%, transparent 100%);
-  animation: scanMove 9s ease-in-out infinite;
-}
-
-.backdropNoise {
-  position: absolute;
-  inset: 0;
-  opacity: 0.05;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  object-fit: cover;
+  opacity: 0.18;
+  filter: blur(4px) saturate(1.02) contrast(1.02);
+  transform: scale(1.02);
 }
 
 .backdropVignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 80% 70% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
-}
-
-.streak {
-  position: absolute;
-  top: -20%;
-  width: 1px;
-  height: 90px;
-  background: linear-gradient(180deg, transparent 0%, rgba(236, 232, 225, 0.4) 45%, transparent 100%);
-  animation: streakFall linear infinite;
-}
-
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.75; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.08); }
-}
-
-@keyframes gridDrift {
-  0% { background-position: 0 0, 0 0; }
-  100% { background-position: 48px 96px, 48px 96px; }
-}
-
-@keyframes scanMove {
-  0% { top: -10%; opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { top: 100%; opacity: 0; }
-}
-
-@keyframes streakFall {
-  from { transform: translateY(-10vh); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  to { transform: translateY(120vh); opacity: 0; }
+  background:
+    linear-gradient(90deg, rgba(15, 25, 35, 0.76) 0%, rgba(15, 25, 35, 0.24) 48%, rgba(15, 25, 35, 0.64) 100%),
+    radial-gradient(ellipse 88% 76% at 50% 38%, transparent 48%, rgba(0, 0, 0, 0.34) 100%);
 }
 
 /* -------------------------------------------------------------------------
@@ -179,8 +110,8 @@
   justify-content: center;
   border-bottom: 1px solid var(--vi-border);
   background: rgba(15, 25, 35, 0.72);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .navInner {
@@ -246,6 +177,12 @@
   padding: 100px 32px;
 }
 
+.hero + .section {
+  margin-top: 0;
+  padding-top: 100px;
+  background: transparent;
+}
+
 .sectionInner {
   max-width: 1240px;
   margin: 0 auto;
@@ -268,10 +205,14 @@
   min-height: 88vh;
   display: flex;
   align-items: center;
-  padding: 64px 32px 96px;
+  padding: 64px 32px 128px;
+  overflow: hidden;
+  background: transparent;
 }
 
 .heroInner {
+  position: relative;
+  z-index: 2;
   width: 100%;
   max-width: 1240px;
   margin: 0 auto;
@@ -333,14 +274,11 @@
 
 .heroPanel {
   position: relative;
-  background: var(--vi-glass);
-  border: 1px solid var(--vi-border);
-  border-radius: 6px;
-  padding: 20px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
-  transform: perspective(1200px) rotateY(-4deg) rotateX(2deg);
+  background: rgba(15, 25, 35, 0.5);
+  border: 1px solid rgba(236, 232, 225, 0.18);
+  border-radius: 2px;
+  padding: 16px;
+  box-shadow: 0 20px 54px rgba(0, 0, 0, 0.34);
 }
 
 .heroPanelHeader {
@@ -349,7 +287,7 @@
   justify-content: space-between;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--vi-border);
+  border-bottom: 1px solid rgba(236, 232, 225, 0.16);
 }
 
 .heroPanelTitle {
@@ -389,18 +327,18 @@
 .heroGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 .heroFloatingBadge {
   position: absolute;
   right: -14px;
   bottom: -22px;
-  background: var(--vi-black-soft);
+  background: rgba(15, 25, 35, 0.86);
   border: 1px solid var(--vi-green);
   border-radius: 4px;
   padding: 10px 16px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.36);
   animation: floatY 4s ease-in-out infinite;
 }
 
@@ -431,6 +369,7 @@
   position: absolute;
   left: 50%;
   bottom: 22px;
+  z-index: 3;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
@@ -465,23 +404,34 @@
 
 .miniCard {
   position: relative;
-  background: rgba(54, 49, 53, 0.5);
-  border: 1px solid var(--vi-border);
+  background: rgba(15, 25, 35, 0.34);
+  border: 1px solid rgba(236, 232, 225, 0.12);
   border-radius: 4px;
-  padding: 8px;
+  padding: 6px;
   overflow: hidden;
 }
 
 .miniCardArt {
-  height: 34px;
+  height: 52px;
   border-radius: 2px;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7, 10, 14, 0.28);
+}
+
+.miniCardImg {
+  width: 80%;
+  max-width: none;
+  max-height: 80%;
+  object-fit: contain;
 }
 
 .miniCardBar {
   height: 5px;
   border-radius: 2px;
-  background: rgba(236, 232, 225, 0.18);
+  background: rgba(236, 232, 225, 0.12);
 }
 
 /* -------------------------------------------------------------------------
@@ -597,7 +547,7 @@
    ------------------------------------------------------------------------- */
 
 .inventorySection {
-  background: linear-gradient(180deg, transparent 0%, rgba(60, 54, 64, 0.12) 50%, transparent 100%);
+  background: transparent;
 }
 
 .inventoryHeader {
@@ -643,8 +593,8 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
 }
 
 .card {
@@ -652,7 +602,7 @@
   background: rgba(54, 49, 53, 0.5);
   border: 1px solid var(--vi-border);
   border-radius: 4px;
-  padding: 14px;
+  padding: 10px;
   transition: transform 0.3s ease-out, border-color 0.3s ease-out, filter 0.3s ease-out;
   filter: drop-shadow(0 0 0 transparent);
 }
@@ -682,10 +632,21 @@
 
 .cardArt {
   position: relative;
-  height: 108px;
+  height: 136px;
   border-radius: 2px;
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 25, 35, 0.6);
+}
+
+.cardArtImg {
+  width: 80%;
+  max-width: none;
+  max-height: 103%;
+  object-fit: contain;
 }
 
 .cardSheen {
@@ -702,8 +663,8 @@
 
 .badge {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 7px;
+  right: 7px;
   font-family: 'Rajdhani', sans-serif;
   font-size: 10px;
   font-weight: 700;
@@ -845,7 +806,7 @@
   position: relative;
   background: rgba(54, 49, 53, 0.4);
   border: 1px solid var(--vi-border);
-  border-radius: 6px;
+  border-radius: 2px;
   padding: 30px 26px;
   transition: transform 0.3s ease-out, border-color 0.3s ease-out;
 }
@@ -893,20 +854,12 @@
   text-align: center;
   overflow: hidden;
   padding: 130px 32px;
+  background: transparent;
 }
 
-.finalCtaGlow {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 60vw;
-  height: 60vw;
-  max-width: 620px;
-  max-height: 620px;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(255, 70, 84, 0.22) 0%, transparent 70%);
-  filter: blur(30px);
-  pointer-events: none;
+.finalCta > div {
+  position: relative;
+  z-index: 1;
 }
 
 .finalCtaEyebrow {
@@ -1036,5 +989,9 @@
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+
+  .backdropGif {
+    display: none;
   }
 }

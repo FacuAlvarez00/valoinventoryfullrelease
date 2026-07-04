@@ -1,6 +1,5 @@
 .page {
   padding: 32px;
-  padding-top: 90px;
   min-height: 100vh;
   background: var(--vi-black);
   color: var(--vi-offwhite);
@@ -10,7 +9,30 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.headerEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--vi-font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--vi-red);
+  margin: 0 0 8px;
+}
+
+.headerEyebrow::before {
+  content: '';
+  width: 14px;
+  height: 2px;
+  background: var(--vi-red);
+  display: inline-block;
 }
 
 .pageTitle {
@@ -18,9 +40,9 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
-  font-size: 22px;
-  color: var(--vi-red);
-  margin: 0 0 32px;
+  font-size: 30px;
+  color: var(--vi-white);
+  margin: 0;
 }
 
 .alertBox {
@@ -54,7 +76,7 @@
 }
 
 .card {
-  background: rgba(54, 49, 53, 0.5);
+  background: rgba(15, 25, 35, 0.62);
   border: 1px solid var(--vi-border);
   border-radius: 4px;
   padding: 32px;
