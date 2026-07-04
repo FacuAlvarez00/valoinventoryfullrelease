@@ -1,0 +1,164 @@
+* {
+  box-sizing: border-box;
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+ul[class*="-list"] {
+  gap: 5px;
+}
+
+body {
+  margin: 0;
+  position: relative;
+  padding: 100px 0 50px 0;
+}
+
+body::before {
+  position: absolute;
+  background-image: url(https://image.winudf.com/v2/image1/Y29tLnZhbHdhbGsuZ2FtZXBsYXlfc2NyZWVuXzBfMTYxOTE1MzU2Ml8wOTc/screen-0.jpg?fakeurl=1&type=.webp);
+  background-size: cover;
+  inset: 0;
+  content: '';
+  filter: blur(8px);
+  -webkit-filter: blur(8px);
+  z-index: -1;
+}
+
+main#inventory {
+  display: flex;
+  flex-flow: column nowrap;
+  max-width: 60vw;
+  margin: 0 auto;
+  height: 80vh;
+}
+
+section#weapons {
+  flex: 1 0;
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 30px;
+}
+
+section#weapons div#sidearms  {
+  width: 150px;
+  flex-shrink: 0;
+  display: flex;
+  flex-flow: column nowrap; 
+}
+
+section#weapons div#sidearms ul.sidearms-list {
+  display: grid;
+  margin-top: 15px;
+  grid-auto-rows: 1fr;
+  flex-grow: 1;
+}
+
+section#weapons ul#main-weapons  {
+  flex: 1 0;
+  display: grid;
+  grid-template-areas: "SMGS     RIFLES SNIPER"
+                       "SHOTGUNS RIFLES HEAVY";
+  gap: 5px;
+}
+
+section#weapons ul#main-weapons li.weapons-type[data-weapon-type="SMGS"]  {
+  grid-area: SMGS;
+}
+
+section#weapons ul#main-weapons li.weapons-type[data-weapon-type="RIFLES"]  {
+  grid-area: RIFLES;
+}
+
+section#weapons ul#main-weapons li.weapons-type[data-weapon-type="SNIPER"]  {
+  grid-area: SNIPER;
+}
+
+section#weapons ul#main-weapons li.weapons-type[data-weapon-type="SHOTGUNS"]  {
+  grid-area: SHOTGUNS;
+}
+
+section#weapons ul#main-weapons li.weapons-type[data-weapon-type="HEAVY"]  {
+  grid-area: HEAVY;
+}
+
+section#weapons ul#main-weapons li.weapons-type {
+  flex-shrink: 1;
+  display: flex;
+  flex-flow: column nowrap; 
+}
+
+section#weapons ul#main-weapons li.weapons-type ul.weapons-list {
+  display: grid;
+  margin-top: 15px;
+  grid-auto-rows: 1fr;
+  flex-grow: 1;
+}
+
+section#weapons div#sidearms ul.sidearms-list {
+  display: grid;
+  margin-top: 15px;
+  grid-auto-rows: 1fr;
+  flex-grow: 1;
+}
+
+section#weapons div#armors  {
+  width: 150px; 
+  flex-shrink: 0;
+  display: flex;
+  flex-flow: column nowrap; 
+}
+
+section#weapons div#armors ul.armors-list {
+  display: grid;
+  margin-top: 15px;
+  grid-auto-rows: 1fr;
+  flex-grow: 1;
+}
+
+section#abilities {
+  height: 100px;
+  flex: 0;
+  margin-top: 30px;
+}
+
+section#abilities ul.abilities-list {
+  display: flex;
+  flex-flow: row nowrap;
+  margin-top: 15px;
+}
+
+section#abilities ul.abilities-list li.abilities-item {
+  flex: 1 0;
+  height: 100px;
+}
+
+
+
+h2 {
+  background-color: #3fc7957a;
+  color: #fff;
+  text-align: center;
+  text-transform: uppercase;
+  font-family: Arial;
+  font-weight: 600;
+  letter-spacing: 2px;
+  font-size: 15px;
+  padding: 5px 0;
+  margin: 0;
+  border-bottom: 0.1px solid #fafafa;
+}
+
+.card {
+  border: 1px solid grey;
+  background-color: rgba(54, 49, 53, 0.5);
+}
+
+.card.active {
+  border: 1px solid #3fc795;
+  background-color: rgb(63, 199, 149, 0.5)
+}

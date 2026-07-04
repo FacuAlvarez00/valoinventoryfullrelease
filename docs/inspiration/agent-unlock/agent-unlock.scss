@@ -1,0 +1,217 @@
+@import url('http://fonts.cdnfonts.com/css/valorant');
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,300;1,400;1,600;1,700;1,800&display=swap');
+
+$valorant-font: 'VALORANT', sans-serif;
+$title-font: 'Anton', sans-serif;
+$normal-font: 'Open Sans', sans-serif;
+
+/* COLORS */
+$bg-primary: #101014;
+$grey: #c1c1c1;
+$red: #FF3E49;
+/* ------ */
+
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+body {
+  background: $bg-primary;
+  font-family: $normal-font;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.app {
+  padding: 40px;
+  display: flex;
+  height: 100%;
+  color: #fff;
+  
+  &__left-zone {
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  &__right-zone {
+    flex-grow: 1;
+    padding-left: 40px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+}
+
+.map {
+  height: 200px;
+  background-image: url('https://static1-es.millenium.gg/articles/7/24/22/7/@/112800-ascent-m-orig-1-amp_main_media_schema-1.jpeg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 10px 36px 0px, rgba(0, 0, 0, 0.06) 0px 0px 0px 1px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-end;
+  
+  &__data {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-grow: 1;
+  }
+  
+  &__data-left {
+    flex-grow: 1;
+  }
+  
+  &__name {
+    font-family: $title-font;
+    padding-bottom: 5px;
+    font-size: 24px;
+    text-shadow: 0px 0px 4px black;
+  }
+  
+  &__ranked {
+    font-size: .7rem;
+    font-weight: 600;
+    color: $grey;
+  }
+  
+  &__data-right {
+    font-size: 32px;
+    font-family: $title-font;
+    text-shadow: 0px 0px 4px black;
+  }
+}
+
+.picked-champs {
+  flex-grow: 1;
+}
+
+.picked-champ {
+  display: flex;
+  align-items: center;
+  margin: 40px 0;
+  cursor: pointer;
+  
+  &:hover {
+    .picked-champ__left {
+      transform: translatey(-10px);
+    }
+  }
+  
+  &--current-player &__username {
+    color: #499FC0;
+  }
+  
+  &__left {
+    position: relative;
+    transition: .1s;
+    svg {
+      width: 100px;
+      height: 100px;
+      polygon, line {
+        stroke: #3C3640;
+        z-index: 0;
+      }
+      circle {
+        fill: #3C3640;
+      }
+    }
+  }
+  
+  &--locked svg {
+    polygon {
+      stroke: $red;
+      filter: drop-shadow( 0 0 10px $red);
+    }
+  }
+  
+  &__right {
+    flex-grow: 1;
+    padding: 0 20px;
+  }
+  
+  &__username {
+    font-weight: 700;
+  }
+  
+  &__picking-status {
+    color: #3C3640;
+    font-weight: 900;
+    font-size: .7rem;
+    padding-top: 10px;
+  }
+  
+  &__img {
+    width: 100px;
+    height: 100px;
+    position: absolute;
+    bottom: 10px;
+    z-index: 1;
+  }
+}
+
+.pickeable-champ {
+  width: 250px;
+  height: 400px;
+  border: 2px solid #3C3640;
+  border-radius: 2px;
+  padding: 5px;
+  cursor: pointer;
+  
+  &__background {
+    background: #3C3640;
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+  
+  &__img {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+  }
+  
+  &__gradient-mask {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(rgba(0,0,0,0), #3C3640);
+    position: absolute;
+    z-index: 1;
+  }
+  
+  &:hover {
+    box-shadow: 0 0 10px #3C3640;
+  }
+  
+  &--locked {
+    border: 2px solid $red;
+    box-shadow: 0 0 10px $red;
+    
+    .pickeable-champ__background {
+      background: linear-gradient(rgba(0,0,0,0), $red);
+    }
+    
+    .pickeable-champ__gradient-mask {
+      background: linear-gradient(rgba(0,0,0,0), $red);
+    }
+  }
+  
+  &__name {
+    position: absolute;
+    z-index: 1;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    padding: 20px 0;
+    font-family: $title-font;
+    font-size: 24px;
+    text-transform: uppercase;
+  }
+}
