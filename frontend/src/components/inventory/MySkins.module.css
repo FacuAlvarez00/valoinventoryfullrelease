@@ -1,24 +1,266 @@
+.page {
+  min-height: 100vh;
+  background: var(--vi-black);
+  color: var(--vi-offwhite);
+  position: relative;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 55% at 50% 0%, rgba(255, 70, 84, 0.16) 0%, rgba(60, 5, 5, 0.08) 45%, transparent 70%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ---- Header ---- */
+
+.headerBar {
+  background: rgba(15, 25, 35, 0.7);
+  border-bottom: 1px solid var(--vi-border);
+  padding: 22px 40px;
+  margin-top: 62px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.headerEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--vi-font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--vi-red);
+  margin: 0 0 8px;
+}
+
+.headerEyebrow::before {
+  content: '';
+  width: 14px;
+  height: 2px;
+  background: var(--vi-red);
+  display: inline-block;
+}
+
+.headerTitle {
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 26px;
+  color: var(--vi-white);
+  margin: 0;
+}
+
+.headerSub {
+  color: rgba(236, 232, 225, 0.5);
+  margin: 4px 0 0;
+  font-size: 13px;
+}
+
+.walletRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.walletChip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--vi-black-soft);
+  border: 1px solid var(--vi-border);
+  border-radius: 2px;
+  padding: 8px 14px;
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--vi-white);
+}
+
+/* ---- Loadout grid ---- */
+
+.loadoutWrap {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 0 40px;
+  gap: 28px;
+}
+
+.categoryBlock {
+  margin-bottom: 22px;
+}
+
+.categoryTitle {
+  font-family: var(--vi-font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--vi-white);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.weaponList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.weaponCard {
+  background: var(--vi-black-soft);
+  border: 1px solid var(--vi-border);
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  overflow: hidden;
+  transition: background 0.15s ease-out, border-color 0.15s ease-out;
+  height: 130px;
+}
+
+.weaponCard:hover {
+  background: #1c2733;
+  border-color: rgba(255, 70, 84, 0.4);
+}
+
+.weaponCardImgWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px 4px;
+}
+
+.weaponCardImg {
+  max-width: 100%;
+  max-height: 78px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+}
+
+.weaponCardFooter {
+  padding: 0 10px;
+}
+
+.weaponCardName {
+  color: rgba(236, 232, 225, 0.8);
+  font-family: var(--vi-font-body);
+  font-size: 12px;
+  letter-spacing: 0.2px;
+  line-height: 1;
+  padding-bottom: 6px;
+}
+
+.weaponCardUnderline {
+  height: 1px;
+  background: var(--vi-border);
+  margin-bottom: 8px;
+}
+
+.sidePanel {
+  width: 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: sticky;
+  top: 100px;
+}
+
+.sidePanelLabel {
+  font-family: var(--vi-font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--vi-white);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* ---- Modal overlay ---- */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.catalogLoadingOverlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 25, 35, 0.92);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.catalogLoadingClose {
+  position: absolute;
+  top: 30px;
+  right: 40px;
+  z-index: 10000;
+}
+
+.catalogLoadingText {
+  color: var(--vi-offwhite);
+  font-size: 20px;
+  text-align: center;
+  font-family: var(--vi-font-heading);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ---- Inventory tab (all skins grid) ---- */
+
 .inventoryGrid {
   display: grid;
-  grid-template-columns: repeat(8, 180px);
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 20px;
-  justify-content: center;
-  padding: 20px;
+  padding: 20px 40px;
+}
+
+.emptyText {
+  color: var(--vi-offwhite);
+  text-align: center;
+  grid-column: 1 / -1;
 }
 
 .skinCard {
   height: 220px;
-  background: #232b39;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px #000a;
+  background: rgba(54, 49, 53, 0.5);
+  border: 1px solid var(--vi-border);
+  border-radius: 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
   position: relative;
-  padding: 16px 8px 8px 8px;
+  padding: 16px 8px 8px;
   overflow: hidden;
-  transition: transform 0.2s;
+  transition: transform 0.2s ease-out, border-color 0.2s ease-out;
+}
+
+.skinCard:hover {
+  transform: translateY(-4px);
+  border-color: rgba(236, 232, 225, 0.3);
 }
 
 .skinImage {
@@ -38,8 +280,9 @@
 }
 
 .skinName {
-  font-size: 1rem;
-  font-weight: bold;
+  font-family: var(--vi-font-heading);
+  font-size: 14px;
+  font-weight: 700;
   text-align: center;
   margin-bottom: 4px;
   min-height: 32px;
@@ -52,19 +295,24 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  background: #ff4d6d;
-  color: #fff;
-  font-weight: bold;
-  border-radius: 8px;
+  background: rgba(255, 70, 84, 0.14);
+  border: 1px solid var(--vi-red);
+  color: var(--vi-red);
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  border-radius: 2px;
   padding: 2px 10px;
-  font-size: 1rem;
+  font-size: 12px;
   z-index: 2;
 }
 
 .unlockedLevels {
-  color: #ffd700;
-  font-size: 0.9rem;
+  color: var(--vi-green);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   margin-top: auto;
   margin-bottom: 2px;
   text-align: center;
-} 
+}

@@ -1,0 +1,23 @@
+/* ==========================================================================
+   ValoInventory — shared tactical design tokens
+   Single source of truth for the palette established by the landing page.
+   Import once (see index.css) so every CSS Module in the app can reference
+   these custom properties without redeclaring them.
+   ========================================================================== */
+
+:root {
+  --vi-black: #0f1923;
+  --vi-black-soft: #142230;
+  --vi-panel: #3c3640;
+  --vi-red: #ff4654;
+  --vi-red-soft: rgba(255, 70, 84, 0.16);
+  --vi-offwhite: #ece8e1;
+  --vi-white: #fafafa;
+  --vi-green: #3fc795;
+  --vi-green-soft: rgba(63, 199, 149, 0.5);
+  --vi-border: rgba(236, 232, 225, 0.12);
+  --vi-glass: rgba(15, 25, 35, 0.55);
+
+  --vi-font-heading: 'Rajdhani', sans-serif;
+  --vi-font-body: 'Inter', system-ui, -apple-system, sans-serif;
+}

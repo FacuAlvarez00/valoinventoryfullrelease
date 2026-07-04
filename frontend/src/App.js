@@ -4,6 +4,8 @@ import { InventoryProvider, useInventory } from "./context/InventoryContext";
 import { LanguageProvider, useLanguage } from "./context/LanguageContext";
 import { AuthPage } from "./components/auth";
 import { HomePage, LandingPage, PageWrapper, LoadingScreen } from "./components/ui";
+import { TacticalButton } from "./components/ui/kit";
+import appStyles from "./App.module.css";
 import { WeaponDetail } from "./components/weapons";
 import { MySkins } from './components/inventory';
 import { Inventory } from './components/inventory';
@@ -313,40 +315,21 @@ function AppContent() {
   );
 
   return (
-    <div style={{ background: "#0f1923", minHeight: "100vh" }}>
+    <div className={appStyles.shell}>
       {/* Header con información del usuario y botón de logout */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '20px 60px',
-        borderBottom: '2px solid #222b3a'
-      }}>
-        <h1 style={{ color: "#ff4655", margin: 0 }}>{t.valorantCollection}</h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <span style={{ color: '#fff' }}>{t.welcome}, {user.username}!</span>
-          <button
-            onClick={logout}
-            style={{
-              background: '#222b3a',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '8px 16px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            {t.logout}
-          </button>
+      <div className={appStyles.header}>
+        <h1 className={appStyles.headerTitle}>{t.valorantCollection}</h1>
+        <div className={appStyles.headerUser}>
+          <span className={appStyles.headerWelcome}>{t.welcome}, {user.username}!</span>
+          <TacticalButton variant="ghost" size="sm" onClick={logout}>{t.logout}</TacticalButton>
         </div>
       </div>
-      
+
       <HomePage
         weaponsByCategory={weaponsByCategory}
         onWeaponSelect={setSelectedWeapon}
       />
-      
+
       {/* Botón de bandera flotante */}
     </div>
   );

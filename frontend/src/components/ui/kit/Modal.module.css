@@ -1,0 +1,55 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+}
+
+.panel {
+  position: relative;
+  width: 100%;
+  background: var(--vi-black-soft);
+  border: 1px solid var(--vi-border);
+  border-radius: 6px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  color: var(--vi-offwhite);
+}
+
+.header {
+  padding: 22px 28px;
+  border-bottom: 1px solid var(--vi-border);
+  border-left: 3px solid var(--vi-red);
+  background: rgba(255, 70, 84, 0.06);
+}
+
+.headerDanger {
+  border-left-color: var(--vi-red);
+  background: rgba(255, 70, 84, 0.12);
+}
+
+.title {
+  font-family: var(--vi-font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--vi-white);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: rgba(236, 232, 225, 0.6);
+  margin-top: 4px;
+}
+
+.body {
+  padding: 28px;
+}

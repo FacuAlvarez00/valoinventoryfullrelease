@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import InventoryNavbar from './InventoryNavbar';
 import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../../context/InventoryContext';
+import { BackButton, SearchInput, SkeletonBlock } from '../ui/kit';
+import styles from './InventoryList.module.css';
 
 export default function InventoryBuddies() {
   const navigate = useNavigate();
@@ -64,214 +66,64 @@ export default function InventoryBuddies() {
   return (
     <>
       <InventoryNavbar />
-      <div style={{ padding: 32, color: '#fff', paddingTop: 90, minHeight: '100vh', background: 'radial-gradient(ellipse at 60% 40%, #1a2636 60%, #0f1923 100%)' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: 24 
-        }}>
-          <button onClick={() => navigate('/inventory')} style={{ 
-            background: '#222b3a', 
-            color: '#fff', 
-            border: 'none', 
-            borderRadius: 8, 
-            padding: '8px 24px', 
-            fontWeight: 'bold', 
-            fontSize: 16, 
-            cursor: 'pointer', 
-            boxShadow: '0 2px 8px #0005' 
-          }}>
-            ← Volver al Dashboard
-          </button>
-          
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '16px' 
-          }}>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px' 
-            }}>
-              <span style={{ 
-                color: '#ff4655', 
-                fontWeight: 'bold', 
-                fontSize: '14px' 
-              }}>
-                Total: {buddies.length}
-              </span>
-              {searchTerm && (
-                <span style={{ 
-                  color: '#888', 
-                  fontSize: '14px' 
-                }}>
-                  ({filteredBuddies.length} encontrados)
-                </span>
-              )}
+      <div className={styles.page}>
+        <div className={styles.headerRow}>
+          <BackButton onClick={() => navigate('/inventory')}>Volver al Dashboard</BackButton>
+
+          <div className={styles.headerRight}>
+            <div className={styles.countGroup}>
+              <span className={styles.countText}>Total: {buddies.length}</span>
+              {searchTerm && <span className={styles.countMuted}>({filteredBuddies.length} encontrados)</span>}
             </div>
-            
-            <input
-              type="text"
-              placeholder="Buscar gunbuddies..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                background: '#1a1a1a',
-                border: '1px solid #333',
-                borderRadius: '6px',
-                padding: '8px 12px',
-                color: '#fff',
-                fontSize: '14px',
-                width: '200px',
-                outline: 'none'
-              }}
-            />
+            <div className={styles.searchWrap}>
+              <SearchInput
+                placeholder="Buscar gunbuddies..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
         </div>
-        
-        <h2 style={{ color: '#ff4655', marginBottom: 32 }}>GUNBUDDIES</h2>
+
+        <h2 className={styles.pageTitle}>GUNBUDDIES</h2>
+
         {loading || loadingBuddies ? (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-            gap: 20,
-            marginTop: 20,
-          }}>
+          <div className={styles.grid}>
             {skeletons.map((_, idx) => (
-              <div key={idx} style={{
-                background: '#1a1a1a',
-                borderRadius: 12,
-                padding: 16,
-                border: '1px solid #333',
-                textAlign: 'center',
-                opacity: 0.7,
-                animation: 'pulse 1.2s infinite ease-in-out',
-              }}>
-                {/* Skeleton para la imagen del gunbuddy */}
-                <div style={{ 
-                  width: '100%', 
-                  height: 120, 
-                  background: '#333',
-                  borderRadius: 8,
-                  marginBottom: 12,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  position: 'relative'
-                }}>
-                  {/* Forma del gunbuddy - rectángulo con hook superior */}
-                  <div style={{
-                    width: '60%',
-                    height: '70%',
-                    background: '#444a5a',
-                    borderRadius: '8px',
-                    position: 'relative'
-                  }}>
-                    {/* Hook superior del gunbuddy */}
-                    <div style={{
-                      position: 'absolute',
-                      top: '-8px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: '12px',
-                      height: '12px',
-                      background: '#444a5a',
-                      borderRadius: '50%'
-                    }} />
-                  </div>
-                </div>
-                
-                {/* Skeleton para el nombre */}
-                <div style={{ 
-                  width: '80%', 
-                  height: 16, 
-                  background: '#444a5a', 
-                  borderRadius: 4, 
-                  margin: '0 auto',
-                  opacity: 0.8
-                }} />
+              <div key={idx} className={styles.skeletonCard}>
+                <SkeletonBlock height={120} radius={2} />
+                <SkeletonBlock width="80%" height={16} radius={4} />
               </div>
             ))}
-            <style>
-              {`@keyframes pulse {
-                0% { opacity: 0.7; }
-                50% { opacity: 1; }
-                100% { opacity: 0.7; }
-              }`}
-            </style>
           </div>
         ) : error ? (
-          <div style={{ color: '#ff4655', textAlign: 'center' }}>{error}</div>
+          <div className={styles.errorState}>{error}</div>
         ) : buddies.length === 0 ? (
-          <div style={{ color: '#fff', textAlign: 'center' }}>No hay Gunbuddies disponibles.</div>
+          <div className={styles.emptyState}>No hay Gunbuddies disponibles.</div>
         ) : filteredBuddies.length === 0 && searchTerm ? (
-          <div style={{ color: '#fff', textAlign: 'center' }}>No se encontraron gunbuddies que coincidan con "{searchTerm}"</div>
+          <div className={styles.emptyState}>No se encontraron gunbuddies que coincidan con "{searchTerm}"</div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20, marginTop: 20 }}>
+          <div className={styles.grid}>
             {filteredBuddies.map((item, index) => (
-                             <div key={item.InstanceID || index} style={{
-                background: '#1a1a1a',
-                borderRadius: 12,
-                padding: 16,
-                border: '1px solid #333',
-                textAlign: 'center'
-              }}>
+              <div key={item.InstanceID || index} className={styles.card}>
                 {item.buddy?.displayIcon ? (
-                  <img 
-                    src={item.buddy.displayIcon} 
-                    alt={item.buddy.displayName || 'Gunbuddy'} 
-                    style={{ 
-                      width: '100%', 
-                      height: 120, 
-                      objectFit: 'contain',
-                      borderRadius: 8,
-                      marginBottom: 12,
-                      backgroundColor: 'transparent'
-                    }}
+                  <img
+                    src={item.buddy.displayIcon}
+                    alt={item.buddy.displayName || 'Gunbuddy'}
+                    className={styles.cardImage}
                     onError={(e) => {
                       console.log('🔫 [InventoryBuddies] Error cargando imagen:', item.buddy.displayIcon);
                       e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'block';
+                      e.target.nextSibling.style.display = 'flex';
                     }}
                   />
                 ) : null}
                 {!item.buddy?.displayIcon && (
-                  <div style={{
-                    width: '100%',
-                    height: 120,
-                    background: '#333',
-                    borderRadius: 8,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 12,
-                    fontSize: 48,
-                    color: '#666'
-                  }}>
-                    🔫
-                  </div>
+                  <div className={styles.cardImagePlaceholder}>🔫</div>
                 )}
-                <h3 style={{ 
-                  fontSize: 14, 
-                  fontWeight: 'bold', 
-                  margin: '8px 0',
-                  color: '#fff',
-                  lineHeight: '1.3',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  wordWrap: 'break-word',
-                  overflowWrap: 'break-word',
-                  hyphens: 'auto',
-                  whiteSpace: 'normal',
-                  padding: '4px 8px'
-                }}>
+                <h3 className={styles.cardName} style={{ whiteSpace: 'normal' }}>
                   {item.buddy?.displayName || 'Gunbuddy Desconocido'}
                 </h3>
-
               </div>
             ))}
           </div>
@@ -279,4 +131,4 @@ export default function InventoryBuddies() {
       </div>
     </>
   );
-} 
+}

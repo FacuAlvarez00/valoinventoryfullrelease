@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getSkinPrice as getSkinPriceUtil, sortSkinsByPriceAsc as sortSkinsByPriceAscUtil } from '../utils/pricing';
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "https://valoinventory-1.onrender.com";
 
 const EMPTY_CATALOG = { weapons: [], skins: [], chromas: [], skinlevels: [] };
@@ -129,40 +130,11 @@ export function InventoryProvider({ children }) {
   const getSkinById = (id) => catalog.skins.find(s => s.uuid === id);
   const getChromaById = (id) => catalog.chromas.find(c => c.uuid === id);
 
-  // Función para obtener el precio de una skin base
-  const getSkinPrice = (baseName) => {
-    if (baseName === 'VCT LOCK//IN Misericórdia') return 5440;
-    if (baseName === 'VCT 2026 Sigil') return 5350;
-    if (baseName === 'VCT 2025 Karambit') return 5350;
-    if (baseName === 'XERØFANG Vandal') return 1775;
-    if (baseName === 'Arcane Vandal') return 2175;
-    if (baseName === 'Arcane Sheriff') return 2380;
-    if (baseName === 'Arcane Gauntlets') return 4350;
-    if (baseName === 'Ignite Fan') return 4350;
-    if (baseName === '5 Years // Beta Remastered Knife') return 4350;
-    if (['Champions 2021 Karambit','Champions 2022 Butterfly Knife','Champions 2023 Kunai','Champions 2024 Blade','Champions 2025 Butterfly Knife'].includes(baseName)) return 5350;
-    if (baseName.startsWith('Champions 202')) return 2675;
-    if (/vct\d*\s+x\b/i.test(baseName)) return 2340;
-
-    const skinBaseWeapon = weaponSkins.find(s => s.name === baseName);
-    if (skinBaseWeapon?.price) {
-      const price = Object.values(skinBaseWeapon.price)[0];
-      if (price) return parseInt(price, 10);
-    }
-    return null;
-  };
+  // Función para obtener el precio de una skin base (delegada al helper compartido)
+  const getSkinPrice = (baseName) => getSkinPriceUtil(baseName, weaponSkins);
 
   // Función para ordenar skins por precio ascendente (las que no tienen precio al final)
-  const sortSkinsByPriceAsc = (skinsPorBase) => {
-    return Object.entries(skinsPorBase).sort((a, b) => {
-      const precioA = getSkinPrice(a[0]);
-      const precioB = getSkinPrice(b[0]);
-      if (precioA && precioB) return precioA - precioB;
-      if (precioA) return -1;
-      if (precioB) return 1;
-      return 0;
-    });
-  };
+  const sortSkinsByPriceAsc = (skinsPorBase) => sortSkinsByPriceAscUtil(skinsPorBase, weaponSkins);
 
   // Función para refrescar la cuenta seleccionada manualmente
   const refreshAccount = async (puuid) => {

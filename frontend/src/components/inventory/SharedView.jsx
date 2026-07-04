@@ -1,47 +1,19 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { getSkinPrice, isGoldenSkin } from '../../utils/pricing';
+import styles from './SharedView.module.css';
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://valoinventory-1.onrender.com';
 
-const CHAMPIONS_MELEE = [
-  'Champions 2021 Karambit','Champions 2022 Butterfly Knife',
-  'Champions 2023 Kunai','Champions 2024 Blade','Champions 2025 Butterfly Knife',
-];
-
-function getSkinPrice(baseName, weaponSkins) {
-  if (baseName === 'VCT LOCK//IN Misericórdia') return 5440;
-  if (baseName === 'VCT 2026 Sigil') return 5350;
-  if (baseName === 'XERØFANG Vandal') return 1775;
-  if (baseName === 'Arcane Vandal') return 2175;
-  if (baseName === 'Arcane Gauntlets') return 4350;
-  if (CHAMPIONS_MELEE.includes(baseName)) return 5350;
-  if (baseName.startsWith('Champions 202')) return 2675;
-  if (/vct\d*\s+x\b/i.test(baseName)) return 2340;
-  const found = weaponSkins.find(s => s.name === baseName);
-  if (found?.price) {
-    const p = Object.values(found.price)[0];
-    if (p) return parseInt(p, 10);
-  }
-  return null;
-}
-
-function isGoldenSkin(baseName) {
-  return baseName.startsWith('Champions 202') ||
-    /vct\d*\s+x\b/i.test(baseName) ||
-    baseName === 'VCT LOCK//IN Misericórdia' ||
-    baseName === 'VCT 2026 Sigil' ||
-    baseName === 'Arcane Vandal' || baseName === 'Arcane Gauntlets';
-}
-
 const SECTIONS = [
-  { key: 'skins',      label: 'SKINS',       bg: '#1a2636' },
-  { key: 'battlepass', label: 'BATTLEPASSES', bg: '#222b3a' },
-  { key: 'buddies',    label: 'GUNBUDDIES',  bg: '#1a2636' },
-  { key: 'cards',      label: 'CARDS',       bg: '#222b3a' },
-  { key: 'sprays',     label: 'SPRAYS',      bg: '#1a2636' },
-  { key: 'flex',       label: 'FLEX',        bg: '#222b3a' },
-  { key: 'titles',     label: 'TITLES',      bg: '#222b3a' },
-  { key: 'agents',     label: 'AGENTS',      bg: '#1a2636' },
+  { key: 'skins',      label: 'SKINS' },
+  { key: 'battlepass', label: 'BATTLEPASSES' },
+  { key: 'buddies',    label: 'GUNBUDDIES' },
+  { key: 'cards',      label: 'CARDS' },
+  { key: 'sprays',     label: 'SPRAYS' },
+  { key: 'flex',       label: 'FLEX' },
+  { key: 'titles',     label: 'TITLES' },
+  { key: 'agents',     label: 'AGENTS' },
 ];
 
 export default function SharedView() {
@@ -119,84 +91,72 @@ export default function SharedView() {
   const totalFlex = 1 + (account?.flex?.Entitlements?.length || 0);
 
   const sections = useMemo(() => [
-    { key: 'skins',      label: 'SKINS',       count: Object.keys(skinsPorBase).length, vpSpent: totalVPSkins,        bg: '#1a2636' },
-    { key: 'battlepass', label: 'BATTLEPASSES', count: account?.battlePasses?.length || 0, vpSpent: totalVPBattlePasses, bg: '#222b3a' },
-    { key: 'buddies',    label: 'GUNBUDDIES',  count: account?.buddies?.length || 0,       bg: '#1a2636' },
-    { key: 'cards',      label: 'CARDS',       count: account?.cards?.length || 0,         bg: '#222b3a' },
-    { key: 'sprays',     label: 'SPRAYS',      count: account?.sprays?.length || 0,        bg: '#1a2636' },
-    { key: 'flex',       label: 'FLEX',        count: totalFlex,                           bg: '#222b3a' },
-    { key: 'titles',     label: 'TITLES',      count: account?.titles?.length || 0,        bg: '#222b3a' },
-    { key: 'agents',     label: 'AGENTS',      count: account?.agents?.length || 0,        bg: '#1a2636' },
+    { key: 'skins',      label: 'SKINS',       count: Object.keys(skinsPorBase).length, vpSpent: totalVPSkins },
+    { key: 'battlepass', label: 'BATTLEPASSES', count: account?.battlePasses?.length || 0, vpSpent: totalVPBattlePasses },
+    { key: 'buddies',    label: 'GUNBUDDIES',  count: account?.buddies?.length || 0 },
+    { key: 'cards',      label: 'CARDS',       count: account?.cards?.length || 0 },
+    { key: 'sprays',     label: 'SPRAYS',      count: account?.sprays?.length || 0 },
+    { key: 'flex',       label: 'FLEX',        count: totalFlex },
+    { key: 'titles',     label: 'TITLES',      count: account?.titles?.length || 0 },
+    { key: 'agents',     label: 'AGENTS',      count: account?.agents?.length || 0 },
   ], [account, skinsPorBase, totalVPSkins, totalVPBattlePasses, totalFlex]);
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#0f1923', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ color: '#ff4655', fontSize: 20, fontWeight: 'bold' }}>Cargando inventario...</div>
+    <div className={styles.center}>
+      <div className={styles.loadingText}>Cargando inventario...</div>
     </div>
   );
 
   if (error) return (
-    <div style={{ minHeight: '100vh', background: '#0f1923', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
-      <div style={{ color: '#ff4655', fontSize: 24, fontWeight: 'bold' }}>Error: {error}</div>
-      <div style={{ color: '#888', fontSize: 14 }}>El link puede ser inválido o haber expirado.</div>
+    <div className={styles.center}>
+      <div className={styles.errorText}>Error: {error}</div>
+      <div className={styles.errorSub}>El link puede ser inválido o haber expirado.</div>
     </div>
   );
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0f1923', color: '#fff' }}>
+    <div className={styles.page}>
       {/* Navbar */}
-      <div style={{ background: 'rgba(15,25,35,0.97)', borderBottom: '2px solid #222b3a', padding: '14px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg,#ff4655,#ff6b7a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 'bold', color: '#fff' }}>
+      <div className={styles.navbar}>
+        <div className={styles.navIdentity}>
+          <div className={styles.navAvatar}>
             {(account.nickname || account.name || '?').charAt(0).toUpperCase()}
           </div>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 'bold' }}>{account.nickname || account.name}</div>
-            <div style={{ fontSize: 11, color: '#666' }}>
+            <div className={styles.navName}>{account.nickname || account.name}</div>
+            <div className={styles.navUpdated}>
               Actualizado: {account.lastUpdated ? new Date(account.lastUpdated).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
             </div>
           </div>
         </div>
-        <div style={{ fontSize: 13, color: '#ff4655', fontWeight: 'bold', letterSpacing: 2 }}>VALOINVENTORY</div>
+        <div className={styles.navBrand}>VALO<span className={styles.navBrandAccent}>INVENTORY</span></div>
       </div>
 
       {/* Dashboard */}
-      <div style={{ padding: '32px 32px 16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <h2 style={{ color: '#fff', fontWeight: 'bold', fontSize: 32, letterSpacing: 2, margin: 0 }}>INVENTORY</h2>
-          <div style={{ background: '#ff4655', color: '#fff', padding: '8px 16px', borderRadius: 8, fontSize: 18, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div className={styles.dashboard}>
+        <div className={styles.dashboardHeader}>
+          <h2 className={styles.heading}>Inventory</h2>
+          <div className={styles.totalValue}>
             Total Value: {totalVP.toLocaleString()}
-            <img src="/assets/icons/20px-White_Valorant_Points_VALORANT.png" alt="VP" style={{ width: 16, height: 16, marginLeft: 4 }} />
+            <img src="/assets/icons/20px-White_Valorant_Points_VALORANT.png" alt="VP" style={{ width: 16, height: 16 }} />
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 24 }}>
+        <div className={styles.tileGrid}>
           {sections.map(sec => (
             <div
               key={sec.key}
               onClick={() => setActiveSection(activeSection === sec.key ? null : sec.key)}
-              style={{
-                background: sec.bg,
-                borderRadius: 12,
-                minHeight: 220,
-                cursor: 'pointer',
-                boxShadow: activeSection === sec.key ? '0 0 0 2px #ff4655' : '0 2px 12px #0007',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
-                transition: 'box-shadow 0.15s',
-              }}
+              className={`${styles.tile} ${activeSection === sec.key ? styles.tileActive : ''}`}
             >
               {sec.vpSpent !== undefined && (
-                <div style={{ position: 'absolute', top: 12, right: 12, background: '#ff4655', color: '#fff', padding: '6px 12px', borderRadius: 6, fontSize: 14, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div className={styles.tileVp}>
                   {sec.vpSpent.toLocaleString()}
-                  <img src="/assets/icons/20px-White_Valorant_Points_VALORANT.png" alt="VP" style={{ width: 12, height: 12, marginLeft: 2 }} />
+                  <img src="/assets/icons/20px-White_Valorant_Points_VALORANT.png" alt="VP" style={{ width: 12, height: 12 }} />
                 </div>
               )}
-              <div style={{ color: '#ff4655', fontWeight: 'bold', fontSize: 22, marginBottom: 8, letterSpacing: 1, textAlign: 'center' }}>{sec.label}</div>
-              <div style={{ color: '#fff', fontSize: 32, fontWeight: 'bold' }}>{sec.count}</div>
+              <div className={styles.tileLabel}>{sec.label}</div>
+              <div className={styles.tileCount}>{sec.count}</div>
             </div>
           ))}
         </div>
@@ -204,11 +164,11 @@ export default function SharedView() {
 
       {/* Detail panel */}
       {activeSection && (
-        <div style={{ padding: '8px 32px 32px' }}>
-          <div style={{ borderTop: '1px solid #222b3a', paddingTop: 24 }}>
+        <div className={styles.detailWrap}>
+          <div className={styles.detailInner}>
 
             {activeSection === 'skins' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12 }}>
+              <div className={`${styles.detailGrid} ${styles.detailGridSkins}`}>
                 {skinsOrdenadas.map(([baseName, skins], idx) => {
                   let skinBaseObj = catalog.skins.find(s => s.displayName === baseName);
                   if (!skinBaseObj) skinBaseObj = catalog.skins.find(s => s.displayName.toLowerCase().includes(baseName.toLowerCase()));
@@ -216,19 +176,14 @@ export default function SharedView() {
                   const price = getSkinPrice(baseName, weaponSkins);
                   const golden = isGoldenSkin(baseName);
                   return (
-                    <div key={idx} style={{
-                      background: golden ? 'linear-gradient(135deg,#2a1e00 0%,#4a3200 50%,#2a1e00 100%)' : '#1a1a1a',
-                      border: golden ? '1px solid #a07820' : '1px solid #333',
-                      borderRadius: 8, padding: 12, display: 'flex', flexDirection: 'column',
-                      alignItems: 'center', justifyContent: 'space-between', height: 200, boxSizing: 'border-box', position: 'relative',
-                    }}>
+                    <div key={idx} className={`${styles.skinCard} ${golden ? styles.skinCardGolden : ''}`}>
                       {price ? (
-                        <div style={{ alignSelf: 'flex-end', background: '#ff4655', color: '#fff', fontWeight: 'bold', fontSize: 14, borderRadius: 6, padding: '2px 10px' }}>{price.toLocaleString()}</div>
+                        <div className={styles.skinPrice}>{price.toLocaleString()}</div>
                       ) : <div style={{ height: 22 }} />}
-                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-                        {imgSrc && <img src={imgSrc} alt={baseName} style={{ maxWidth: '100%', maxHeight: 80, objectFit: 'contain' }} />}
+                      <div className={styles.skinImgWrap}>
+                        {imgSrc && <img src={imgSrc} alt={baseName} className={styles.skinImg} />}
                       </div>
-                      <div style={{ color: '#fff', fontWeight: 600, fontSize: 12, textAlign: 'center', marginTop: 8 }}>{baseName}</div>
+                      <div className={styles.skinName}>{baseName}</div>
                     </div>
                   );
                 })}
@@ -236,78 +191,78 @@ export default function SharedView() {
             )}
 
             {activeSection === 'battlepass' && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+              <div className={styles.chip}>
                 {(account.battlePasses || []).map((bp, idx) => (
-                  <div key={idx} style={{ background: '#1a2636', border: '1px solid #333', borderRadius: 8, padding: '10px 20px', color: '#fff', fontSize: 14 }}>
+                  <div key={idx} className={styles.chipItem}>
                     {bp.displayName || bp.ItemID || `Battle Pass ${idx + 1}`}
                   </div>
                 ))}
-                {!account.battlePasses?.length && <div style={{ color: '#666' }}>Sin battle passes</div>}
+                {!account.battlePasses?.length && <div className={styles.emptyNote}>Sin battle passes</div>}
               </div>
             )}
 
             {activeSection === 'buddies' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 12 }}>
+              <div className={styles.detailGrid}>
                 {(account.buddies || []).map((buddy, idx) => (
-                  <div key={idx} style={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                    {buddy.displayIcon && <img src={buddy.displayIcon} alt={buddy.displayName} style={{ width: 56, height: 56, objectFit: 'contain' }} />}
-                    <div style={{ fontSize: 11, color: '#ccc', textAlign: 'center' }}>{buddy.displayName || 'Buddy'}</div>
+                  <div key={idx} className={styles.itemCard}>
+                    {buddy.displayIcon && <img src={buddy.displayIcon} alt={buddy.displayName} className={styles.itemImg} />}
+                    <div className={styles.itemName}>{buddy.displayName || 'Buddy'}</div>
                   </div>
                 ))}
-                {!account.buddies?.length && <div style={{ color: '#666' }}>Sin buddies</div>}
+                {!account.buddies?.length && <div className={styles.emptyNote}>Sin buddies</div>}
               </div>
             )}
 
             {activeSection === 'cards' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 12 }}>
+              <div className={styles.detailGrid}>
                 {(account.cards || []).map((card, idx) => (
-                  <div key={idx} style={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 8, overflow: 'hidden' }}>
-                    {card.smallArt && <img src={card.smallArt} alt={card.displayName} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover' }} />}
-                    <div style={{ padding: '6px 8px', fontSize: 11, color: '#ccc', textAlign: 'center' }}>{card.displayName || 'Card'}</div>
+                  <div key={idx} className={styles.tileImgCard}>
+                    {card.smallArt && <img src={card.smallArt} alt={card.displayName} className={styles.tileImg} />}
+                    <div className={styles.tileImgName}>{card.displayName || 'Card'}</div>
                   </div>
                 ))}
-                {!account.cards?.length && <div style={{ color: '#666' }}>Sin cards</div>}
+                {!account.cards?.length && <div className={styles.emptyNote}>Sin cards</div>}
               </div>
             )}
 
             {activeSection === 'sprays' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 12 }}>
+              <div className={styles.detailGrid}>
                 {(account.sprays || []).map((spray, idx) => (
-                  <div key={idx} style={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                    {spray.displayIcon && <img src={spray.displayIcon} alt={spray.displayName} style={{ width: 56, height: 56, objectFit: 'contain' }} />}
-                    <div style={{ fontSize: 11, color: '#ccc', textAlign: 'center' }}>{spray.displayName || 'Spray'}</div>
+                  <div key={idx} className={styles.itemCard}>
+                    {spray.displayIcon && <img src={spray.displayIcon} alt={spray.displayName} className={styles.itemImg} />}
+                    <div className={styles.itemName}>{spray.displayName || 'Spray'}</div>
                   </div>
                 ))}
-                {!account.sprays?.length && <div style={{ color: '#666' }}>Sin sprays</div>}
+                {!account.sprays?.length && <div className={styles.emptyNote}>Sin sprays</div>}
               </div>
             )}
 
             {activeSection === 'flex' && (
-              <div style={{ color: '#888', fontSize: 14 }}>
+              <div className={styles.emptyNote}>
                 {totalFlex} item{totalFlex !== 1 ? 's' : ''} flex
               </div>
             )}
 
             {activeSection === 'titles' && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              <div className={styles.chip}>
                 {(account.titles || []).map((title, idx) => (
-                  <div key={idx} style={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 8, padding: '8px 16px', color: '#fff', fontSize: 13 }}>
+                  <div key={idx} className={styles.chipItem}>
                     {title.titleText || title.displayName || 'Title'}
                   </div>
                 ))}
-                {!account.titles?.length && <div style={{ color: '#666' }}>Sin títulos</div>}
+                {!account.titles?.length && <div className={styles.emptyNote}>Sin títulos</div>}
               </div>
             )}
 
             {activeSection === 'agents' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 12 }}>
+              <div className={styles.detailGrid}>
                 {(account.agents || []).map((agent, idx) => (
-                  <div key={idx} style={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 8, overflow: 'hidden' }}>
-                    {agent.displayIconSmall && <img src={agent.displayIconSmall} alt={agent.displayName} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover' }} />}
-                    <div style={{ padding: '6px 8px', fontSize: 11, color: '#ccc', textAlign: 'center' }}>{agent.displayName || 'Agent'}</div>
+                  <div key={idx} className={styles.tileImgCard}>
+                    {agent.displayIconSmall && <img src={agent.displayIconSmall} alt={agent.displayName} className={styles.tileImg} />}
+                    <div className={styles.tileImgName}>{agent.displayName || 'Agent'}</div>
                   </div>
                 ))}
-                {!account.agents?.length && <div style={{ color: '#666' }}>Sin agentes</div>}
+                {!account.agents?.length && <div className={styles.emptyNote}>Sin agentes</div>}
               </div>
             )}
 

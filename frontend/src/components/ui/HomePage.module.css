@@ -1,0 +1,645 @@
+.page {
+  position: relative;
+  min-height: 100vh;
+  padding: 60px 32px 60px;
+}
+
+/* ---- Top bar: search + filters + add ---- */
+
+.topBar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.searchWrap {
+  width: 280px;
+  flex-shrink: 0;
+}
+
+.filtersToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 2px;
+  border: 1px solid var(--vi-border);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(236, 232, 225, 0.6);
+  font-family: var(--vi-font-heading);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease-out;
+}
+
+.filtersToggleActive {
+  border-color: var(--vi-red);
+  color: var(--vi-red);
+  background: rgba(255, 70, 84, 0.08);
+}
+
+.filtersToggleCaret {
+  font-size: 10px;
+  transition: transform 0.2s ease-out;
+  display: inline-block;
+}
+
+.filtersToggleCaretOpen {
+  transform: rotate(180deg);
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* ---- Filters dropdown panel ---- */
+
+.filtersPanel {
+  margin-top: 8px;
+  width: 100%;
+  background: var(--vi-black-soft);
+  border: 1px solid var(--vi-border);
+  border-radius: 4px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filterRowLabel {
+  color: rgba(236, 232, 225, 0.5);
+  font-family: var(--vi-font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  min-width: 110px;
+}
+
+.filterDivider {
+  border-top: 1px solid var(--vi-border);
+}
+
+.chip {
+  padding: 7px 16px;
+  border-radius: 2px;
+  border: 1px solid var(--vi-border);
+  background: transparent;
+  color: rgba(236, 232, 225, 0.55);
+  font-family: var(--vi-font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease-out;
+}
+
+.chipActive {
+  border-color: var(--vi-red);
+  color: var(--vi-red);
+  background: rgba(255, 70, 84, 0.1);
+}
+
+/* ---- Shared links panel ---- */
+
+.sharesSection {
+  margin-bottom: 20px;
+}
+
+.sharesToggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.sharesToggleLabel {
+  color: var(--vi-white);
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.sharesCount {
+  border-radius: 2px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--vi-font-heading);
+  background: rgba(236, 232, 225, 0.08);
+  color: rgba(236, 232, 225, 0.6);
+}
+
+.sharesCountFull {
+  background: var(--vi-red);
+  color: var(--vi-white);
+}
+
+.sharesCaret {
+  color: rgba(236, 232, 225, 0.4);
+  font-size: 11px;
+}
+
+.sharesPanel {
+  margin-top: 10px;
+  background: var(--vi-black-soft);
+  border: 1px solid var(--vi-border);
+  border-radius: 4px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sharesEmpty {
+  padding: 24px;
+  text-align: center;
+  color: rgba(236, 232, 225, 0.4);
+  font-size: 13px;
+}
+
+.shareRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--vi-border);
+}
+
+.shareAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--vi-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--vi-black);
+  flex-shrink: 0;
+  font-family: var(--vi-font-heading);
+}
+
+.shareIdentity {
+  min-width: 0;
+  width: 150px;
+  flex-shrink: 0;
+}
+
+.shareName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--vi-white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shareRiotId {
+  font-size: 11px;
+  color: rgba(236, 232, 225, 0.45);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shareLinkBtn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--vi-black);
+  border: 1px solid var(--vi-border);
+  border-radius: 2px;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s ease-out;
+}
+
+.shareLinkBtnCopied {
+  border-color: var(--vi-green);
+}
+
+.shareLinkUrl {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: rgba(236, 232, 225, 0.5);
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shareLinkStatus {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(236, 232, 225, 0.4);
+  flex-shrink: 0;
+}
+
+.shareLinkStatusCopied {
+  color: var(--vi-green);
+}
+
+.shareDate {
+  font-size: 11px;
+  color: rgba(236, 232, 225, 0.4);
+  width: 110px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.shareRevoke {
+  flex-shrink: 0;
+  background: rgba(255, 70, 84, 0.08);
+  border: 1px solid rgba(255, 70, 84, 0.3);
+  border-radius: 2px;
+  color: var(--vi-red);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--vi-font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease-out;
+}
+
+.shareRevoke:hover {
+  background: rgba(255, 70, 84, 0.2);
+}
+
+/* ---- Account grid ---- */
+
+.accountsContainer {
+  max-height: calc(2 * (360px + 16px));
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.accountsContainer::-webkit-scrollbar { width: 6px; }
+.accountsContainer::-webkit-scrollbar-track { background: var(--vi-black-soft); border-radius: 4px; }
+.accountsContainer::-webkit-scrollbar-thumb { background: var(--vi-red); border-radius: 4px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1400px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 900px)  { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 550px)  { .grid { grid-template-columns: 1fr; } }
+
+.card {
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--vi-border);
+  background: var(--vi-black-soft);
+  cursor: pointer;
+  transition: transform 0.3s ease-out, border-color 0.3s ease-out, filter 0.3s ease-out;
+  filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5));
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  border-color: var(--vi-red);
+  filter: drop-shadow(0 16px 32px rgba(255, 70, 84, 0.16));
+}
+
+.cardBanner {
+  position: relative;
+  height: 150px;
+  overflow: hidden;
+  background: var(--vi-panel);
+}
+
+.cardBannerImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.cardBannerOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(15, 25, 35, 0.1) 0%, rgba(15, 25, 35, 0.85) 100%);
+}
+
+.cardBannerName {
+  position: absolute;
+  bottom: 12px;
+  left: 16px;
+  right: 16px;
+  font-family: var(--vi-font-heading);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--vi-white);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardBannerRiotId {
+  font-family: var(--vi-font-body);
+  font-weight: 400;
+  text-transform: none;
+  color: rgba(236, 232, 225, 0.6);
+  font-size: 13px;
+  margin-left: 6px;
+}
+
+.cardBody {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cardUpdated {
+  font-size: 11px;
+  color: rgba(236, 232, 225, 0.45);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cardStats {
+  display: flex;
+  gap: 8px;
+}
+
+.statBox {
+  flex: 1;
+  background: var(--vi-black);
+  border: 1px solid var(--vi-border);
+  border-radius: 2px;
+  padding: 8px 12px;
+}
+
+.statLabel {
+  font-size: 10px;
+  color: rgba(236, 232, 225, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.statValue {
+  font-family: var(--vi-font-heading);
+  font-size: 19px;
+  color: var(--vi-white);
+  font-weight: 700;
+}
+
+.statValueGold {
+  color: #ffd700;
+}
+
+.cardActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.cardActionBtn {
+  flex: 1;
+  background: var(--vi-black);
+  color: rgba(236, 232, 225, 0.6);
+  border: 1px solid var(--vi-border);
+  border-radius: 2px;
+  padding: 9px 0;
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.cardActionBtn:hover {
+  color: var(--vi-white);
+  border-color: rgba(236, 232, 225, 0.3);
+}
+
+.cardActionShared {
+  background: rgba(63, 199, 149, 0.12);
+  color: var(--vi-green);
+  border-color: var(--vi-green);
+}
+
+.cardActionSharing {
+  background: rgba(255, 180, 0, 0.1);
+  color: #ffb300;
+  border-color: rgba(255, 180, 0, 0.4);
+  cursor: default;
+}
+
+.cardActionDanger {
+  background: rgba(255, 70, 84, 0.1);
+  color: var(--vi-red);
+  border-color: rgba(255, 70, 84, 0.3);
+}
+
+.cardActionDanger:hover {
+  background: rgba(255, 70, 84, 0.2);
+  border-color: var(--vi-red);
+  color: var(--vi-white);
+}
+
+/* ---- Empty state ---- */
+
+.emptyState {
+  text-align: center;
+  padding-top: 40px;
+}
+
+.emptyStateText {
+  color: var(--vi-offwhite);
+  margin-bottom: 20px;
+}
+
+/* ---- Modal content shared bits ---- */
+
+.fieldGap {
+  margin-bottom: 20px;
+}
+
+.helperText {
+  font-size: 11px;
+  color: rgba(236, 232, 225, 0.4);
+  margin-top: 6px;
+}
+
+.accountBadgeRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 70, 84, 0.08);
+  border: 1px solid rgba(255, 70, 84, 0.25);
+  border-radius: 4px;
+  padding: 14px 16px;
+  margin-bottom: 22px;
+}
+
+.accountBadgeAvatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--vi-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--vi-black);
+  flex-shrink: 0;
+}
+
+.accountBadgeLabel {
+  font-size: 11px;
+  color: rgba(236, 232, 225, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.accountBadgeName {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--vi-white);
+}
+
+.statusMessage {
+  border-radius: 2px;
+  padding: 12px 16px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.statusOk {
+  background: rgba(63, 199, 149, 0.1);
+  border: 1px solid rgba(63, 199, 149, 0.35);
+  color: var(--vi-green);
+}
+
+.statusError {
+  background: rgba(255, 70, 84, 0.1);
+  border: 1px solid rgba(255, 70, 84, 0.35);
+  color: var(--vi-red);
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.deleteAccountBox {
+  background: var(--vi-black);
+  border: 1px solid var(--vi-border);
+  border-radius: 4px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.deleteAccountLabel {
+  font-size: 11px;
+  color: rgba(236, 232, 225, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.deleteAccountName {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--vi-white);
+}
+
+.deleteLoadingWrap {
+  padding: 48px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.spinnerOuter {
+  position: relative;
+  width: 52px;
+  height: 52px;
+}
+
+.spinnerRing {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 70, 84, 0.15);
+  border-top-color: var(--vi-red);
+  animation: spin 0.9s linear infinite;
+}
+
+.spinnerRingInner {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 70, 84, 0.08);
+  border-top-color: rgba(255, 70, 84, 0.5);
+  animation: spinReverse 1.3s linear infinite;
+}
+
+.spinnerSm {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: var(--vi-white);
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spinReverse { to { transform: rotate(-360deg); } }

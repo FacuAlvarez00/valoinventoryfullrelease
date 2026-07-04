@@ -1,0 +1,49 @@
+.panel {
+  position: relative;
+  background: rgba(54, 49, 53, 0.5);
+  border: 1px solid var(--vi-border);
+  border-radius: 4px;
+}
+
+.glass {
+  background: var(--vi-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.padded {
+  padding: 20px;
+}
+
+.interactive {
+  cursor: pointer;
+  transition: transform 0.3s ease-out, border-color 0.3s ease-out, filter 0.3s ease-out;
+  filter: drop-shadow(0 0 0 transparent);
+}
+
+.interactive:hover {
+  transform: translateY(-6px);
+  border-color: rgba(236, 232, 225, 0.3);
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.45));
+}
+
+.owned {
+  border-color: var(--vi-green);
+  background: linear-gradient(160deg, rgba(63, 199, 149, 0.1) 0%, rgba(54, 49, 53, 0.5) 40%);
+}
+
+.owned.interactive:hover {
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 16px rgba(63, 199, 149, 0.28));
+}
+
+.featured {
+  border-color: var(--vi-red);
+}
+
+.featured.interactive:hover {
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 18px rgba(255, 70, 84, 0.32));
+}
+
+.locked {
+  opacity: 0.6;
+}

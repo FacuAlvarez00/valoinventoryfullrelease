@@ -1,0 +1,39 @@
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--vi-font-heading);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--vi-red);
+  margin: 0 0 12px;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 18px;
+  height: 2px;
+  background: var(--vi-red);
+  display: inline-block;
+}
+
+.eyebrowMuted {
+  color: rgba(236, 232, 225, 0.55);
+}
+
+.eyebrowMuted::before {
+  background: rgba(236, 232, 225, 0.4);
+}
+
+.heading {
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--vi-white);
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  line-height: 1.05;
+  letter-spacing: 0.3px;
+  margin: 0;
+}

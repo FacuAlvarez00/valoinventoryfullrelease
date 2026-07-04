@@ -1,212 +1,433 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { TacticalButton } from './kit';
+import styles from './LandingPage.module.css';
 
-const ACCENT = '#ff4655';
+const HERO_HUES = [355, 200, 35, 280, 160, 10];
 
-function MiniSkinCard({ hue, idx }) {
+const FILTERS = ['ALL', 'RIFLE', 'SNIPER', 'SIDEARM', 'SMG', 'MELEE'];
+
+const INVENTORY_ITEMS = [
+  { id: 1, name: 'Nova Pulse', type: 'RIFLE', rarity: 'EXOTIC', status: 'featured', hue: 355 },
+  { id: 2, name: 'Static Fang', type: 'SIDEARM', rarity: 'RARE', status: 'owned', hue: 200 },
+  { id: 3, name: 'Crimson Vector', type: 'RIFLE', rarity: 'EXOTIC', status: 'owned', hue: 12 },
+  { id: 4, name: 'Glacier Bloom', type: 'SNIPER', rarity: 'RARE', status: 'owned', hue: 190 },
+  { id: 5, name: 'Voidline', type: 'MELEE', rarity: 'EXOTIC', status: 'featured', hue: 280 },
+  { id: 6, name: 'Iron Ember', type: 'SMG', rarity: 'STANDARD', status: 'locked', hue: 32 },
+  { id: 7, name: 'Neon Wraith', type: 'SIDEARM', rarity: 'EXOTIC', status: 'owned', hue: 320 },
+  { id: 8, name: 'Titan Frame', type: 'SNIPER', rarity: 'STANDARD', status: 'locked', hue: 160 },
+];
+
+const COLLECTIONS = [
+  { name: 'GHOSTLINE', locked: false },
+  { name: 'VANTAGE', locked: false },
+  { name: 'RECON-9', locked: true },
+  { name: 'ONYX', locked: false },
+  { name: 'TREMOR', locked: true },
+  { name: 'BLACKOUT', locked: true },
+];
+
+const STREAKS = [
+  { left: '6%', duration: '7s', delay: '0s' },
+  { left: '18%', duration: '9s', delay: '2s' },
+  { left: '34%', duration: '6.5s', delay: '4s' },
+  { left: '48%', duration: '8s', delay: '1s' },
+  { left: '62%', duration: '7.5s', delay: '3s' },
+  { left: '76%', duration: '9.5s', delay: '5s' },
+  { left: '88%', duration: '6s', delay: '2.5s' },
+  { left: '96%', duration: '8.5s', delay: '0.5s' },
+];
+
+const fadeUp = (reduced) => ({
+  hidden: { opacity: 0, y: reduced ? 0 : 22 },
+  visible: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: reduced ? 0.01 : 0.5, ease: [0.16, 1, 0.3, 1], delay: reduced ? 0 : i * 0.06 },
+  }),
+});
+
+function MiniCard({ hue, idx }) {
   return (
-    <div style={{
-      background: '#181c24',
-      border: '1px solid rgba(255,255,255,0.08)',
-      borderRadius: 6,
-      padding: 8,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 6,
-    }}>
-      <div style={{
-        height: 34,
-        borderRadius: 4,
-        background: `linear-gradient(135deg, hsla(${hue},70%,55%,0.35) 0%, hsla(${hue},70%,30%,0.15) 100%)`,
-      }} />
-      <div style={{ height: 6, width: `${55 + (idx % 3) * 12}%`, borderRadius: 3, background: 'rgba(255,255,255,0.18)' }} />
-      <div style={{ height: 6, width: 28, borderRadius: 3, background: 'rgba(255,70,85,0.45)' }} />
+    <div className={styles.miniCard}>
+      <div
+        className={styles.miniCardArt}
+        style={{ background: `linear-gradient(135deg, hsla(${hue},70%,55%,0.4) 0%, hsla(${hue},70%,28%,0.15) 100%)` }}
+      />
+      <div className={styles.miniCardBar} style={{ width: `${55 + (idx % 3) * 14}%` }} />
     </div>
   );
 }
 
-function DeviceMock({ width, height, compact = false }) {
-  const hues = [355, 200, 35, 280, 160, 10];
+function InventoryCard({ item, index, reduced }) {
+  const stateClass = item.status === 'owned' ? styles.cardOwned : item.status === 'featured' ? styles.cardFeatured : '';
+  const badgeClass = item.status === 'owned' ? styles.badgeOwned : item.status === 'featured' ? styles.badgeFeatured : styles.badgeLocked;
+  const badgeText = item.status === 'owned' ? 'Owned' : item.status === 'featured' ? 'Featured' : 'Locked';
+
   return (
-    <div style={{
-      width,
-      height,
-      background: 'linear-gradient(180deg, #11161d 0%, #0c0f14 100%)',
-      border: '1px solid rgba(255,255,255,0.1)',
-      borderRadius: compact ? 14 : 12,
-      boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
-      {/* Title bar */}
-      <div style={{
-        height: compact ? 26 : 30,
-        background: '#161b22',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        padding: '0 12px',
-        flexShrink: 0,
-      }}>
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff5f56' }} />
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffbd2e' }} />
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#27c93f' }} />
-        {!compact && (
-          <span style={{ marginLeft: 'auto', marginRight: 'auto', fontSize: 10, color: '#666', letterSpacing: '0.5px' }}>
-            valoinventory.app
-          </span>
-        )}
+    <motion.div
+      className={`${styles.card} ${stateClass}`}
+      custom={index}
+      variants={fadeUp(reduced)}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.3 }}
+    >
+      <div
+        className={styles.cardArt}
+        style={{ background: `linear-gradient(135deg, hsla(${item.hue},70%,52%,0.45) 0%, hsla(${item.hue},70%,22%,0.18) 100%)` }}
+      >
+        <span className={styles.cardSheen} aria-hidden="true" />
       </div>
-
-      {/* Body */}
-      <div style={{ padding: compact ? 10 : 16, flex: 1, display: 'flex', flexDirection: 'column', gap: compact ? 8 : 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 4, height: compact ? 12 : 14, background: ACCENT, borderRadius: 2 }} />
-            <span style={{ fontSize: compact ? 9 : 11, fontWeight: 700, color: '#fff', letterSpacing: '1px' }}>MIS SKINS</span>
-          </div>
-          <span style={{ fontSize: compact ? 8 : 10, color: ACCENT, fontWeight: 700 }}>128</span>
-        </div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: compact ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
-          gap: compact ? 6 : 8,
-        }}>
-          {Array.from({ length: compact ? 4 : 6 }).map((_, i) => (
-            <MiniSkinCard key={i} hue={hues[i % hues.length]} idx={i} />
-          ))}
-        </div>
-      </div>
-    </div>
+      <span className={`${styles.badge} ${badgeClass}`}>{badgeText}</span>
+      <div className={styles.cardName}>{item.name}</div>
+      <div className={styles.cardMeta}>{item.type} · {item.rarity}</div>
+    </motion.div>
   );
 }
 
-const navBtnBase = {
-  padding: '9px 22px',
-  borderRadius: 6,
-  fontSize: 13,
-  fontWeight: 700,
-  cursor: 'pointer',
-  letterSpacing: '0.3px',
-  transition: 'all 0.2s ease',
-};
+function IconPlayers() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="12" cy="12" r="7" />
+      <line x1="12" y1="1" x2="12" y2="5" />
+      <line x1="12" y1="19" x2="12" y2="23" />
+      <line x1="1" y1="12" x2="5" y2="12" />
+      <line x1="19" y1="12" x2="23" y2="12" />
+      <circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function IconCollectors() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M12 2 L22 8 L12 14 L2 8 Z" />
+      <path d="M2 13 L12 19 L22 13" />
+      <path d="M2 17.5 L12 23 L22 17.5" opacity="0.55" />
+    </svg>
+  );
+}
+
+function IconManagers() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <rect x="3" y="12" width="4" height="9" />
+      <rect x="10" y="7" width="4" height="14" />
+      <rect x="17" y="3" width="4" height="18" />
+    </svg>
+  );
+}
+
+const AUDIENCE = [
+  {
+    key: 'players',
+    icon: IconPlayers,
+    title: 'Players',
+    desc: 'Track your loadout, flex your best skins, and always know exactly what you own.',
+  },
+  {
+    key: 'collectors',
+    icon: IconCollectors,
+    title: 'Collectors',
+    desc: 'Organize rare pulls and full sets into one browsable, presentable showcase.',
+  },
+  {
+    key: 'managers',
+    icon: IconManagers,
+    title: 'Sellers & Managers',
+    desc: 'Present large, high-volume catalogs clearly — built for scale, not spreadsheets.',
+  },
+];
 
 export default function LandingPage({ onLogin, onRegister }) {
-  return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', position: 'relative', overflow: 'hidden' }}>
-      {/* Ambient glow */}
-      <div style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'radial-gradient(ellipse 60% 45% at 82% 8%, rgba(255,70,85,0.14) 0%, transparent 60%)',
-        pointerEvents: 'none',
-        zIndex: 0,
-      }} />
+  const reduced = useReducedMotion();
+  const inventoryRef = useRef(null);
+  const [activeFilter, setActiveFilter] = useState('ALL');
 
-      {/* Navbar */}
-      <nav style={{
-        position: 'relative',
-        zIndex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '22px 48px',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-      }}>
-        <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: '1px' }}>
-          <span style={{ color: '#fff' }}>VALO</span><span style={{ color: ACCENT }}>INVENTORY</span>
-        </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button
-            onClick={onLogin}
-            style={{ ...navBtnBase, background: 'transparent', color: '#fff', border: '1.5px solid rgba(255,255,255,0.25)' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#fff'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; }}
-          >
-            Login
-          </button>
-          <button
-            onClick={onRegister}
-            style={{ ...navBtnBase, background: ACCENT, color: '#fff', border: '1.5px solid ' + ACCENT }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#e63946'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = ACCENT; }}
-          >
-            Register
-          </button>
+  const scrollToPreview = () => {
+    inventoryRef.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+  };
+
+  const filteredItems = activeFilter === 'ALL'
+    ? INVENTORY_ITEMS
+    : INVENTORY_ITEMS.filter((item) => item.type === activeFilter);
+
+  return (
+    <div className={styles.landing}>
+      <div className={styles.backdrop} aria-hidden="true">
+        <div className={styles.backdropBase} />
+        <div className={styles.backdropGlow} />
+        <div className={styles.backdropGrid} />
+        <div className={styles.backdropScan} />
+        {!reduced && STREAKS.map((s, i) => (
+          <span
+            key={i}
+            className={styles.streak}
+            style={{ left: s.left, animationDuration: s.duration, animationDelay: s.delay }}
+          />
+        ))}
+        <div className={styles.backdropNoise} />
+        <div className={styles.backdropVignette} />
+      </div>
+
+      <nav className={styles.nav}>
+        <div className={styles.navInner}>
+          <div className={styles.brand}>VALO<span className={styles.brandAccent}>INVENTORY</span></div>
+          <div className={styles.navActions}>
+            <button type="button" className={styles.navLogin} onClick={onLogin}>Log In</button>
+            <TacticalButton size="sm" onClick={onRegister}>Open App</TacticalButton>
+          </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <div style={{
-        position: 'relative',
-        zIndex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        maxWidth: 1280,
-        margin: '0 auto',
-        padding: '110px 48px 80px',
-        gap: 60,
-        flexWrap: 'wrap',
-      }}>
-        {/* Mockup visual */}
-        <motion.div
-          initial={{ opacity: 0, x: -30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          style={{ flex: '1 1 460px', position: 'relative', minHeight: 380, maxWidth: 560 }}
-        >
-          <DeviceMock width="100%" height={340} />
-          <div style={{ position: 'absolute', bottom: -36, right: -16 }}>
-            <DeviceMock width={170} height={230} compact />
-          </div>
-        </motion.div>
-
-        {/* Copy */}
-        <motion.div
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          style={{ flex: '1 1 380px', maxWidth: 480 }}
-        >
-          <h1 style={{
-            fontSize: 44,
-            fontWeight: 900,
-            color: ACCENT,
-            lineHeight: 1.1,
-            letterSpacing: '1px',
-            textTransform: 'uppercase',
-            margin: '0 0 20px 0',
-          }}>
-            Discover<br />ValoInventory
-          </h1>
-          <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, marginBottom: 32 }}>
-            Explorá y compartí tus cuentas de Valorant con ValoInventory. La plataforma ideal
-            para revisar estadísticas, gestionar tu inventario de skins y compartirlo con tus amigos.
-          </p>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={onRegister}
-            style={{
-              background: 'transparent',
-              color: '#fff',
-              border: '2px solid #fff',
-              borderRadius: 30,
-              padding: '14px 32px',
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: 'pointer',
-              letterSpacing: '0.5px',
-            }}
+      {/* HERO */}
+      <section className={styles.hero}>
+        <div className={styles.heroInner}>
+          <motion.div
+            initial={{ opacity: 0, y: reduced ? 0 : 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: reduced ? 0.01 : 0.7, ease: [0.16, 1, 0.3, 1] }}
           >
-            Comenzar &gt;
-          </motion.button>
+            <div className={styles.eyebrow}>Inventory OS for Valorant</div>
+            <h1 className={`${styles.heading} ${styles.heroHeadline}`}>
+              Your collection.<br />
+              <span className={styles.heroHeadlineAccent}>Finally cataloged.</span>
+            </h1>
+            <p className={styles.heroSub}>
+              ValoInventory turns your skins, agents, and gear into one clean, shareable
+              showcase — built for players who take their loadout seriously.
+            </p>
+            <div className={styles.heroCtas}>
+              <TacticalButton size="lg" onClick={onRegister}>Open App</TacticalButton>
+              <TacticalButton size="lg" variant="ghost" onClick={scrollToPreview}>View Demo</TacticalButton>
+            </div>
+            <div className={styles.heroMeta}>
+              <span className={styles.heroMetaDot}>●</span>
+              Synced in seconds&nbsp;&nbsp;·&nbsp;&nbsp;No screenshots&nbsp;&nbsp;·&nbsp;&nbsp;Shareable links
+            </div>
+          </motion.div>
+
+          <motion.div
+            className={styles.heroVisual}
+            initial={{ opacity: 0, x: reduced ? 0 : 28 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: reduced ? 0.01 : 0.8, delay: reduced ? 0 : 0.15, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className={styles.heroPanel}>
+              <div className={styles.heroPanelHeader}>
+                <div className={styles.heroPanelTitle}>
+                  <span className={styles.livedot} aria-hidden="true" />
+                  Live Inventory
+                </div>
+                <div className={styles.heroPanelCount}>1,204 Items</div>
+              </div>
+              <div className={styles.heroGrid}>
+                {HERO_HUES.map((hue, idx) => (
+                  <MiniCard key={idx} hue={hue} idx={idx} />
+                ))}
+              </div>
+            </div>
+            <div className={styles.heroFloatingBadge}>
+              <div className={styles.heroFloatingBadgeValue}>128</div>
+              <div className={styles.heroFloatingBadgeLabel}>Skins Tracked</div>
+            </div>
+          </motion.div>
+        </div>
+
+        <div className={styles.scrollCue} aria-hidden="true">
+          <span className={styles.scrollCueLine} />
+          <span className={styles.scrollCueText}>Scroll</span>
+        </div>
+      </section>
+
+      {/* PROBLEM */}
+      <section className={styles.section}>
+        <div className={styles.sectionInner}>
+          <div className={styles.problemInner}>
+            <motion.div
+              variants={fadeUp(reduced)}
+              custom={0}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.4 }}
+            >
+              <div className={`${styles.eyebrow} ${styles.eyebrowMuted}`}>The Problem</div>
+              <h2 className={`${styles.heading} ${styles.heading2}`}>
+                Screenshots aren't<br />an inventory.
+              </h2>
+              <p className={styles.problemCopy}>
+                Scattered clips, blurry screenshots, and manual spreadsheets don't do your
+                loadout justice — and they're a nightmare to share. ValoInventory replaces
+                the chaos with one clean, structured view.
+              </p>
+              <ul className={styles.problemList}>
+                <li><span className={styles.problemListMark}>✕</span> No more screenshot folders</li>
+                <li><span className={styles.problemListMark}>✕</span> No more outdated Discord threads</li>
+                <li><span className={styles.problemListMark}>✕</span> No more manual spreadsheets</li>
+              </ul>
+            </motion.div>
+
+            <motion.div
+              className={styles.problemVisual}
+              variants={fadeUp(reduced)}
+              custom={1}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.4 }}
+            >
+              <div className={styles.chaosCard} style={{ top: 0, left: 0, transform: 'rotate(-4deg)' }}>
+                <div className={styles.chaosCardLabel}>IMG_2291.PNG</div>
+                <div className={styles.chaosCardBody} />
+              </div>
+              <div className={styles.chaosCard} style={{ top: 46, left: 60, transform: 'rotate(3deg)', opacity: 0.85 }}>
+                <div className={styles.chaosCardLabel}>Discord — #trades</div>
+                <div className={styles.chaosCardBody} />
+              </div>
+              <div className={styles.cleanCard}>
+                <div className={styles.cleanCardHeader}>
+                  <span className={styles.cleanCardLabel}>ValoInventory</span>
+                  <span className={styles.livedot} aria-hidden="true" />
+                </div>
+                <div className={styles.cleanCardGrid}>
+                  {[190, 355, 160].map((hue, idx) => (
+                    <MiniCard key={idx} hue={hue} idx={idx} />
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      <div className={styles.divider} />
+
+      {/* INVENTORY PREVIEW */}
+      <section
+        id="inventory-preview"
+        ref={inventoryRef}
+        className={`${styles.section} ${styles.inventorySection}`}
+      >
+        <div className={styles.sectionInner}>
+          <div className={styles.inventoryHeader}>
+            <motion.div
+              variants={fadeUp(reduced)}
+              custom={0}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.4 }}
+            >
+              <div className={styles.eyebrow}>The Armory</div>
+              <h2 className={`${styles.heading} ${styles.heading2}`} style={{ marginBottom: 0 }}>
+                Built like your<br />in-game loadout.
+              </h2>
+            </motion.div>
+
+            <div className={styles.filterTabs}>
+              {FILTERS.map((filter) => (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={() => setActiveFilter(filter)}
+                  className={`${styles.filterTab} ${activeFilter === filter ? styles.filterTabActive : ''}`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.grid}>
+            {filteredItems.map((item, idx) => (
+              <InventoryCard key={item.id} item={item} index={idx} reduced={reduced} />
+            ))}
+          </div>
+
+          <div className={styles.collections}>
+            <span className={styles.collectionsLabel}>Collections</span>
+            {COLLECTIONS.map((c) => (
+              <div key={c.name} className={`${styles.hex} ${c.locked ? styles.hexLocked : styles.hexUnlocked}`}>
+                <span className={styles.hexLabel}>{c.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className={styles.divider} />
+
+      {/* AUDIENCE */}
+      <section className={styles.section}>
+        <div className={styles.sectionInner}>
+          <motion.div
+            className={styles.audienceHeader}
+            variants={fadeUp(reduced)}
+            custom={0}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.4 }}
+          >
+            <div className={`${styles.eyebrow} ${styles.eyebrowMuted}`}>Who It's For</div>
+            <h2 className={`${styles.heading} ${styles.heading2}`}>Built for the whole roster.</h2>
+            <p className={styles.audienceSub}>
+              Whether you're grinding ranked, curating a collection, or managing a full
+              catalog — ValoInventory keeps it organized.
+            </p>
+          </motion.div>
+
+          <div className={styles.audienceGrid}>
+            {AUDIENCE.map((a, idx) => {
+              const Icon = a.icon;
+              return (
+                <motion.div
+                  key={a.key}
+                  className={styles.audienceCard}
+                  variants={fadeUp(reduced)}
+                  custom={idx}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, amount: 0.4 }}
+                >
+                  <div className={styles.audienceIcon}><Icon /></div>
+                  <h3 className={styles.audienceTitle}>{a.title}</h3>
+                  <p className={styles.audienceDesc}>{a.desc}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section className={styles.finalCta}>
+        <div className={styles.finalCtaGlow} aria-hidden="true" />
+        <motion.div
+          variants={fadeUp(reduced)}
+          custom={0}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.5 }}
+        >
+          <div className={`${styles.eyebrow} ${styles.finalCtaEyebrow}`}>Ready When You Are</div>
+          <h2 className={`${styles.heading} ${styles.finalCtaHeading}`}>
+            Stop describing your inventory.<br />Start showing it.
+          </h2>
+          <p className={styles.finalCtaSub}>
+            Open the app and see your full Valorant collection, organized and ready
+            to share in seconds.
+          </p>
+          <div className={styles.finalCtaActions}>
+            <TacticalButton size="lg" onClick={onRegister}>Open App</TacticalButton>
+            <TacticalButton size="lg" variant="ghost" onClick={scrollToPreview}>View Demo</TacticalButton>
+          </div>
+          <div className={styles.finalFootnote}>Free to explore · No spreadsheets required</div>
         </motion.div>
-      </div>
+      </section>
+
+      <footer className={styles.footer}>
+        <span className={styles.footerBrand}>VALOINVENTORY</span>
+        <span>Fan-made project — not affiliated with Riot Games.</span>
+      </footer>
     </div>
   );
 }
