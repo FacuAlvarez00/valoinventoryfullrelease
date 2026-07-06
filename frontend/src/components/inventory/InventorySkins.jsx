@@ -278,6 +278,8 @@ export default function InventorySkins() {
                           <img
                             src={chroma.swatch}
                             alt={chroma.name}
+                            loading="lazy"
+                            decoding="async"
                             className={`${styles.swatch} ${isInteractive ? styles.swatchInteractive : ''}`}
                             onClick={async () => {
                               if (!isInteractive) return;
@@ -310,7 +312,7 @@ export default function InventorySkins() {
                 </div>
                 {/* Imagen centrada y tamaño uniforme */}
                 <div className={styles.cardImageWrap}>
-                  {imgSrc && <img src={imgSrc} alt={baseName} className={styles.cardImage} />}
+                  {imgSrc && <img src={imgSrc} alt={baseName} loading="lazy" decoding="async" className={styles.cardImage} />}
                 </div>
                 <div className={styles.cardName}>{baseName}</div>
               </motion.div>

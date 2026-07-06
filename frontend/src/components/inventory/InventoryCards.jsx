@@ -149,6 +149,8 @@ export default function InventoryCards() {
                     <img
                       src={card.largeArt}
                       alt={card.displayName || 'Card'}
+                      loading="lazy"
+                      decoding="async"
                       className={styles.pcardImg}
                       onError={(e) => {
                         e.target.style.display = 'none';

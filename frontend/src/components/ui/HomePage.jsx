@@ -595,12 +595,12 @@ export default function HomePage() {
                       onClick={() => {
                         localStorage.setItem('selected_riot_puuid', acc.puuid);
                         refreshAccount(acc.puuid);
-                        navigate('/mis-skins?puuid=' + acc.puuid);
+                        navigate('/details?puuid=' + acc.puuid);
                       }}
                       onAuxClick={e => {
                         if (e.button === 1) {
                           e.preventDefault();
-                          window.open('/mis-skins?puuid=' + acc.puuid, '_blank');
+                          window.open('/details?puuid=' + acc.puuid, '_blank');
                         }
                       }}
                     >

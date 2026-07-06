@@ -61,14 +61,16 @@
 
 /* ---- Grids ---- */
 
+/* Columnas de tamaño fijo (no 1fr): las cards mantienen su tamaño real sin
+   estirarse cuando hay pocos items, el espacio sobrante queda vacío. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, 200px);
   gap: 20px;
 }
 
 .gridWide {
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, 280px);
 }
 
 .gridBP {
@@ -88,6 +90,13 @@
   cursor: default;
   transition: transform 0.2s ease-out, border-color 0.2s ease-out, filter 0.2s ease-out;
   filter: drop-shadow(0 0 0 transparent);
+  content-visibility: auto;
+  contain-intrinsic-size: 200px 190px;
+}
+
+.pcard {
+  content-visibility: auto;
+  contain-intrinsic-size: 280px 580px;
 }
 
 .cardClickable {
@@ -301,6 +310,8 @@
   flex-direction: column;
   height: 240px;
   transition: border-color 0.2s ease-out, transform 0.2s ease-out;
+  content-visibility: auto;
+  contain-intrinsic-size: 380px 240px;
 }
 
 .bpCard:hover {

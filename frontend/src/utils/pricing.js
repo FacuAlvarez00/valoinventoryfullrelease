@@ -35,9 +35,8 @@ export function getSkinPrice(baseName, weaponSkins = []) {
 export function isGoldenSkin(baseName) {
   return (
     baseName.startsWith('Champions 202') ||
+    baseName.startsWith('VCT ') ||
     /vct\d*\s+x\b/i.test(baseName) ||
-    baseName === 'VCT LOCK//IN Misericórdia' ||
-    baseName === 'VCT 2026 Sigil' ||
     baseName === 'Arcane Vandal' ||
     baseName === 'Arcane Gauntlets'
   );

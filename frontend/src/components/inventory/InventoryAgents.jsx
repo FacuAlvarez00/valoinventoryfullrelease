@@ -122,11 +122,13 @@ export default function InventoryAgents() {
         {agentsDetails.length > 0 && (
           <div className={`${styles.grid} ${styles.gridWide}`}>
             {agentsDetails.map((agent, index) => (
-              <div key={agent.uuid || agent.ItemID || index} className={styles.card} style={{ padding: 20 }}>
+              <div key={agent.uuid || agent.ItemID || index} className={styles.card} style={{ padding: 20, contentVisibility: 'auto', containIntrinsicSize: '280px 372px' }}>
                 {agent.fullPortrait ? (
                   <img
                     src={agent.fullPortrait}
                     alt={agent.displayName || 'Agent'}
+                    loading="lazy"
+                    decoding="async"
                     className={`${styles.cardImage} ${styles.cardImageTall}`}
                     style={{ marginBottom: 16 }}
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}

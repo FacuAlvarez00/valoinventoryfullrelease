@@ -237,6 +237,8 @@ export default function InventoryBattlepass() {
                       <img
                         src={imageSrc}
                         alt={battlePassName || 'Battle Pass'}
+                        loading="lazy"
+                        decoding="async"
                         className={styles.bpImage}
                         onError={(e) => { e.target.src = getDefaultBattlePassImage(); }}
                       />

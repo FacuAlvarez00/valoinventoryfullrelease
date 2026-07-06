@@ -110,6 +110,8 @@ export default function InventoryBuddies() {
                   <img
                     src={item.buddy.displayIcon}
                     alt={item.buddy.displayName || 'Gunbuddy'}
+                    loading="lazy"
+                    decoding="async"
                     className={styles.cardImage}
                     onError={(e) => {
                       console.log('🔫 [InventoryBuddies] Error cargando imagen:', item.buddy.displayIcon);
