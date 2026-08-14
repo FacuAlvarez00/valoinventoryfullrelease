@@ -1,7 +1,25 @@
 .page {
   position: relative;
   min-height: 100vh;
-  padding: 60px 32px 60px;
+  padding: 44px 32px 60px;
+}
+
+.accountsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 26px;
+}
+
+.accountsTitle {
+  margin: 0;
+  color: var(--vi-white);
+  font-family: var(--vi-font-heading);
+  font-size: clamp(27px, 3vw, 40px);
+  line-height: 1;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 /* ---- Top bar: search + filters + add ---- */
@@ -52,10 +70,6 @@
 
 .filtersToggleCaretOpen {
   transform: rotate(180deg);
-}
-
-.spacer {
-  flex: 1;
 }
 
 /* ---- Filters dropdown panel ---- */
@@ -301,24 +315,14 @@
 /* ---- Account grid ---- */
 
 .accountsContainer {
-  max-height: calc(2 * (360px + 16px));
-  overflow-y: auto;
-  padding-right: 8px;
+  width: 100%;
 }
-
-.accountsContainer::-webkit-scrollbar { width: 6px; }
-.accountsContainer::-webkit-scrollbar-track { background: var(--vi-black-soft); border-radius: 4px; }
-.accountsContainer::-webkit-scrollbar-thumb { background: var(--vi-red); border-radius: 4px; }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   gap: 20px;
 }
-
-@media (max-width: 1400px) { .grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 900px)  { .grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 550px)  { .grid { grid-template-columns: 1fr; } }
 
 .card {
   position: relative;
@@ -329,6 +333,18 @@
   cursor: pointer;
   transition: transform 0.3s ease-out, border-color 0.3s ease-out, filter 0.3s ease-out;
   filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5));
+}
+
+.cardHitArea {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.cardHitArea:focus-visible {
+  outline: 2px solid var(--vi-red);
+  outline-offset: -3px;
 }
 
 .card:hover {
@@ -436,10 +452,11 @@
 .cardActions {
   display: flex;
   gap: 8px;
-  margin-top: 2px;
 }
 
 .cardActionBtn {
+  position: relative;
+  z-index: 2;
   flex: 1;
   background: var(--vi-black);
   color: rgba(236, 232, 225, 0.6);
@@ -453,6 +470,52 @@
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.2s ease-out;
+}
+
+@media (max-width: 700px) {
+  .page {
+    padding: 32px 18px 48px;
+  }
+
+  .accountsHeader {
+    align-items: stretch;
+    flex-direction: column;
+    margin-bottom: 24px;
+  }
+
+  .topBar {
+    align-items: stretch;
+  }
+
+  .searchWrap {
+    width: 100%;
+  }
+
+  .filtersToggle {
+    justify-content: center;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shareRow {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .shareIdentity {
+    flex: 1;
+  }
+
+  .shareLinkBtn {
+    flex-basis: 100%;
+    order: 4;
+  }
+
+  .shareDate {
+    display: none;
+  }
 }
 
 .cardActionBtn:hover {

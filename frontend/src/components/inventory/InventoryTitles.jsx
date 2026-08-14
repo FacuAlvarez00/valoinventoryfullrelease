@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import InventoryNavbar from './InventoryNavbar';
 import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../../context/InventoryContext';
 import LoadingScreen from '../ui/LoadingScreen';
@@ -79,7 +78,6 @@ export default function InventoryTitles() {
 
   return (
     <>
-      <InventoryNavbar />
       <div className={styles.page}>
         <div className={styles.headerRow}>
           <BackButton onClick={() => navigate('/inventory')}>Volver al Dashboard</BackButton>

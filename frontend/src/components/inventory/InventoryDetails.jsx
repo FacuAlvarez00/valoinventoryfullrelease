@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import InventoryNavbar from './InventoryNavbar';
 import { useInventory } from '../../context/InventoryContext';
 import LoadingScreen from '../ui/LoadingScreen';
 import { calcAccountStats } from '../../utils/pricing';
@@ -113,7 +112,6 @@ export default function InventoryDetails() {
 
   return (
     <>
-      <InventoryNavbar />
       <div className={styles.page}>
         <div className={styles.headerRow}>
           <div>

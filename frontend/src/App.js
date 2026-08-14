@@ -17,9 +17,9 @@ import { InventorySprays } from './components/inventory';
 import { InventoryTitles } from './components/inventory';
 import { InventoryAgents } from './components/inventory';
 import { InventoryFlex } from './components/inventory';
-import { InventoryDetails } from './components/inventory';
+import { InventoryDetails, InventoryNavbar } from './components/inventory';
 import { SharedView } from './components/inventory';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 
 function groupWeaponsByCategory(weapons) {
   const categories = {};
@@ -326,6 +326,15 @@ function AppContent() {
   );
 }
 
+function AccountLayout() {
+  return (
+    <PageWrapper>
+      <InventoryNavbar />
+      <Outlet />
+    </PageWrapper>
+  );
+}
+
 function App() {
   return (
     <LanguageProvider>
@@ -334,19 +343,20 @@ function App() {
           <Router>
             <Routes>
               <Route path="/" element={<AppContent />} />
-            <Route path="/mis-skins" element={<PageWrapper><MySkins /></PageWrapper>} />
-            {/* NUEVA ESTRUCTURA DE INVENTORY */}
-            <Route path="/inventory" element={<PageWrapper><InventoryDashboard /></PageWrapper>} />
-            <Route path="/inventory/skins" element={<PageWrapper><InventorySkins /></PageWrapper>} />
-            <Route path="/inventory/battlepass" element={<PageWrapper><InventoryBattlepass /></PageWrapper>} />
-            <Route path="/inventory/buddies" element={<PageWrapper><InventoryBuddies /></PageWrapper>} />
-            <Route path="/inventory/cards" element={<PageWrapper><InventoryCards /></PageWrapper>} />
-            <Route path="/inventory/sprays" element={<PageWrapper><InventorySprays /></PageWrapper>} />
-            <Route path="/inventory/flex" element={<PageWrapper><InventoryFlex /></PageWrapper>} />
-            <Route path="/inventory/titles" element={<PageWrapper><InventoryTitles /></PageWrapper>} />
-            <Route path="/inventory/agents" element={<PageWrapper><InventoryAgents /></PageWrapper>} />
-            <Route path="/details" element={<PageWrapper><InventoryDetails /></PageWrapper>} />
-            <Route path="/share/:token" element={<SharedView />} />
+              <Route element={<AccountLayout />}>
+                <Route path="details" element={<InventoryDetails />} />
+                <Route path="mis-skins" element={<MySkins />} />
+                <Route path="inventory" element={<InventoryDashboard />} />
+                <Route path="inventory/skins" element={<InventorySkins />} />
+                <Route path="inventory/battlepass" element={<InventoryBattlepass />} />
+                <Route path="inventory/buddies" element={<InventoryBuddies />} />
+                <Route path="inventory/cards" element={<InventoryCards />} />
+                <Route path="inventory/sprays" element={<InventorySprays />} />
+                <Route path="inventory/flex" element={<InventoryFlex />} />
+                <Route path="inventory/titles" element={<InventoryTitles />} />
+                <Route path="inventory/agents" element={<InventoryAgents />} />
+              </Route>
+              <Route path="/share/:token" element={<SharedView />} />
             </Routes>
           </Router>
         </InventoryProvider>

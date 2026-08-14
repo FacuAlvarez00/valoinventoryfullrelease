@@ -1,4 +1,5 @@
 .page {
+  padding: 32px;
   min-height: 100vh;
   background: var(--vi-black);
   color: var(--vi-offwhite);
@@ -13,16 +14,13 @@
   pointer-events: none;
 }
 
-/* ---- Header ---- */
+/* ---- Page header ---- */
 
-.headerBar {
-  background: rgba(15, 25, 35, 0.72);
-  border-bottom: 1px solid var(--vi-border);
-  padding: 28px 40px;
-  margin-top: 0;
+.headerRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 30px;
   flex-wrap: wrap;
   gap: 16px;
 }
@@ -48,7 +46,7 @@
   display: inline-block;
 }
 
-.headerTitle {
+.pageTitle {
   font-family: var(--vi-font-heading);
   font-weight: 700;
   text-transform: uppercase;
@@ -56,12 +54,6 @@
   font-size: 30px;
   color: var(--vi-white);
   margin: 0;
-}
-
-.headerSub {
-  color: rgba(236, 232, 225, 0.62);
-  margin: 4px 0 0;
-  font-size: 13px;
 }
 
 .walletRow {
@@ -91,8 +83,23 @@
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  padding: 0 40px;
   gap: 28px;
+}
+
+.mainContent {
+  padding: 0;
+}
+
+.weaponArea {
+  flex: 1;
+  min-width: 0;
+}
+
+.weaponGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0 20px;
+  padding-top: 4px;
 }
 
 .categoryBlock {
@@ -134,6 +141,7 @@
 }
 
 .weaponCardImgWrap {
+  position: relative;
   flex: 1;
   display: flex;
   align-items: center;
@@ -145,7 +153,21 @@
   max-width: 100%;
   max-height: 78px;
   object-fit: contain;
+  opacity: 0;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+  transition: opacity 0.25s ease-out;
+}
+
+.weaponCardImgLoaded {
+  opacity: 1;
+}
+
+.weaponImagePlaceholder {
+  position: absolute;
+  inset: 14px 20px 8px;
+  border-radius: 2px;
+  background: linear-gradient(100deg, rgba(236, 232, 225, 0.035), rgba(236, 232, 225, 0.09), rgba(236, 232, 225, 0.035));
+  animation: loadoutPulse 1.5s ease-in-out infinite;
 }
 
 .weaponCardFooter {
@@ -172,8 +194,6 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  position: sticky;
-  top: 100px;
 }
 
 .sidePanelLabel {
@@ -184,6 +204,80 @@
   letter-spacing: 2px;
   text-transform: uppercase;
   text-align: center;
+}
+
+/* ---- Local loading skeletons ---- */
+
+.skeletonColumn {
+  display: flex;
+  flex-direction: column;
+}
+
+.skeletonCategoryTitle,
+.skeletonWeaponImage,
+.skeletonWeaponName,
+.walletSkeletonChip,
+.skeletonSideLabel,
+.skeletonPlayerCard {
+  background: linear-gradient(100deg, rgba(236, 232, 225, 0.035), rgba(236, 232, 225, 0.09), rgba(236, 232, 225, 0.035));
+  animation: loadoutPulse 1.5s ease-in-out infinite;
+}
+
+.skeletonCategoryTitle {
+  width: 45%;
+  height: 12px;
+  margin: 2px auto 12px;
+  border-radius: 2px;
+}
+
+.skeletonWeaponCard {
+  height: 130px;
+  overflow: hidden;
+  border: 1px solid rgba(236, 232, 225, 0.07);
+  border-radius: 2px;
+  background: rgba(236, 232, 225, 0.025);
+}
+
+.skeletonWeaponImage {
+  height: 82px;
+  margin: 12px 16px 8px;
+  border-radius: 2px;
+}
+
+.skeletonWeaponName {
+  width: 42%;
+  height: 8px;
+  margin: 0 10px;
+  border-radius: 2px;
+}
+
+.walletSkeletonRow {
+  display: flex;
+  gap: 12px;
+}
+
+.walletSkeletonChip {
+  width: 86px;
+  height: 36px;
+  border-radius: 2px;
+}
+
+.skeletonSideLabel {
+  width: 70%;
+  height: 12px;
+  margin: 2px auto 0;
+  border-radius: 2px;
+}
+
+.skeletonPlayerCard {
+  width: 100%;
+  height: 310px;
+  border-radius: 4px;
+}
+
+@keyframes loadoutPulse {
+  0%, 100% { opacity: 0.38; }
+  50% { opacity: 0.82; }
 }
 
 /* ---- Modal overlay ---- */
@@ -315,4 +409,67 @@
   margin-top: auto;
   margin-bottom: 2px;
   text-align: center;
+}
+
+@media (max-width: 1100px) {
+  .loadoutWrap {
+    flex-direction: column;
+  }
+
+  .weaponArea,
+  .sidePanel {
+    width: 100%;
+  }
+
+  .weaponGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .skeletonPlayerCard {
+    max-width: 320px;
+  }
+}
+
+@media (max-width: 650px) {
+  .page {
+    padding: 24px 18px;
+  }
+
+  .headerRow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .walletRow,
+  .walletSkeletonRow {
+    width: 100%;
+  }
+
+  .walletChip,
+  .walletSkeletonChip {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .weaponGrid {
+    gap: 0 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .weaponGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .weaponImagePlaceholder,
+  .skeletonCategoryTitle,
+  .skeletonWeaponImage,
+  .skeletonWeaponName,
+  .walletSkeletonChip,
+  .skeletonSideLabel,
+  .skeletonPlayerCard {
+    animation: none;
+  }
 }

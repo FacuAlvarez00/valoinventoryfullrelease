@@ -1,89 +1,154 @@
-.nav {
+.scopeBar {
   width: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(15, 25, 35, 0.85);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--vi-border);
+  background: transparent;
 }
 
 .inner {
-  width: 100%;
-  max-width: 1280px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 32px;
-  gap: 24px;
+  margin: 0 32px;
+  padding-top: 28px;
 }
 
-.brand {
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: rgba(236, 232, 225, 0.58);
+  padding: 6px 0;
   font-family: var(--vi-font-heading);
-  font-size: 18px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: var(--vi-white);
-  white-space: nowrap;
   cursor: pointer;
 }
 
-.brandAccent {
-  color: var(--vi-red);
+.backButton:hover,
+.backButton:focus-visible {
+  color: var(--vi-white);
 }
 
-.links {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.backButton:focus-visible,
+.sectionLink:focus-visible {
+  outline: 2px solid var(--vi-red);
+  outline-offset: 3px;
 }
 
-.link {
-  position: relative;
-  background: none;
-  border: none;
-  color: rgba(236, 232, 225, 0.6);
+.accountHeader {
+  margin: 22px 0 24px;
+}
+
+.accountName {
+  overflow: hidden;
+  color: var(--vi-white);
   font-family: var(--vi-font-heading);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
+  font-size: clamp(26px, 3vw, 36px);
+  font-weight: 800;
+  letter-spacing: 1px;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.accountNameSkeleton {
+  width: min(260px, 60vw);
+  height: 36px;
+  border-radius: 2px;
+  background: rgba(236, 232, 225, 0.08);
+  animation: accountNamePulse 1.5s ease-in-out infinite;
+}
+
+.riotId {
+  margin-top: 7px;
+  color: rgba(236, 232, 225, 0.48);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.sections {
+  display: flex;
+  align-items: flex-end;
+  gap: 28px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--vi-border);
+  scrollbar-width: none;
+}
+
+.sections::-webkit-scrollbar {
+  display: none;
+}
+
+.sectionLink {
+  position: relative;
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(236, 232, 225, 0.48);
+  padding: 0 0 12px;
+  font-family: var(--vi-font-heading);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
   text-transform: uppercase;
   cursor: pointer;
-  padding: 8px 16px;
-  transition: color 0.2s ease-out;
 }
 
-.link:hover {
-  color: var(--vi-white);
-}
-
-.link:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--vi-black), 0 0 0 4px var(--vi-red);
-}
-
-.link::after {
+.sectionLink::after {
   content: '';
   position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 2px;
+  right: 0;
+  bottom: -1px;
+  left: 0;
   height: 2px;
   background: var(--vi-red);
   transform: scaleX(0);
   transition: transform 0.2s ease-out;
 }
 
-.linkActive {
+.sectionLink:hover {
+  color: var(--vi-white);
+}
+
+.sectionLinkActive {
   color: var(--vi-red);
 }
 
-.linkActive::after {
+.sectionLinkActive::after {
   transform: scaleX(1);
+}
+
+@keyframes accountNamePulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+@media (max-width: 560px) {
+  .inner {
+    margin: 0 14px;
+    padding-top: 20px;
+  }
+
+  .accountHeader {
+    margin: 18px 0 20px;
+  }
+
+  .accountName {
+    font-size: 26px;
+  }
+
+  .accountNameSkeleton {
+    height: 28px;
+  }
+
+  .sections {
+    gap: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .accountNameSkeleton {
+    animation: none;
+  }
 }

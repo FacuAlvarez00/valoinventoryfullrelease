@@ -17,16 +17,19 @@ export function InventoryProvider({ children }) {
   const getJWT = () => localStorage.getItem('authToken');
 
   // --- FUNCIONES DE CARGA ---
-  const fetchAccount = async () => {
+  const fetchAccount = async (requestedPuuid) => {
+    const queryPuuid = new URLSearchParams(window.location.search).get('puuid');
+    const puuid = requestedPuuid || queryPuuid || localStorage.getItem('selected_riot_puuid');
     setLoading(true);
     setError('');
-    setRiotAccount(null);
-    const puuid = localStorage.getItem('selected_riot_puuid');
     if (!puuid) {
+      setRiotAccount(null);
       setError('No hay cuenta Riot seleccionada.');
       setLoading(false);
       return;
     }
+    if (riotAccount?.puuid !== puuid) setRiotAccount(null);
+    localStorage.setItem('selected_riot_puuid', puuid);
     try {
       const jwt = getJWT();
       const res = await fetch(`${API_BASE}/api/auth/profile`, {
@@ -138,8 +141,7 @@ export function InventoryProvider({ children }) {
 
   // Función para refrescar la cuenta seleccionada manualmente
   const refreshAccount = async (puuid) => {
-    if (puuid) localStorage.setItem('selected_riot_puuid', puuid);
-    await fetchAccount();
+    await fetchAccount(puuid);
   };
 
   return (
@@ -162,4 +164,4 @@ export function InventoryProvider({ children }) {
 
 export function useInventory() {
   return useContext(InventoryContext);
-} 
+}

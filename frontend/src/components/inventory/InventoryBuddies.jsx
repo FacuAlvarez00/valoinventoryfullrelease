@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import InventoryNavbar from './InventoryNavbar';
 import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../../context/InventoryContext';
 import { BackButton, SearchInput, SkeletonBlock } from '../ui/kit';
@@ -65,7 +64,6 @@ export default function InventoryBuddies() {
 
   return (
     <>
-      <InventoryNavbar />
       <div className={styles.page}>
         <div className={styles.headerRow}>
           <BackButton onClick={() => navigate('/inventory')}>Volver al Dashboard</BackButton>

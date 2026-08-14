@@ -1,60 +1,114 @@
-import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { TacticalButton } from './kit';
 import styles from './AppHeader.module.css';
-
-const NAV_ITEMS = [
-  { labelKey: 'home', path: '/' },
-  { label: 'Details', path: '/details' },
-  { labelKey: 'loadout', path: '/mis-skins' },
-  { labelKey: 'inventory', path: '/inventory' },
-];
 
 export default function AppHeader() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, logout } = useAuth();
-  const { t } = useLanguage();
+  const { language, changeLanguage, getLanguageName, availableLanguages } = useLanguage();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+
+    const closeOnOutsideClick = (event) => {
+      if (!menuRef.current?.contains(event.target)) setMenuOpen(false);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setMenuOpen(false);
+    };
+
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [menuOpen]);
+
+  const goToAccounts = () => {
+    setMenuOpen(false);
+    navigate('/');
+  };
+
+  const handleLogout = () => {
+    setMenuOpen(false);
+    logout();
+    navigate('/');
+  };
+
+  const userInitial = user?.username?.charAt(0)?.toUpperCase() || 'U';
 
   return (
     <header className={styles.header}>
       <div className={styles.topRow}>
-        <div className={styles.headerMain}>
-          <button type="button" className={styles.titleButton} onClick={() => navigate('/')}>
-            VALO<span className={styles.titleAccent}>INVENTORY</span>
-          </button>
+        <button type="button" className={styles.titleButton} onClick={() => navigate('/')}>
+          VALO<span className={styles.titleAccent}>INVENTORY</span>
+        </button>
 
-          <nav className={styles.nav} aria-label="Primary">
-            {NAV_ITEMS.map((item) => {
-              const isActive = item.path === '/'
-                ? location.pathname === '/'
-                : location.pathname.startsWith(item.path);
+        {user && (
+          <div className={styles.settings} ref={menuRef}>
+            <button
+              type="button"
+              className={`${styles.settingsButton} ${menuOpen ? styles.settingsButtonOpen : ''}`}
+              onClick={() => setMenuOpen(current => !current)}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              aria-controls="account-settings-menu"
+            >
+              <span className={styles.avatar} aria-hidden="true">{userInitial}</span>
+              <span className={styles.settingsLabel}>Ajustes</span>
+              <span className={styles.chevron} aria-hidden="true">⌄</span>
+            </button>
 
-              return (
-                <button
-                  key={item.path}
-                  type="button"
-                  className={`${styles.navLink} ${isActive ? styles.navLinkActive : ''}`}
-                  onClick={() => navigate(item.path)}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  {item.labelKey ? t[item.labelKey] : item.label}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
+            {menuOpen && (
+              <div id="account-settings-menu" className={styles.menu} role="menu">
+                <div className={styles.accountSummary}>
+                  <span className={styles.accountEyebrow}>Tu cuenta</span>
+                  <strong className={styles.accountName}>{user.username}</strong>
+                  {user.email && <span className={styles.accountEmail}>{user.email}</span>}
+                </div>
 
-        <div className={styles.headerUser}>
-          {user?.username && (
-            <span className={styles.headerWelcome}>{t.welcome}, {user.username}!</span>
-          )}
-          <TacticalButton variant="ghost" size="sm" onClick={logout} aria-label={t.logout}>
-            {t.logout}
-          </TacticalButton>
-        </div>
+                <div className={styles.menuSection}>
+                  <span className={styles.menuSectionLabel}>Cuenta</span>
+                  <button type="button" className={styles.menuItem} role="menuitem" onClick={goToAccounts}>
+                    <span>
+                      <strong>Administrar cuentas Riot</strong>
+                      <small>Agregar, actualizar o eliminar cuentas</small>
+                    </span>
+                    <span className={styles.menuArrow} aria-hidden="true">→</span>
+                  </button>
+                </div>
+
+                <div className={styles.menuSection}>
+                  <span className={styles.menuSectionLabel}>Idioma</span>
+                  <div className={styles.languageOptions} role="group" aria-label="Seleccionar idioma">
+                    {availableLanguages.map(lang => (
+                      <button
+                        key={lang}
+                        type="button"
+                        className={`${styles.languageOption} ${language === lang ? styles.languageOptionActive : ''}`}
+                        onClick={() => changeLanguage(lang)}
+                        aria-pressed={language === lang}
+                      >
+                        {getLanguageName(lang)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={styles.logoutSection}>
+                  <button type="button" className={styles.logoutButton} role="menuitem" onClick={handleLogout}>
+                    Cerrar sesión
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );

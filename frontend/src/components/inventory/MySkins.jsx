@@ -1,30 +1,103 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import styles from './MySkins.module.css';
-import InventoryNavbar from './InventoryNavbar';
 import { WeaponDetail } from '../weapons';
 import { useInventory } from '../../context/InventoryContext';
-import { useLanguage } from '../../context/LanguageContext';
-import { PlayerCard, Notification, LoadingScreen } from '../ui';
+import { PlayerCard, Notification } from '../ui';
 import { TacticalButton } from '../ui/kit';
 import useNotification from '../../hooks/useNotification';
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "https://valoinventory-1.onrender.com";
 
-export default function MySkins() {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const {
-    riotAccount, setRiotAccount, loading, error, catalog, catalogLoading, weaponSkins, sortSkinsByPriceAsc, refreshAccount
-  } = useInventory();
+const SKELETON_COLUMN_COUNTS = [6, 4, 5, 5];
 
-  useEffect(() => {
-    const puuid = searchParams.get('puuid');
-    if (puuid) {
-      refreshAccount(puuid);
-    }
-    // eslint-disable-next-line
-  }, []);
-  const { t } = useLanguage();
+function getDefaultSkin(weapon) {
+  return weapon?.skins?.find(skin =>
+    !skin.contentTierUuid &&
+    !/random favorite skin/i.test(skin.displayName || '')
+  ) || null;
+}
+
+function createDefaultSelection(weapon) {
+  const defaultSkin = getDefaultSkin(weapon);
+  const skinLevelId = defaultSkin?.levels?.[0]?.uuid;
+
+  if (!skinLevelId) return null;
+
+  return {
+    ID: weapon.uuid,
+    SkinLevelID: skinLevelId,
+    ChromaID: defaultSkin.chromas?.[0]?.uuid || null
+  };
+}
+
+function WeaponGridSkeleton() {
+  return (
+    <div className={styles.weaponGrid} aria-hidden="true">
+      {SKELETON_COLUMN_COUNTS.map((count, columnIndex) => (
+        <div key={columnIndex} className={styles.skeletonColumn}>
+          <div className={styles.skeletonCategoryTitle} />
+          <div className={styles.weaponList}>
+            {Array.from({ length: count }).map((_, cardIndex) => (
+              <div key={cardIndex} className={styles.skeletonWeaponCard}>
+                <div className={styles.skeletonWeaponImage} />
+                <div className={styles.skeletonWeaponName} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function LoadoutWeaponImage({ src, alt }) {
+  const [loaded, setLoaded] = useState(!src);
+
+  useEffect(() => setLoaded(!src), [src]);
+
+  return (
+    <div className={styles.weaponCardImgWrap}>
+      {!loaded && <div className={styles.weaponImagePlaceholder} aria-hidden="true" />}
+      {src && (
+        <img
+          src={src}
+          alt={alt}
+          className={`${styles.weaponCardImg} ${loaded ? styles.weaponCardImgLoaded : ''}`}
+          onLoad={() => setLoaded(true)}
+          onError={() => setLoaded(true)}
+        />
+      )}
+    </div>
+  );
+}
+
+function LoadoutPageSkeleton() {
+  return (
+    <div className={styles.page} aria-busy="true" aria-label="Cargando loadout">
+      <div className={styles.headerRow}>
+        <div>
+          <div className={styles.headerEyebrow}>Loadout</div>
+          <h2 className={styles.pageTitle}>Current Loadout</h2>
+        </div>
+        <div className={styles.walletSkeletonRow} aria-hidden="true">
+          {[0, 1, 2].map(item => <div key={item} className={styles.walletSkeletonChip} />)}
+        </div>
+      </div>
+
+      <div className={styles.loadoutWrap}>
+        <div className={styles.weaponArea}><WeaponGridSkeleton /></div>
+        <div className={styles.sidePanel} aria-hidden="true">
+          <div className={styles.skeletonSideLabel} />
+          <div className={styles.skeletonPlayerCard} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function MySkins() {
+  const {
+    riotAccount, setRiotAccount, loading, error, catalog, catalogLoading, weaponSkins, sortSkinsByPriceAsc
+  } = useInventory();
   const { notification, showSuccess, showError, hideNotification } = useNotification();
   // Para todos los skins
   const [skins, setSkins] = useState([]);
@@ -235,6 +308,53 @@ export default function MySkins() {
     fetchDefaultWeapons();
   }, []);
 
+  // Completar los slots vacíos con la skin estándar sin tocar las selecciones existentes.
+  useEffect(() => {
+    if (!riotAccount || catalogLoading || !catalog.weapons.length) return;
+
+    const currentLoadout = riotAccount.loadout || {};
+    const currentGuns = Array.isArray(currentLoadout.Guns) ? currentLoadout.Guns : [];
+    const nextGuns = [...currentGuns];
+    let nextMelee = currentLoadout.Melee || null;
+    let changed = false;
+
+    catalog.weapons.forEach(weapon => {
+      const isMelee = weapon.displayName?.toLowerCase() === 'melee';
+      const existingGunIndex = nextGuns.findIndex(gun => gun.ID === weapon.uuid);
+      const existingSelection = isMelee
+        ? (nextMelee || (existingGunIndex >= 0 ? nextGuns[existingGunIndex] : null))
+        : (existingGunIndex >= 0 ? nextGuns[existingGunIndex] : null);
+
+      if (existingSelection?.SkinLevelID) return;
+
+      const defaultSelection = createDefaultSelection(weapon);
+      if (!defaultSelection) return;
+
+      if (isMelee) {
+        nextMelee = { ...(existingSelection || {}), ...defaultSelection };
+      } else if (existingGunIndex >= 0) {
+        nextGuns[existingGunIndex] = { ...nextGuns[existingGunIndex], ...defaultSelection };
+      } else {
+        nextGuns.push(defaultSelection);
+      }
+      changed = true;
+    });
+
+    if (!changed) return;
+
+    setRiotAccount(currentAccount => {
+      if (!currentAccount || currentAccount.puuid !== riotAccount.puuid) return currentAccount;
+      return {
+        ...currentAccount,
+        loadout: {
+          ...currentAccount.loadout,
+          Guns: nextGuns,
+          Melee: nextMelee
+        }
+      };
+    });
+  }, [riotAccount, catalog.weapons, catalogLoading, setRiotAccount]);
+
   // Funciones de mapeo
   const getWeaponById = (id) => catalog.weapons.find(w => w.uuid === id);
   const getSkinById = (id) => catalog.skins.find(s => s.uuid === id);
@@ -341,7 +461,7 @@ export default function MySkins() {
   };
 
   // Mostrar loading/error
-  if (loading) return <LoadingScreen fullscreen={true} text="Cargando skins..." />;
+  if (loading) return <LoadoutPageSkeleton />;
   if (error) return <div style={{ color: 'var(--vi-red)', textAlign: 'center', marginTop: 80 }}>{error}</div>;
   if (!riotAccount) return null;
 
@@ -428,9 +548,7 @@ export default function MySkins() {
     const displayName = weaponName.charAt(0) + weaponName.slice(1).toLowerCase();
     return (
       <div className={styles.weaponCard} onClick={() => handleWeaponClick(weaponObj)}>
-        <div className={styles.weaponCardImgWrap}>
-          <img src={imgSrc} alt={weaponName} className={styles.weaponCardImg} />
-        </div>
+        <LoadoutWeaponImage src={imgSrc} alt={weaponName} />
         <div className={styles.weaponCardFooter}>
           <div className={styles.weaponCardName}>{displayName}</div>
           <div className={styles.weaponCardUnderline} />
@@ -452,11 +570,11 @@ export default function MySkins() {
   const renderLoadout = () => (
     <div className={styles.loadoutWrap}>
       {/* Main Weapon Grid */}
-      <div style={{ flex: 1 }}>
+      <div className={styles.weaponArea}>
         {catalogLoading ? (
-          <div className={styles.catalogLoadingText} style={{ paddingTop: 40 }}>Cargando catálogo de skins...</div>
+          <WeaponGridSkeleton />
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0 20px', paddingTop: 24 }}>
+          <div className={styles.weaponGrid}>
             {weaponCategories.map(category => (
               <div key={category.name} style={{ display: 'flex', flexDirection: 'column' }}>
                 <CategoryBlock name={category.name} weapons={category.weapons} isMelee={false} />
@@ -506,7 +624,7 @@ export default function MySkins() {
         const ownedLevelIds = new Set((riotAccount?.skins || []).map(skin => skin.ItemID));
 
         // Skin base/estándar del arma (siempre disponible, no es un ítem comprable) — se excluye "Random Favorite Skin"
-        const defaultSkin = allWeaponSkins.find(s => !s.contentTierUuid && s.displayName !== 'Random Favorite Skin') || null;
+        const defaultSkin = getDefaultSkin(weaponCatalogEntry);
 
         // Skins premium que la cuenta realmente posee (algún nivel de la skin está en sus Entitlements)
         const ownedSkins = allWeaponSkins.filter(s =>
@@ -582,16 +700,11 @@ export default function MySkins() {
     <div className={styles.page}>
       <div className={styles.backdrop} />
 
-      <InventoryNavbar />
-
       {/* Header Section */}
-      <div className={styles.headerBar}>
+      <div className={styles.headerRow}>
         <div>
           <div className={styles.headerEyebrow}>Loadout</div>
-          <h1 className={styles.headerTitle}>Current Loadout</h1>
-          <p className={styles.headerSub}>
-            {riotAccount.name} ({riotAccount.nickname || riotAccount.puuid})
-          </p>
+          <h2 className={styles.pageTitle}>Current Loadout</h2>
         </div>
 
         {/* Top Right Currency Display */}
@@ -614,7 +727,7 @@ export default function MySkins() {
       </div>
 
       {/* Main Content */}
-      <div style={{ padding: '40px 0' }}>
+      <div className={styles.mainContent}>
         {/* Renderizar la sección activa */}
         {activeTab === 'loadout' && renderLoadout()}
         {activeTab === 'inventory' && renderAllSkins()}

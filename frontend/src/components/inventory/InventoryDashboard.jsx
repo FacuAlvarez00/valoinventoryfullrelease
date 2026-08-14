@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import InventoryNavbar from './InventoryNavbar';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useInventory } from '../../context/InventoryContext';
 import useStaticAgents from '../../hooks/useStaticAgents'; //
 import { getDefaultBattlePassImage } from '../../data/battlePassImages';
@@ -8,6 +7,7 @@ import styles from './InventoryDashboard.module.css';
 
 export default function InventoryDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { riotAccount, catalog, weaponSkins, getSkinPrice } = useInventory();
   const { staticAgents } = useStaticAgents(); // 👈 nuevo
 
@@ -93,53 +93,81 @@ export default function InventoryDashboard() {
     { key: 'agents',     label: 'AGENTS',      count: totalAgents, img: firstAgentImg },
   ];
 
-  return (
-    <>
-      <InventoryNavbar />
-      <div className={styles.page}>
-        <div className={styles.headerRow}>
-          <h2 className={styles.heading}>Inventory</h2>
+  const openSection = (sectionKey) => {
+    navigate({
+      pathname: `/inventory/${sectionKey}`,
+      search: location.search
+    });
+  };
 
-          <div className={styles.totalValue}>
-            Total Value: {totalVPGastados.toLocaleString()}
+  return (
+    <div className={styles.page}>
+      <div className={styles.headerRow}>
+        <div>
+          <div className={styles.headerEyebrow}>Collection</div>
+          <h2 className={styles.pageTitle}>Inventory</h2>
+          <p className={styles.pageDescription}>
+            Explore your cosmetics and collection progress by category.
+          </p>
+        </div>
+
+        <div className={styles.totalValue} aria-label={`${totalVPGastados.toLocaleString()} VP estimated value`}>
+          <span className={styles.totalValueLabel}>Estimated value</span>
+          <span className={styles.totalValueAmount}>
+            {totalVPGastados.toLocaleString()}
             <img
               src="/assets/icons/20px-White_Valorant_Points_VALORANT.png"
               alt="VP"
-              style={{ width: 16, height: 16 }}
+              className={styles.vpIcon}
             />
-          </div>
-        </div>
-        <div className={styles.grid}>
-          {sections.map(section => (
-            <div
-              key={section.key}
-              onClick={() => navigate(`/inventory/${section.key}`)}
-              className={styles.tile}
-            >
-              {section.img && (
-                <>
-                  <img src={section.img} alt="" className={styles.tileImg} />
-                  <div className={section.key === 'buddies' ? styles.tileOverlayLight : styles.tileOverlay} />
-                </>
-              )}
-
-              {section.vpSpent !== undefined && (
-                <div className={styles.tileVp}>
-                  {section.vpSpent.toLocaleString()}
-                  <img
-                    src="/assets/icons/20px-White_Valorant_Points_VALORANT.png"
-                    alt="VP"
-                    style={{ width: 12, height: 12 }}
-                  />
-                </div>
-              )}
-
-              <div className={styles.tileLabel}>{section.label}</div>
-              <div className={styles.tileCount}>{section.count}</div>
-            </div>
-          ))}
+          </span>
         </div>
       </div>
-    </>
+
+      <div className={styles.collectionHeader}>
+        <h3 className={styles.collectionTitle}>Categories</h3>
+        <span className={styles.collectionMeta}>{sections.length} collections</span>
+      </div>
+
+      <div className={styles.grid}>
+        {sections.map(section => (
+          <button
+            key={section.key}
+            type="button"
+            onClick={() => openSection(section.key)}
+            className={styles.tile}
+            aria-label={`Open ${section.label.toLowerCase()}, ${section.count} items`}
+          >
+            {section.img && (
+              <>
+                <img src={section.img} alt="" className={styles.tileImg} />
+                <span className={section.key === 'buddies' ? styles.tileOverlayLight : styles.tileOverlay} />
+              </>
+            )}
+
+            {section.vpSpent !== undefined && (
+              <span className={styles.tileVp}>
+                <span>{section.vpSpent.toLocaleString()}</span>
+                <img
+                  src="/assets/icons/20px-White_Valorant_Points_VALORANT.png"
+                  alt="VP"
+                />
+              </span>
+            )}
+
+            <span className={styles.tileContent}>
+              <span className={styles.tileLabel}>{section.label}</span>
+              <span className={styles.tileFooter}>
+                <span className={styles.tileQuantity}>
+                  <span className={styles.tileCount}>{section.count.toLocaleString()}</span>
+                  <span className={styles.tileCountLabel}>items</span>
+                </span>
+                <span className={styles.tileArrow} aria-hidden="true">→</span>
+              </span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }

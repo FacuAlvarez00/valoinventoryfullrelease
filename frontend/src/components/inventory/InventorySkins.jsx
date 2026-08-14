@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { useLanguage } from '../../context/LanguageContext';
-import InventoryNavbar from './InventoryNavbar';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { BackButton, SkeletonBlock, Modal } from '../ui/kit';
@@ -116,7 +115,6 @@ export default function InventorySkins() {
   if (loading || !riotAccount || !catalogReady || !weaponSkins.length) {
     return (
       <>
-        <InventoryNavbar />
         <div className={styles.page}>
           <SkeletonBlock width={200} height={40} radius={2} style={{ marginBottom: 24 }} />
 
@@ -153,7 +151,6 @@ export default function InventorySkins() {
 
   return (
     <>
-      <InventoryNavbar />
       {/* Modal para mostrar el streamedVideo */}
       <Modal open={modalOpen && !!modalVideo} onClose={() => setModalOpen(false)} maxWidth={900}>
         <div className={styles.videoModalBody}>

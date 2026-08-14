@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import InventoryNavbar from './InventoryNavbar';
 import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../../context/InventoryContext';
 import { getBattlePassImage, getDefaultBattlePassImage } from '../../data/battlePassImages';
@@ -201,7 +200,6 @@ export default function InventoryBattlepass() {
 
   return (
     <>
-      <InventoryNavbar />
       <div className={styles.page}>
         <BackButton onClick={() => navigate('/inventory')} style={{ marginBottom: 24 }}>Volver al Dashboard</BackButton>
 

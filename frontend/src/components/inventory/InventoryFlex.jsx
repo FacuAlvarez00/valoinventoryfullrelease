@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import InventoryNavbar from './InventoryNavbar';
 import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../../context/InventoryContext';
 import LoadingScreen from '../ui/LoadingScreen';
@@ -101,7 +100,6 @@ export default function InventoryFlex() {
 
   return (
     <>
-      <InventoryNavbar />
       <div className={styles.page}>
         <BackButton onClick={() => navigate('/inventory')} style={{ marginBottom: 24 }}>Volver al Dashboard</BackButton>
         <h2 className={styles.pageTitle}>FLEX</h2>

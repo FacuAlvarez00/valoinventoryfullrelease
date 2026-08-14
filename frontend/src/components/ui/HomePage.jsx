@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useInventory } from '../../context/InventoryContext';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -38,7 +38,6 @@ export default function HomePage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showSharesPanel, setShowSharesPanel] = useState(false);
   const [copiedSharePuuid, setCopiedSharePuuid] = useState(null);
-  const navigate = useNavigate();
   const { t } = useLanguage();
   const { refreshAccount, catalog, weaponSkins } = useInventory();
   const { makeAuthenticatedRequest } = useAuth();
@@ -427,6 +426,11 @@ export default function HomePage() {
 
       {/* Lista de cuentas Riot agregadas */}
       <div>
+        <div className={styles.accountsHeader}>
+          <h1 className={styles.accountsTitle}>Tus cuentas</h1>
+          <TacticalButton onClick={handleOpenPopup}>+ {t.addAccount}</TacticalButton>
+        </div>
+
         {/* Filtros */}
         {!loadingAccounts && riotAccounts.length > 0 && (
           <div style={{ marginBottom: 24 }}>
@@ -445,8 +449,6 @@ export default function HomePage() {
                 ⚙ Filtros
                 <span className={`${styles.filtersToggleCaret} ${filtersOpen ? styles.filtersToggleCaretOpen : ''}`}>▼</span>
               </button>
-              <div className={styles.spacer} />
-              <TacticalButton onClick={handleOpenPopup}>{t.addAccount}</TacticalButton>
             </div>
 
             {/* Panel desplegable */}
@@ -584,26 +586,20 @@ export default function HomePage() {
                       : null);
 
                   return (
-                    <motion.div
+                    <motion.article
                       key={`${acc.puuid}-${idx}`}
                       className={styles.card}
                       initial={{ opacity: 0, y: 24 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.35, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                      whileTap={{ scale: 0.98 }}
-                      onMouseDown={e => { if (e.button === 1) e.preventDefault(); }}
-                      onClick={() => {
-                        localStorage.setItem('selected_riot_puuid', acc.puuid);
-                        refreshAccount(acc.puuid);
-                        navigate('/details?puuid=' + acc.puuid);
-                      }}
-                      onAuxClick={e => {
-                        if (e.button === 1) {
-                          e.preventDefault();
-                          window.open('/details?puuid=' + acc.puuid, '_blank');
-                        }
-                      }}
                     >
+                      <Link
+                        className={styles.cardHitArea}
+                        to={`/details?puuid=${encodeURIComponent(acc.puuid)}`}
+                        onClick={() => refreshAccount(acc.puuid)}
+                        aria-label={`Abrir cuenta ${acc.name}`}
+                      />
+
                       <div className={styles.cardBanner}>
                         <img
                           src={wideArt}
@@ -646,23 +642,23 @@ export default function HomePage() {
                               ? '✓ Link copiado'
                               : sharingIdx === idx
                                 ? '⏳ Generando...'
-                                : '🔗 Compartir'}
+                                : 'Compartir'}
                           </button>
                           <button
-                            className={`${styles.cardActionBtn} ${styles.cardActionDanger}`}
+                            className={styles.cardActionBtn}
                             onClick={e => { e.stopPropagation(); setAccountToUpdate(acc); setShowUpdateModal(true); setUpdateToken(''); setUpdateStatus(''); }}
                           >
                             {t.updateAccount}
                           </button>
                           <button
-                            className={styles.cardActionBtn}
+                            className={`${styles.cardActionBtn} ${styles.cardActionDanger}`}
                             onClick={e => { e.stopPropagation(); setAccountToDelete(acc); setDeleteStep(1); setDeleteLoading(false); setShowDeleteModal(true); }}
                           >
                             {t.deleteAccount}
                           </button>
                         </div>
                       </div>
-                    </motion.div>
+                    </motion.article>
                   );
                 })}
               </div>
