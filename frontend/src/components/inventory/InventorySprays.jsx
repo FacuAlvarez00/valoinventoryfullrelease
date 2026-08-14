@@ -150,6 +150,8 @@ export default function InventorySprays() {
                   <img
                     src={spray.fullTransparentIcon}
                     alt={spray.displayName || 'Spray'}
+                    loading="lazy"
+                    decoding="async"
                     className={styles.cardImage}
                     onError={(e) => {
                       console.log('🎨 [InventorySprays] Error cargando imagen:', spray.fullTransparentIcon);

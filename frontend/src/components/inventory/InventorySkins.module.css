@@ -151,6 +151,8 @@
   align-items: center;
   position: relative;
   border-radius: 2px;
+  content-visibility: auto;
+  contain-intrinsic-size: 200px 220px;
   transition: transform 0.2s ease-out, border-color 0.2s ease-out;
 }
 

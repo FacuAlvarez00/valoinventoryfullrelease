@@ -14,7 +14,7 @@ export default function MySkins() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const {
-    riotAccount, setRiotAccount, loading, error, catalog, setCatalog, catalogLoading, setCatalogLoading, weaponSkins, sortSkinsByPriceAsc, refreshAccount
+    riotAccount, setRiotAccount, loading, error, catalog, catalogLoading, weaponSkins, sortSkinsByPriceAsc, refreshAccount
   } = useInventory();
 
   useEffect(() => {
@@ -235,37 +235,6 @@ export default function MySkins() {
     fetchDefaultWeapons();
   }, []);
 
-  // Obtener catálogo de la API pública al montar
-  useEffect(() => {
-    const fetchCatalog = async () => {
-      setCatalogLoading(true);
-      try {
-        const [weaponsRes, skinsRes, chromasRes] = await Promise.all([
-          fetch('https://valorant-api.com/v1/weapons'),
-          fetch('https://valorant-api.com/v1/weapons/skins'),
-          fetch('https://valorant-api.com/v1/weapons/skinchromas'),
-        ]);
-        const weaponsData = await weaponsRes.json();
-        const skinsData = await skinsRes.json();
-        const chromasData = await chromasRes.json();
-
-
-        const newCatalog = {
-          weapons: weaponsData.data || [],
-          skins: skinsData.data || [],
-          chromas: chromasData.data || [],
-        };
-
-        setCatalog(newCatalog);
-      } catch (e) {
-        console.error('❌ Error cargando catálogo:', e);
-        setCatalog({ weapons: [], skins: [], chromas: [] });
-      }
-      setCatalogLoading(false);
-    };
-    fetchCatalog();
-  }, []);
-
   // Funciones de mapeo
   const getWeaponById = (id) => catalog.weapons.find(w => w.uuid === id);
   const getSkinById = (id) => catalog.skins.find(s => s.uuid === id);
@@ -303,7 +272,7 @@ export default function MySkins() {
     // Crear el objeto de skin equipada
     const equippedSkin = {
       ID: weaponUuid,
-      SkinLevelID: skin.uuid,
+      SkinLevelID: skin.levels?.[0]?.uuid || skin.uuid,
       ChromaID: skin.chromas?.[0]?.uuid || null
     };
 
@@ -515,20 +484,8 @@ export default function MySkins() {
       </div>
       {/* Modal de skins por arma */}
       {modalOpen && modalWeapon && (() => {
-        // Usar catálogo del contexto global si el local está vacío
-        const catalogToUse = (catalog.skins && catalog.skins.length > 0) ? catalog :
-                            (catalog && catalog.skins && catalog.skins.length > 0) ? catalog :
-                            { weapons: [], skins: [], chromas: [] };
-
-        console.log('🔍 CATÁLOGO A USAR:', {
-          localCatalog: catalog,
-          catalogToUse: catalogToUse,
-          catalogSkinsCount: catalogToUse.skins?.length || 0,
-          catalogWeaponsCount: catalogToUse.weapons?.length || 0
-        });
-
         // Verificar que el catálogo esté cargado
-        if (catalogLoading || !catalogToUse.skins || catalogToUse.skins.length === 0) {
+        if (catalogLoading || !catalog.weapons || catalog.weapons.length === 0) {
           return (
             <div className={styles.catalogLoadingOverlay}>
               <div className={styles.catalogLoadingClose}>
@@ -541,201 +498,29 @@ export default function MySkins() {
           );
         }
 
-        // Agrupar allSkins por nombre base usando skinlevels
-        const skinlevels = catalog.skinlevels || [];
-        const allSkins = riotAccount?.skins || [];
+        // Todas las skins que existen para esta arma puntual, según el catálogo (no el catálogo global de skins)
+        const weaponCatalogEntry = catalog.weapons.find(w => w.uuid === modalWeapon.uuid);
+        const allWeaponSkins = weaponCatalogEntry?.skins || [];
 
-        console.log('🔍 DATOS DE SKINS DEL USUARIO:', {
-          riotAccount: riotAccount,
-          allSkins: allSkins,
-          allSkinsCount: allSkins.length,
-          skinlevels: skinlevels,
-          skinlevelsCount: skinlevels.length,
-          sampleSkins: allSkins.slice(0, 5).map(s => ({
-            ItemID: s.ItemID,
-            uuid: s.uuid
-          }))
-        });
+        // Qué niveles de skin posee realmente la cuenta (Entitlements)
+        const ownedLevelIds = new Set((riotAccount?.skins || []).map(skin => skin.ItemID));
 
-        const skinsPorBase = {};
-        allSkins.forEach(skin => {
-          const skinLevelObj = skinlevels.find(s => s.uuid === skin.ItemID);
-          if (!skinLevelObj) {
-            console.log('⚠️ No se encontró skinLevel para:', skin.ItemID);
-            return;
-          }
-          const baseName = skinLevelObj.displayName.replace(/ Level \d+$/, '').trim();
-          if (!skinsPorBase[baseName]) skinsPorBase[baseName] = [];
-          skinsPorBase[baseName].push(skinLevelObj);
-          console.log('✅ Skin procesada:', {
-            ItemID: skin.ItemID,
-            baseName: baseName,
-            skinLevelName: skinLevelObj.displayName
-          });
-        });
+        // Skin base/estándar del arma (siempre disponible, no es un ítem comprable) — se excluye "Random Favorite Skin"
+        const defaultSkin = allWeaponSkins.find(s => !s.contentTierUuid && s.displayName !== 'Random Favorite Skin') || null;
 
-        console.log('🔍 SKINS POR BASE RESULTADO:', skinsPorBase);
-        // Buscar en el catálogo todas las skins de esa arma
-        const armaNombre = modalWeapon.displayName;
-        const armaUUID = modalWeapon.uuid;
+        // Skins premium que la cuenta realmente posee (algún nivel de la skin está en sus Entitlements)
+        const ownedSkins = allWeaponSkins.filter(s =>
+          s.contentTierUuid && s.levels?.some(lvl => ownedLevelIds.has(lvl.uuid))
+        );
 
-        // Buscar skins por displayName Y por UUID del weapon
-        let skinsDeArma = catalogToUse.skins.filter(skinObj => {
-          if (!skinObj || !skinObj.weapon) return false;
-          return skinObj.weapon.displayName === armaNombre ||
-                 skinObj.weapon.uuid === armaUUID ||
-                 skinObj.weapon.displayName?.toLowerCase() === armaNombre.toLowerCase();
-        });
+        // Ordenar las poseídas por precio ascendente usando el contexto global
+        const sortedOwnedSkins = ownedSkins.length > 0
+          ? sortSkinsByPriceAsc(Object.fromEntries(ownedSkins.map(s => [s.displayName, s.levels || []])))
+              .map(([name]) => ownedSkins.find(s => s.displayName === name))
+          : [];
 
-        // Si no encuentra skins por weapon (porque weapon es undefined), usar filtrado por nombre
-        if (skinsDeArma.length === 0) {
-          console.log('🔧 Usando filtrado alternativo por nombre de skin...');
+        const skinsParaModal = defaultSkin ? [defaultSkin, ...sortedOwnedSkins] : sortedOwnedSkins;
 
-          // Buscar skins que contengan el nombre del arma en su displayName
-          skinsDeArma = catalogToUse.skins.filter(skinObj => {
-            if (!skinObj || !skinObj.displayName) return false;
-
-            // Buscar skins que contengan el nombre del arma
-            const skinName = skinObj.displayName.toLowerCase();
-            const weaponName = armaNombre.toLowerCase();
-
-            // Lista de palabras clave para identificar tipos de armas melee
-            const meleeKeywords = ['knife', 'karambit', 'axe', 'sword', 'dagger', 'blade', 'melee'];
-
-            // Si es una arma melee, verificar si la skin es de tipo melee
-            if (weaponName === 'melee' || meleeKeywords.some(keyword => weaponName.includes(keyword))) {
-              return meleeKeywords.some(keyword => skinName.includes(keyword));
-            } else {
-              // Para otras armas, verificar que la skin contenga el nombre del arma
-              return skinName.includes(weaponName);
-            }
-          });
-
-          console.log('🔧 SKINS ENCONTRADAS POR NOMBRE:', skinsDeArma.map(s => s.displayName));
-        }
-
-        console.log('🔍 DEBUG MODAL:', {
-          armaNombre,
-          armaUUID,
-          skinsDeArma: skinsDeArma.map(s => s.displayName),
-          skinsPorBase: Object.keys(skinsPorBase),
-          allSkins: allSkins.map(s => s.ItemID),
-          catalogSkinsCount: catalogToUse.skins?.length || 0,
-          catalogWeaponsCount: catalogToUse.weapons?.length || 0
-        });
-
-        // Debug adicional: mostrar algunas skins del catálogo para verificar estructura
-        if (catalogToUse.skins && catalogToUse.skins.length > 0) {
-          const sampleSkins = catalogToUse.skins.slice(0, 3);
-          console.log('🔍 SAMPLE CATALOG SKINS:', sampleSkins.map(s => ({
-            name: s.displayName,
-            weapon: s.weapon?.displayName,
-            weaponUUID: s.weapon?.uuid
-          })));
-
-          // Buscar específicamente skins de Vandal en el catálogo
-          const vandalSkins = catalogToUse.skins.filter(s =>
-            s.weapon && s.weapon.displayName &&
-            (s.weapon.displayName.toLowerCase().includes('vandal') ||
-             s.weapon.displayName === 'Vandal')
-          );
-          console.log('🔍 VANDAL SKINS EN CATÁLOGO:', vandalSkins.map(s => ({
-            name: s.displayName,
-            weapon: s.weapon?.displayName,
-            weaponUUID: s.weapon?.uuid
-          })));
-        } else {
-          console.log('❌ CATÁLOGO DE SKINS VACÍO O NO DISPONIBLE');
-        }
-
-        // Mostrar solo las que el usuario tiene (por nombre base)
-        let skinsParaModal = skinsDeArma.filter(skinObj => skinsPorBase[skinObj.displayName]);
-
-        console.log('🎯 SKINS PARA MODAL:', skinsParaModal.map(s => s.displayName));
-
-        // Si no hay skins específicas para esta arma, mostrar todas las skins de la arma que el usuario tiene
-        if (skinsParaModal.length === 0) {
-          console.log('🔍 Buscando skins alternativas...');
-
-          // Buscar skins por coincidencia parcial o por weapon UUID
-          skinsParaModal = skinsDeArma.filter(skinObj => {
-            // Buscar si alguna skin del usuario pertenece a esta arma
-            const hasUserSkin = allSkins.some(userSkin => {
-              const skinLevelObj = skinlevels.find(s => s.uuid === userSkin.ItemID);
-              if (!skinLevelObj) return false;
-              const baseName = skinLevelObj.displayName.replace(/ Level \d+$/, '').trim();
-
-              // Comparación más flexible
-              return baseName === skinObj.displayName ||
-                     baseName.toLowerCase().includes(skinObj.displayName.toLowerCase()) ||
-                     skinObj.displayName.toLowerCase().includes(baseName.toLowerCase());
-            });
-
-            if (hasUserSkin) {
-              console.log('✅ Encontrada skin del usuario:', skinObj.displayName);
-            }
-            return hasUserSkin;
-          });
-
-          // Si aún no hay skins, mostrar TODAS las skins de la arma (para debugging)
-          if (skinsParaModal.length === 0 && skinsDeArma.length > 0) {
-            console.log('⚠️ Mostrando TODAS las skins de la arma para debugging');
-            skinsParaModal = skinsDeArma;
-          }
-
-          // Si aún no hay skins, crear skins básicas desde los datos del usuario
-          if (skinsParaModal.length === 0) {
-            console.log('🔧 Creando skins básicas desde datos del usuario...');
-
-            // Buscar skins del usuario que pertenezcan a esta arma específica
-            const userSkinsForWeapon = allSkins.filter(userSkin => {
-              const skinLevelObj = skinlevels.find(s => s.uuid === userSkin.ItemID);
-              if (!skinLevelObj) return false;
-
-              const baseName = skinLevelObj.displayName.replace(/ Level \d+$/, '').trim().toLowerCase();
-              const weaponName = armaNombre.toLowerCase();
-
-              // Lista de palabras clave para identificar tipos de armas melee
-              const meleeKeywords = ['knife', 'karambit', 'axe', 'sword', 'dagger', 'blade', 'melee'];
-
-              // Si es una arma melee, verificar si la skin es de tipo melee
-              if (weaponName === 'melee' || meleeKeywords.some(keyword => weaponName.includes(keyword))) {
-                return meleeKeywords.some(keyword => baseName.includes(keyword));
-              } else {
-                // Para otras armas, verificar que la skin contenga el nombre del arma
-                return baseName.includes(weaponName);
-              }
-            });
-
-            console.log('🔧 USER SKINS FOR WEAPON:', userSkinsForWeapon);
-
-            // Crear objetos de skin básicos
-            skinsParaModal = userSkinsForWeapon.map(userSkin => {
-              const skinLevelObj = skinlevels.find(s => s.uuid === userSkin.ItemID);
-              const baseName = skinLevelObj?.displayName.replace(/ Level \d+$/, '').trim() || 'Unknown Skin';
-
-              return {
-                displayName: baseName,
-                displayIcon: skinLevelObj?.displayIcon || '',
-                weapon: {
-                  displayName: armaNombre,
-                  uuid: armaUUID
-                },
-                uuid: userSkin.ItemID,
-                levels: [skinLevelObj].filter(Boolean)
-              };
-            });
-
-            console.log('🔧 SKINS BÁSICAS CREADAS:', skinsParaModal.map(s => s.displayName));
-          }
-        }
-
-        console.log('🎯 SKINS FINALES PARA MODAL:', skinsParaModal.map(s => s.displayName));
-
-        // Ordenar por precio ascendente usando el contexto global
-        if (skinsParaModal.length > 0) {
-          skinsParaModal = sortSkinsByPriceAsc(Object.fromEntries(skinsParaModal.map(s => [s.displayName, skinsPorBase[s.displayName] || []]))).map(([name, obj]) => skinsDeArma.find(s => s.displayName === name));
-        }
         // Determinar índice de la skin actualmente equipada para abrir el carrusel en ella
         const isMeleeModal = modalWeapon.displayName.toLowerCase() === 'melee';
         const equippedSkinLevelId = isMeleeModal

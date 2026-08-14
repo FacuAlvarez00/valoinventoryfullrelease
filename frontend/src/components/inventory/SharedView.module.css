@@ -62,7 +62,7 @@
   font-family: var(--vi-font-heading);
   font-size: 18px;
   font-weight: 700;
-  color: var(--vi-black);
+  color: var(--vi-white);
 }
 
 .navName {
@@ -120,7 +120,7 @@
   align-items: center;
   gap: 8px;
   background: var(--vi-red);
-  color: var(--vi-black);
+  color: var(--vi-white);
   padding: 9px 18px;
   border-radius: 2px;
   font-family: var(--vi-font-heading);
@@ -130,7 +130,7 @@
 
 .tileGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 20px;
 }
 
@@ -163,9 +163,8 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(255, 70, 84, 0.14);
-  border: 1px solid var(--vi-red);
-  color: var(--vi-red);
+  background: var(--vi-red);
+  color: var(--vi-white);
   padding: 4px 10px;
   border-radius: 2px;
   font-family: var(--vi-font-heading);
@@ -203,7 +202,7 @@
 
 .detailGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, 140px);
   gap: 12px;
 }
 
@@ -317,7 +316,7 @@
 .skinPrice {
   align-self: flex-end;
   background: var(--vi-red);
-  color: var(--vi-black);
+  color: var(--vi-white);
   font-family: var(--vi-font-heading);
   font-weight: 700;
   font-size: 13px;

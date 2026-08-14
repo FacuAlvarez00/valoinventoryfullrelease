@@ -120,12 +120,14 @@ export default function InventoryFlex() {
               <div
                 key={flexItem.ItemID || index}
                 className={styles.card}
-                style={{ minHeight: 240, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+                style={{ minHeight: 240, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', contentVisibility: 'auto', containIntrinsicSize: '200px 280px' }}
               >
                 {flexItem.displayIcon ? (
                   <img
                     src={flexItem.displayIcon}
                     alt={flexItem.displayName || 'Flex Item'}
+                    loading="lazy"
+                    decoding="async"
                     className={styles.cardImage}
                     style={{ height: 160 }}
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
@@ -136,9 +138,6 @@ export default function InventoryFlex() {
                 <h3 className={styles.cardName} style={{ letterSpacing: '0.8px' }}>
                   {flexItem.displayName || 'FLEX ITEM'}
                 </h3>
-                {flexItem.category && (
-                  <p className={styles.cardMeta}>{flexItem.category}</p>
-                )}
                 {flexItem.description && (
                   <p className={styles.cardDesc}>{flexItem.description}</p>
                 )}

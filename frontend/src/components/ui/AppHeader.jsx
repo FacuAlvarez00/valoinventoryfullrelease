@@ -7,21 +7,9 @@ import styles from './AppHeader.module.css';
 
 const NAV_ITEMS = [
   { labelKey: 'home', path: '/' },
+  { label: 'Details', path: '/details' },
   { labelKey: 'loadout', path: '/mis-skins' },
   { labelKey: 'inventory', path: '/inventory' },
-  { label: 'Account', path: '/details' },
-];
-
-const INVENTORY_ITEMS = [
-  { label: 'Dashboard', path: '/inventory' },
-  { label: 'Skins', path: '/inventory/skins' },
-  { label: 'Battlepass', path: '/inventory/battlepass' },
-  { label: 'Buddies', path: '/inventory/buddies' },
-  { label: 'Cards', path: '/inventory/cards' },
-  { label: 'Sprays', path: '/inventory/sprays' },
-  { label: 'Flex', path: '/inventory/flex' },
-  { label: 'Titles', path: '/inventory/titles' },
-  { label: 'Agents', path: '/inventory/agents' },
 ];
 
 export default function AppHeader() {
@@ -29,7 +17,6 @@ export default function AppHeader() {
   const location = useLocation();
   const { user, logout } = useAuth();
   const { t } = useLanguage();
-  const isInventoryRoute = location.pathname.startsWith('/inventory');
 
   return (
     <header className={styles.header}>
@@ -69,28 +56,6 @@ export default function AppHeader() {
           </TacticalButton>
         </div>
       </div>
-
-      {isInventoryRoute && (
-        <nav className={styles.subNav} aria-label="Inventory sections">
-          {INVENTORY_ITEMS.map((item) => {
-            const isActive = item.path === '/inventory'
-              ? location.pathname === '/inventory'
-              : location.pathname.startsWith(item.path);
-
-            return (
-              <button
-                key={item.path}
-                type="button"
-                className={`${styles.subNavLink} ${isActive ? styles.subNavLinkActive : ''}`}
-                onClick={() => navigate(item.path)}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
-      )}
     </header>
   );
 }

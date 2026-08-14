@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import InventoryNavbar from './InventoryNavbar';
 import { useInventory } from '../../context/InventoryContext';
 import useStaticAgents from '../../hooks/useStaticAgents'; //
+import { getDefaultBattlePassImage } from '../../data/battlePassImages';
 import styles from './InventoryDashboard.module.css';
 
 export default function InventoryDashboard() {
@@ -77,15 +78,19 @@ export default function InventoryDashboard() {
   // Calcular total de VP gastados (skins + battle passes)
   const totalVPGastados = totalVPSkins + totalVPBattlePasses;
 
+  // ----- FOTOS REPRESENTATIVAS POR CATEGORÍA -----
+  const firstAgentImg = mergedAgents?.[0]?.fullPortrait || null;
+  const battlePassImg = totalBattlePasses > 0 ? getDefaultBattlePassImage() : null;
+
   const sections = [
-    { key: 'skins',      label: 'SKINS',       count: totalTarjetasSkins, vpSpent: totalVPSkins },
-    { key: 'battlepass', label: 'BATTLEPASSES',count: totalBattlePasses,  vpSpent: totalVPBattlePasses },
-    { key: 'buddies',    label: 'GUNBUDDIES',  count: totalBuddies },
-    { key: 'cards',      label: 'CARDS',       count: totalCards },
-    { key: 'sprays',     label: 'SPRAYS',      count: totalSprays },
-    { key: 'flex',       label: 'FLEX',        count: totalFlex },
-    { key: 'titles',     label: 'TITLES',      count: totalTitles },
-    { key: 'agents',     label: 'AGENTS',      count: totalAgents },
+    { key: 'skins',      label: 'SKINS',       count: totalTarjetasSkins, vpSpent: totalVPSkins, img: '/assets/dashboard/SKINS.webp' },
+    { key: 'battlepass', label: 'BATTLEPASSES',count: totalBattlePasses,  vpSpent: totalVPBattlePasses, img: battlePassImg },
+    { key: 'buddies',    label: 'GUNBUDDIES',  count: totalBuddies, img: '/assets/dashboard/GUNBUDDIES.jpg' },
+    { key: 'cards',      label: 'CARDS',       count: totalCards, img: '/assets/dashboard/CARDS.webp' },
+    { key: 'sprays',     label: 'SPRAYS',      count: totalSprays, img: '/assets/dashboard/SPRAYS.jpg' },
+    { key: 'flex',       label: 'FLEX',        count: totalFlex, img: '/assets/dashboard/FLEX.jpg' },
+    { key: 'titles',     label: 'TITLES',      count: totalTitles, img: '/assets/dashboard/TITLES.webp' },
+    { key: 'agents',     label: 'AGENTS',      count: totalAgents, img: firstAgentImg },
   ];
 
   return (
@@ -111,6 +116,13 @@ export default function InventoryDashboard() {
               onClick={() => navigate(`/inventory/${section.key}`)}
               className={styles.tile}
             >
+              {section.img && (
+                <>
+                  <img src={section.img} alt="" className={styles.tileImg} />
+                  <div className={section.key === 'buddies' ? styles.tileOverlayLight : styles.tileOverlay} />
+                </>
+              )}
+
               {section.vpSpent !== undefined && (
                 <div className={styles.tileVp}>
                   {section.vpSpent.toLocaleString()}

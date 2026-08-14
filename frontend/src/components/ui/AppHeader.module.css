@@ -124,52 +124,6 @@
   white-space: nowrap;
 }
 
-.subNav {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding-top: 8px;
-  border-top: 1px solid rgba(236, 232, 225, 0.08);
-}
-
-.subNav::-webkit-scrollbar {
-  display: none;
-}
-
-.subNavLink {
-  flex: 0 0 auto;
-  border: 1px solid transparent;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.02);
-  color: rgba(236, 232, 225, 0.58);
-  font-family: var(--vi-font-heading);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  cursor: pointer;
-  padding: 7px 11px;
-  transition: color 0.2s ease-out, border-color 0.2s ease-out, background 0.2s ease-out;
-}
-
-.subNavLink:hover {
-  color: var(--vi-white);
-  border-color: rgba(236, 232, 225, 0.18);
-}
-
-.subNavLink:focus-visible {
-  outline: 2px solid var(--vi-red);
-  outline-offset: 2px;
-}
-
-.subNavLinkActive {
-  color: var(--vi-green);
-  border-color: rgba(63, 199, 149, 0.48);
-  background: rgba(63, 199, 149, 0.08);
-}
-
 @media (max-width: 900px) {
   .header {
     padding: 14px 20px;

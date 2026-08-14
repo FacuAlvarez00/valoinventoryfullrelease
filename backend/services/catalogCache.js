@@ -38,6 +38,26 @@ async function refresh() {
     const weapons = (weaponsData.data || []).map(w => ({
       uuid: w.uuid,
       displayName: w.displayName,
+      skins: (w.skins || []).map(s => ({
+        uuid: s.uuid,
+        displayName: s.displayName,
+        contentTierUuid: s.contentTierUuid,
+        displayIcon: s.displayIcon,
+        chromas: (s.chromas || []).map(c => ({
+          uuid: c.uuid,
+          displayName: c.displayName,
+          displayIcon: c.displayIcon,
+          fullRender: c.fullRender,
+          swatch: c.swatch,
+          streamedVideo: c.streamedVideo || null,
+        })),
+        levels: (s.levels || []).map(lvl => ({
+          uuid: lvl.uuid,
+          displayName: lvl.displayName,
+          displayIcon: lvl.displayIcon,
+          streamedVideo: lvl.streamedVideo || null,
+        })),
+      })),
     }));
 
     const skins = (skinsData.data || []).map(s => ({
