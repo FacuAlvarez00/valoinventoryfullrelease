@@ -1,0 +1,169 @@
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 14px 30px;
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
+  white-space: nowrap;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -5%;
+  width: 130%;
+  height: 100%;
+  transform: translateX(-100%) skew(-15deg);
+  transition: transform 0.4s ease;
+  z-index: 0;
+}
+
+.btnLabel {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btnTickL,
+.btnTickR {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 10px;
+  background: var(--vi-black);
+  transform: translateY(-50%);
+  z-index: 2;
+  opacity: 0.5;
+}
+
+.btnTickL { left: 0; }
+.btnTickR { right: 0; }
+
+.btn:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--vi-black), 0 0 0 4px var(--vi-red);
+}
+
+.btnPrimary {
+  background: #ff4654;
+  color: #fafafa;
+  border: 1px solid #ff4654;
+}
+
+.btnPrimary::before {
+  background: var(--vi-black);
+}
+
+.btnPrimary:not(:disabled):hover {
+  box-shadow: 0 10px 30px rgba(255, 70, 84, 0.35);
+}
+
+.btnPrimary:not(:disabled):hover::before {
+  transform: translateX(0) skew(-15deg);
+}
+
+.btnPrimary:not(:disabled):hover .btnLabel {
+  color: var(--vi-white);
+}
+
+.btnPrimary .btnTickL,
+.btnPrimary .btnTickR {
+  background: #fafafa;
+}
+
+.btnGhost {
+  background: transparent;
+  color: var(--vi-offwhite);
+  border: 1px solid rgba(236, 232, 225, 0.35);
+}
+
+.btnGhost::before {
+  background: var(--vi-red);
+}
+
+.btnGhost:not(:disabled):hover {
+  border-color: var(--vi-red);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+}
+
+.btnGhost:not(:disabled):hover::before {
+  transform: translateX(0) skew(-15deg);
+}
+
+.btnGhost:not(:disabled):hover .btnLabel {
+  color: var(--vi-white);
+}
+
+.btnGhost .btnTickL,
+.btnGhost .btnTickR {
+  background: var(--vi-offwhite);
+  opacity: 0.35;
+}
+
+.btnDanger {
+  background: transparent;
+  color: var(--vi-red);
+  border: 1px solid rgba(255, 70, 84, 0.4);
+}
+
+.btnDanger::before {
+  background: var(--vi-red);
+}
+
+.btnDanger:not(:disabled):hover {
+  border-color: var(--vi-red);
+  box-shadow: 0 10px 26px rgba(255, 70, 84, 0.25);
+}
+
+.btnDanger:not(:disabled):hover::before {
+  transform: translateX(0) skew(-15deg);
+}
+
+.btnDanger:not(:disabled):hover .btnLabel {
+  color: var(--vi-white);
+}
+
+.btnDanger .btnTickL,
+.btnDanger .btnTickR {
+  background: var(--vi-red);
+}
+
+.btnLg {
+  padding: 18px 40px;
+  font-size: 15px;
+}
+
+.btnSm {
+  padding: 9px 20px;
+  font-size: 12px;
+}
+
+.btnFull {
+  width: 100%;
+}

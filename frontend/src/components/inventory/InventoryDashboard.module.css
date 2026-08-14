@@ -1,0 +1,100 @@
+.page {
+  padding: 32px;
+  min-height: 100vh;
+  background: var(--vi-black);
+  color: var(--vi-offwhite);
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.heading {
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 30px;
+  color: var(--vi-white);
+  margin: 0;
+}
+
+.totalValue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 70, 84, 0.14);
+  border: 1px solid rgba(255, 70, 84, 0.48);
+  color: var(--vi-red);
+  padding: 9px 18px;
+  border-radius: 2px;
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.tile {
+  position: relative;
+  background: rgba(15, 25, 35, 0.62);
+  border: 1px solid var(--vi-border);
+  border-radius: 4px;
+  min-height: 180px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease-out, border-color 0.2s ease-out, filter 0.2s ease-out;
+  filter: drop-shadow(0 0 0 transparent);
+}
+
+.tile:hover {
+  transform: translateY(-6px);
+  border-color: var(--vi-red);
+  filter: drop-shadow(0 14px 26px rgba(255, 70, 84, 0.16));
+}
+
+.tileVp {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 70, 84, 0.14);
+  border: 1px solid var(--vi-red);
+  color: var(--vi-red);
+  padding: 4px 10px;
+  border-radius: 2px;
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.tileLabel {
+  font-family: var(--vi-font-heading);
+  color: var(--vi-offwhite);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.tileCount {
+  font-family: var(--vi-font-heading);
+  color: var(--vi-red);
+  font-size: 30px;
+  font-weight: 700;
+}

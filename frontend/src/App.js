@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { InventoryProvider, useInventory } from "./context/InventoryContext";
-import { LanguageProvider, useLanguage } from "./context/LanguageContext";
+import { LanguageProvider } from "./context/LanguageContext";
 import { AuthPage } from "./components/auth";
-import { HomePage, LandingPage, PageWrapper, LoadingScreen } from "./components/ui";
+import { HomePage, LandingPage, PageWrapper, LoadingScreen, AppHeader } from "./components/ui";
+import appStyles from "./App.module.css";
 import { WeaponDetail } from "./components/weapons";
 import { MySkins } from './components/inventory';
 import { Inventory } from './components/inventory';
@@ -223,9 +224,8 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
   const [authView, setAuthView] = useState('landing'); // 'landing' | 'auth'
   const [authInitialLogin, setAuthInitialLogin] = useState(true);
-  const { user, loading: authLoading, logout } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { riotAccount, catalog } = useInventory();
-  const { t } = useLanguage();
 
   useEffect(() => {
     async function fetchData() {
@@ -313,40 +313,14 @@ function AppContent() {
   );
 
   return (
-    <div style={{ background: "#0f1923", minHeight: "100vh" }}>
-      {/* Header con información del usuario y botón de logout */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '20px 60px',
-        borderBottom: '2px solid #222b3a'
-      }}>
-        <h1 style={{ color: "#ff4655", margin: 0 }}>{t.valorantCollection}</h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <span style={{ color: '#fff' }}>{t.welcome}, {user.username}!</span>
-          <button
-            onClick={logout}
-            style={{
-              background: '#222b3a',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '8px 16px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            {t.logout}
-          </button>
-        </div>
-      </div>
-      
+    <div className={appStyles.shell}>
+      <AppHeader />
+
       <HomePage
         weaponsByCategory={weaponsByCategory}
         onWeaponSelect={setSelectedWeapon}
       />
-      
+
       {/* Botón de bandera flotante */}
     </div>
   );

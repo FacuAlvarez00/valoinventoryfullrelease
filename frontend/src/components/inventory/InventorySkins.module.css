@@ -1,0 +1,334 @@
+.page {
+  min-height: 100vh;
+  background: var(--vi-black);
+  color: var(--vi-offwhite);
+  padding: 40px;
+  padding-top: 90px;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.statsGroup {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.statTotal {
+  font-family: var(--vi-font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--vi-red);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statVp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--vi-font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffb347;
+}
+
+.actionsGroup {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.searchInput {
+  padding: 8px 16px;
+  border-radius: 2px;
+  border: 1px solid var(--vi-border);
+  font-size: 14px;
+  outline: none;
+  min-width: 240px;
+  background: var(--vi-black-soft);
+  color: var(--vi-white);
+}
+
+.searchInput::placeholder {
+  color: rgba(236, 232, 225, 0.35);
+}
+
+.searchInput:focus {
+  border-color: var(--vi-red);
+}
+
+.downloadBtn {
+  padding: 8px 14px;
+  border-radius: 2px;
+  border: 1px solid var(--vi-border);
+  background: var(--vi-black-soft);
+  color: var(--vi-offwhite);
+  font-size: 13px;
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: border-color 0.2s ease-out;
+}
+
+.downloadBtn:hover {
+  border-color: var(--vi-red);
+}
+
+.chipsRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+.chip {
+  padding: 6px 18px;
+  border-radius: 2px;
+  border: 1px solid var(--vi-border);
+  background: transparent;
+  color: rgba(236, 232, 225, 0.55);
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.chipActive {
+  border-color: var(--vi-red);
+  background: rgba(255, 70, 84, 0.12);
+  color: var(--vi-red);
+}
+
+.chipGold {
+  border-color: rgba(255, 215, 0, 0.4);
+}
+
+.chipGoldActive {
+  border-color: #a07820;
+  background: linear-gradient(135deg, #2a1e00 0%, #4a3200 100%);
+  color: #ffd700;
+}
+
+/* ---- Grid + cards ---- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  column-gap: 12px;
+  row-gap: 20px;
+  width: 100%;
+}
+
+@media (max-width: 1400px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 900px)  { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 550px)  { .grid { grid-template-columns: 1fr; } }
+
+.card {
+  background: rgba(54, 49, 53, 0.5);
+  border: 1px solid var(--vi-border);
+  padding: 12px;
+  width: 100%;
+  height: 220px;
+  text-align: center;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  border-radius: 2px;
+  transition: transform 0.2s ease-out, border-color 0.2s ease-out;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(236, 232, 225, 0.35);
+}
+
+.cardGolden {
+  background: linear-gradient(135deg, #2a1e00 0%, #4a3200 50%, #2a1e00 100%);
+  border-color: #a07820;
+}
+
+.cardTopRow {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.swatchGroup {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.swatchWrap {
+  position: relative;
+}
+
+.swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 2px;
+  border: 1px solid var(--vi-black);
+  transition: filter 0.2s ease-out;
+}
+
+.swatchInteractive {
+  cursor: pointer;
+}
+
+.swatchInteractive:hover {
+  filter: brightness(0.7);
+}
+
+.swatchTooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--vi-red);
+  color: var(--vi-white);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 2px;
+  white-space: nowrap;
+  z-index: 20;
+  margin-bottom: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+  pointer-events: none;
+}
+
+.swatchWrap:hover .swatchTooltip {
+  opacity: 1;
+}
+
+.priceTag {
+  background: var(--vi-red);
+  color: var(--vi-black);
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  font-size: 15px;
+  border-radius: 2px;
+  padding: 2px 12px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+}
+
+.cardImageWrap {
+  width: 100%;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.cardImage {
+  max-width: 100%;
+  max-height: 80px;
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+.cardName {
+  color: var(--vi-white);
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 4px;
+  margin-top: 4px;
+}
+
+/* ---- Skeleton state ---- */
+
+.skeletonRow {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.skeletonCard {
+  background: rgba(54, 49, 53, 0.5);
+  border: 1px solid var(--vi-border);
+  padding: 12px;
+  width: 100%;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  border-radius: 2px;
+}
+
+.skeletonTopRow {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.skeletonSwatches {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+/* ---- Video modal ---- */
+
+.videoModalBody {
+  position: relative;
+  background: var(--vi-black-soft);
+  border-radius: 4px;
+  overflow: hidden;
+  max-width: 900px;
+  width: 98vw;
+}
+
+.videoClose {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid var(--vi-red);
+  border-radius: 50%;
+  color: var(--vi-white);
+  font-size: 24px;
+  cursor: pointer;
+  font-weight: 700;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.video {
+  width: 100%;
+  border-radius: 2px;
+  background: #000;
+  max-height: 80vh;
+  display: block;
+}

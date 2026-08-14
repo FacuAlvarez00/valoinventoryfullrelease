@@ -1,0 +1,348 @@
+.page {
+  min-height: 100vh;
+  background: var(--vi-black);
+  color: var(--vi-offwhite);
+}
+
+.center {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.loadingText {
+  color: var(--vi-red);
+  font-family: var(--vi-font-heading);
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.errorText {
+  color: var(--vi-red);
+  font-family: var(--vi-font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.errorSub {
+  color: rgba(236, 232, 225, 0.5);
+  font-size: 14px;
+}
+
+/* ---- Navbar ---- */
+
+.navbar {
+  background: rgba(15, 25, 35, 0.9);
+  border-bottom: 1px solid var(--vi-border);
+  padding: 14px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navIdentity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.navAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--vi-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--vi-font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--vi-black);
+}
+
+.navName {
+  font-family: var(--vi-font-heading);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--vi-white);
+}
+
+.navUpdated {
+  font-size: 11px;
+  color: rgba(236, 232, 225, 0.4);
+}
+
+.navBrand {
+  font-family: var(--vi-font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--vi-white);
+}
+
+.navBrandAccent {
+  color: var(--vi-red);
+}
+
+/* ---- Dashboard tiles ---- */
+
+.dashboard {
+  padding: 32px 32px 16px;
+}
+
+.dashboardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.heading {
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 30px;
+  color: var(--vi-white);
+  margin: 0;
+}
+
+.totalValue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--vi-red);
+  color: var(--vi-black);
+  padding: 9px 18px;
+  border-radius: 2px;
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.tileGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.tile {
+  position: relative;
+  background: rgba(54, 49, 53, 0.5);
+  border: 1px solid var(--vi-border);
+  border-radius: 4px;
+  min-height: 180px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.tile:hover {
+  transform: translateY(-4px);
+}
+
+.tileActive {
+  border-color: var(--vi-red);
+}
+
+.tileVp {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 70, 84, 0.14);
+  border: 1px solid var(--vi-red);
+  color: var(--vi-red);
+  padding: 4px 10px;
+  border-radius: 2px;
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.tileLabel {
+  font-family: var(--vi-font-heading);
+  color: var(--vi-red);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.tileCount {
+  font-family: var(--vi-font-heading);
+  color: var(--vi-white);
+  font-size: 30px;
+  font-weight: 700;
+}
+
+/* ---- Detail panel ---- */
+
+.detailWrap {
+  padding: 8px 32px 32px;
+}
+
+.detailInner {
+  border-top: 1px solid var(--vi-border);
+  padding-top: 24px;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.detailGridSkins {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+@media (max-width: 1200px) { .detailGridSkins { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 700px)  { .detailGridSkins { grid-template-columns: repeat(2, 1fr); } }
+
+.chip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.chipItem {
+  background: rgba(54, 49, 53, 0.5);
+  border: 1px solid var(--vi-border);
+  border-radius: 2px;
+  padding: 10px 20px;
+  color: var(--vi-offwhite);
+  font-size: 14px;
+}
+
+.emptyNote {
+  color: rgba(236, 232, 225, 0.4);
+}
+
+.itemCard {
+  background: rgba(54, 49, 53, 0.5);
+  border: 1px solid var(--vi-border);
+  border-radius: 4px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.itemCard:hover {
+  border-color: rgba(236, 232, 225, 0.35);
+  transform: translateY(-4px);
+}
+
+.itemImg {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+.itemName {
+  font-size: 11px;
+  color: rgba(236, 232, 225, 0.7);
+  text-align: center;
+}
+
+.tileImgCard {
+  background: rgba(54, 49, 53, 0.5);
+  border: 1px solid var(--vi-border);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.tileImgCard:hover {
+  border-color: rgba(236, 232, 225, 0.35);
+  transform: translateY(-4px);
+}
+
+.tileImg {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+}
+
+.tileImgName {
+  padding: 6px 8px;
+  font-size: 11px;
+  color: rgba(236, 232, 225, 0.7);
+  text-align: center;
+}
+
+.skinCard {
+  background: rgba(54, 49, 53, 0.5);
+  border: 1px solid var(--vi-border);
+  border-radius: 4px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 200px;
+  box-sizing: border-box;
+  position: relative;
+  transition: border-color 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.skinCard:hover {
+  border-color: rgba(236, 232, 225, 0.35);
+  transform: translateY(-4px);
+}
+
+.skinCardGolden {
+  background: linear-gradient(135deg, #2a1e00 0%, #4a3200 50%, #2a1e00 100%);
+  border-color: #a07820;
+}
+
+.skinPrice {
+  align-self: flex-end;
+  background: var(--vi-red);
+  color: var(--vi-black);
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  border-radius: 2px;
+  padding: 2px 10px;
+}
+
+.skinImgWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.skinImg {
+  max-width: 100%;
+  max-height: 80px;
+  object-fit: contain;
+}
+
+.skinName {
+  color: var(--vi-white);
+  font-weight: 600;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 8px;
+}

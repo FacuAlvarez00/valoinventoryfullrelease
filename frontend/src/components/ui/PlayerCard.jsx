@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import styles from './PlayerCard.module.css';
 
 export default function PlayerCard({ identity, name, puuid, nickname }) {
   const [card, setCard] = useState(null);
@@ -30,78 +31,27 @@ export default function PlayerCard({ identity, name, puuid, nickname }) {
   }, [identity, playerName, playerTag]);
 
   if (!identity || !identity.PlayerCardID || !identity.PlayerTitleID) {
-    return (
-      <div style={{
-        width: 200,
-        height: 340,
-        background: 'rgba(255,255,255,0.05)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: 4,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'rgba(255,255,255,0.4)',
-        fontSize: 13,
-        textAlign: 'center',
-        padding: 16
-      }}>
-        No hay datos de identidad
-      </div>
-    );
+    return <div className={styles.empty}>No hay datos de identidad</div>;
   }
 
   return (
-    <div style={{
-      width: 200,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'stretch',
-      borderRadius: 4,
-      overflow: 'hidden',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
-      border: '1px solid rgba(255,255,255,0.12)',
-    }}>
+    <div className={styles.card}>
       {/* Account level badge */}
       {accountLevel !== null && (
-        <div style={{
-          background: 'rgba(0,0,0,0.8)',
-          textAlign: 'center',
-          fontSize: 11,
-          fontWeight: 700,
-          color: 'rgba(255,255,255,0.6)',
-          letterSpacing: 1,
-          padding: '4px 0',
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
-        }}>
-          ◆ {accountLevel}
-        </div>
+        <div className={styles.levelBadge}>◆ {accountLevel}</div>
       )}
       {/* Card art - tall portrait */}
-      <div style={{ position: 'relative', lineHeight: 0 }}>
+      <div className={styles.artWrap}>
         {card ? (
-          <img
-            src={card.tallArt || card.largeArt}
-            alt={card.displayName}
-            style={{ width: '100%', display: 'block', objectFit: 'cover' }}
-          />
+          <img src={card.tallArt || card.largeArt} alt={card.displayName} className={styles.art} />
         ) : (
-          <div style={{ width: '100%', height: 300, background: 'rgba(255,255,255,0.05)' }} />
+          <div className={styles.artPlaceholder} />
         )}
       </div>
       {/* Player name bar */}
-      <div style={{
-        background: '#c8a84b',
-        padding: '8px 12px',
-        textAlign: 'center',
-      }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a', letterSpacing: 0.5 }}>
-          {nickname || name}
-        </div>
-        {title?.titleText && (
-          <div style={{ fontSize: 10, color: 'rgba(0,0,0,0.6)', marginTop: 2 }}>
-            {title.titleText}
-          </div>
-        )}
+      <div className={styles.nameBar}>
+        <div className={styles.name}>{nickname || name}</div>
+        {title?.titleText && <div className={styles.title}>{title.titleText}</div>}
       </div>
     </div>
   );

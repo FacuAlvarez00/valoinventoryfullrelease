@@ -1,67 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import AllSkins from './AllSkins';
 import styles from './MySkins.module.css';
+import InventoryNavbar from './InventoryNavbar';
 import { WeaponDetail } from '../weapons';
 import { useInventory } from '../../context/InventoryContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { PlayerCard, Notification, LoadingScreen } from '../ui';
+import { TacticalButton } from '../ui/kit';
 import useNotification from '../../hooks/useNotification';
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "https://valoinventory-1.onrender.com";
-
-const weaponCategories = [
-  {
-    name: 'SIDEARMS',
-    weapons: ['CLASSIC', 'SHORTY', 'FRENZY', 'GHOST', 'SHERIFF']
-  },
-  {
-    name: 'SMGS',
-    weapons: ['STINGER', 'SPECTRE']
-  },
-  {
-    name: 'RIFLES',
-    weapons: ['BULLDOG', 'GUARDIAN', 'PHANTOM', 'VANDAL']
-  },
-  {
-    name: 'SHOTGUNS',
-    weapons: ['BUCKY', 'JUDGE']
-  },
-  {
-    name: 'SNIPER RIFLES',
-    weapons: ['MARSHAL', 'OUTLAW', 'OPERATOR']
-  },
-  {
-    name: 'MACHINE GUNS',
-    weapons: ['ARES', 'ODIN']
-  },
-  {
-    name: 'MELEE',
-    weapons: ['MELEE']
-  }
-];
-
-const weaponSlotMap = {
-  CLASSIC: 'Classic',
-  SHORTY: 'Shorty',
-  FRENZY: 'Frenzy',
-  GHOST: 'Ghost',
-  BANDIT: 'Bandit',
-  SHERIFF: 'Sheriff',
-  STINGER: 'Stinger',
-  SPECTRE: 'Spectre',
-  BULLDOG: 'Bulldog',
-  GUARDIAN: 'Guardian',
-  PHANTOM: 'Phantom',
-  VANDAL: 'Vandal',
-  BUCKY: 'Bucky',
-  JUDGE: 'Judge',
-  MARSHAL: 'Marshal',
-  OUTLAW: 'Outlaw',
-  OPERATOR: 'Operator',
-  ARES: 'Ares',
-  ODIN: 'Odin',
-  MELEE: 'Melee'
-};
 
 export default function MySkins() {
   const navigate = useNavigate();
@@ -126,7 +73,7 @@ export default function MySkins() {
     }
     try {
       // 1. Obtener los skins del backend
-      const res = await fetch(`${API_BASE}/api/auth/riot/skins`, {   
+      const res = await fetch(`${API_BASE}/api/auth/riot/skins`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ riotToken: token })
@@ -210,7 +157,7 @@ export default function MySkins() {
         return;
       }
       setLoadout(data.loadout);
-      
+
       // Debug: Verificar si hay datos de loadout
       if (!data.loadout || !data.loadout.Guns) {
         console.log('⚠️ No hay datos de loadout o Guns');
@@ -301,14 +248,14 @@ export default function MySkins() {
         const weaponsData = await weaponsRes.json();
         const skinsData = await skinsRes.json();
         const chromasData = await chromasRes.json();
-        
-        
+
+
         const newCatalog = {
           weapons: weaponsData.data || [],
           skins: skinsData.data || [],
           chromas: chromasData.data || [],
         };
-        
+
         setCatalog(newCatalog);
       } catch (e) {
         console.error('❌ Error cargando catálogo:', e);
@@ -343,7 +290,7 @@ export default function MySkins() {
   // Función para equipar skin
   const handleEquipSkin = (skin) => {
     console.log('🎯 Equipando skin:', skin);
-    
+
     if (!modalWeapon || !riotAccount) {
       showError('Error: No se puede equipar la skin');
       return;
@@ -352,7 +299,7 @@ export default function MySkins() {
     // Encontrar el arma en el loadout
     const weaponUuid = modalWeapon.uuid;
     const isMelee = modalWeapon.displayName.toLowerCase() === 'melee';
-    
+
     // Crear el objeto de skin equipada
     const equippedSkin = {
       ID: weaponUuid,
@@ -362,7 +309,7 @@ export default function MySkins() {
 
     // Actualizar el estado local del loadout
     const updatedLoadout = { ...riotAccount.loadout };
-    
+
     if (isMelee) {
       updatedLoadout.Melee = equippedSkin;
     } else {
@@ -389,7 +336,7 @@ export default function MySkins() {
 
     // Cerrar el modal
     closeModal();
-    
+
     showSuccess(`Skin ${skin.displayName} equipada!`);
   };
 
@@ -426,14 +373,8 @@ export default function MySkins() {
 
   // Mostrar loading/error
   if (loading) return <LoadingScreen fullscreen={true} text="Cargando skins..." />;
-  if (error) return <div style={{ color: '#ff4655', textAlign: 'center', marginTop: 80 }}>{error}</div>;
+  if (error) return <div style={{ color: 'var(--vi-red)', textAlign: 'center', marginTop: 80 }}>{error}</div>;
   if (!riotAccount) return null;
-
-/*   useEffect(() => {
-    if (riotAccount && riotAccount.loadout) {
-      console.log('PLAYER LOADOUT:', riotAccount.loadout);
-    }
-  }, [riotAccount]); */
 
   // Utilidades para renderizar loadout y skins
   const loadoutGuns = riotAccount?.loadout?.Guns || [];
@@ -517,73 +458,22 @@ export default function MySkins() {
     const imgSrc = getWeaponImgSrc(weaponObj, isMelee);
     const displayName = weaponName.charAt(0) + weaponName.slice(1).toLowerCase();
     return (
-      <div
-        onClick={() => handleWeaponClick(weaponObj)}
-        onMouseEnter={e => { e.currentTarget.style.background = '#251a1c'; }}
-        onMouseLeave={e => { e.currentTarget.style.background = '#1c1315'; }}
-        style={{
-          background: '#1c1315',
-          border: '1px solid rgba(255,255,255,0.06)',
-          borderRadius: 2,
-          display: 'flex',
-          flexDirection: 'column',
-          cursor: 'pointer',
-          overflow: 'hidden',
-          transition: 'background 0.15s',
-          height: 130,
-        }}
-      >
-        {/* Image area */}
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '10px 14px 4px',
-        }}>
-          <img
-            src={imgSrc}
-            alt={weaponName}
-            style={{
-              maxWidth: '100%',
-              maxHeight: 78,
-              objectFit: 'contain',
-              filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.6))',
-            }}
-          />
+      <div className={styles.weaponCard} onClick={() => handleWeaponClick(weaponObj)}>
+        <div className={styles.weaponCardImgWrap}>
+          <img src={imgSrc} alt={weaponName} className={styles.weaponCardImg} />
         </div>
-        {/* Name + underline */}
-        <div style={{ padding: '0 10px' }}>
-          <div style={{
-            color: 'rgba(255,255,255,0.82)',
-            fontSize: 12,
-            fontWeight: 400,
-            letterSpacing: 0.2,
-            lineHeight: 1,
-            paddingBottom: 6,
-          }}>
-            {displayName}
-          </div>
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.18)', marginBottom: 8 }} />
+        <div className={styles.weaponCardFooter}>
+          <div className={styles.weaponCardName}>{displayName}</div>
+          <div className={styles.weaponCardUnderline} />
         </div>
       </div>
     );
   };
 
   const CategoryBlock = ({ name, weapons, isMelee = false }) => (
-    <div style={{ marginBottom: 22 }}>
-      <div style={{
-        fontSize: 17,
-        fontWeight: 900,
-        color: '#fff',
-        letterSpacing: '2px',
-        textTransform: 'uppercase',
-        textAlign: 'center',
-        marginBottom: 10,
-      }}>
-        {name}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <div className={styles.categoryBlock}>
+      <div className={styles.categoryTitle}>{name}</div>
+      <div className={styles.weaponList}>
         {weapons.map(wn => <WeaponCard key={wn} weaponName={wn} isMelee={isMelee} />)}
       </div>
     </div>
@@ -591,11 +481,11 @@ export default function MySkins() {
 
   // Render de loadout agrupado por categoría, siempre mostrando todas las armas, solo imagen y nombre del arma
   const renderLoadout = () => (
-    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', padding: '0 28px', gap: 28 }}>
+    <div className={styles.loadoutWrap}>
       {/* Main Weapon Grid */}
       <div style={{ flex: 1 }}>
         {catalogLoading ? (
-          <div style={{ color: '#fff', textAlign: 'center', paddingTop: 40 }}>Cargando catálogo de skins...</div>
+          <div className={styles.catalogLoadingText} style={{ paddingTop: 40 }}>Cargando catálogo de skins...</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0 20px', paddingTop: 24 }}>
             {weaponCategories.map(category => (
@@ -615,10 +505,8 @@ export default function MySkins() {
       </div>
 
       {/* Right Side Panel */}
-      <div style={{ width: 210, display: 'flex', flexDirection: 'column', gap: 12, position: 'sticky', top: 100 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: '2px', textTransform: 'uppercase', textAlign: 'center' }}>
-          PLAYER CARDS
-        </div>
+      <div className={styles.sidePanel}>
+        <div className={styles.sidePanelLabel}>PLAYER CARDS</div>
         <PlayerCard
           identity={riotAccount?.identity || {}}
           name={riotAccount?.name || ''}
@@ -628,35 +516,35 @@ export default function MySkins() {
       {/* Modal de skins por arma */}
       {modalOpen && modalWeapon && (() => {
         // Usar catálogo del contexto global si el local está vacío
-        const catalogToUse = (catalog.skins && catalog.skins.length > 0) ? catalog : 
-                            (catalog && catalog.skins && catalog.skins.length > 0) ? catalog : 
+        const catalogToUse = (catalog.skins && catalog.skins.length > 0) ? catalog :
+                            (catalog && catalog.skins && catalog.skins.length > 0) ? catalog :
                             { weapons: [], skins: [], chromas: [] };
-        
+
         console.log('🔍 CATÁLOGO A USAR:', {
           localCatalog: catalog,
           catalogToUse: catalogToUse,
           catalogSkinsCount: catalogToUse.skins?.length || 0,
           catalogWeaponsCount: catalogToUse.weapons?.length || 0
         });
-        
+
         // Verificar que el catálogo esté cargado
         if (catalogLoading || !catalogToUse.skins || catalogToUse.skins.length === 0) {
           return (
-            <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(15,25,35,0.92)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ position: 'absolute', top: 30, right: 40, zIndex: 10000 }}>
-                <button onClick={closeModal} style={{ background: '#ff4655', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 24px', fontWeight: 'bold', fontSize: 20, cursor: 'pointer', boxShadow: '0 2px 12px #000a' }}>Cerrar</button>
+            <div className={styles.catalogLoadingOverlay}>
+              <div className={styles.catalogLoadingClose}>
+                <TacticalButton onClick={closeModal}>Cerrar</TacticalButton>
               </div>
-              <div style={{ color: '#fff', fontSize: '24px', textAlign: 'center' }}>
+              <div className={styles.catalogLoadingText}>
                 {catalogLoading ? 'Cargando catálogo de skins...' : 'Error cargando catálogo. Intenta recargar la página.'}
               </div>
             </div>
           );
         }
-        
+
         // Agrupar allSkins por nombre base usando skinlevels
         const skinlevels = catalog.skinlevels || [];
         const allSkins = riotAccount?.skins || [];
-        
+
         console.log('🔍 DATOS DE SKINS DEL USUARIO:', {
           riotAccount: riotAccount,
           allSkins: allSkins,
@@ -668,7 +556,7 @@ export default function MySkins() {
             uuid: s.uuid
           }))
         });
-        
+
         const skinsPorBase = {};
         allSkins.forEach(skin => {
           const skinLevelObj = skinlevels.find(s => s.uuid === skin.ItemID);
@@ -685,35 +573,35 @@ export default function MySkins() {
             skinLevelName: skinLevelObj.displayName
           });
         });
-        
+
         console.log('🔍 SKINS POR BASE RESULTADO:', skinsPorBase);
         // Buscar en el catálogo todas las skins de esa arma
         const armaNombre = modalWeapon.displayName;
         const armaUUID = modalWeapon.uuid;
-        
+
         // Buscar skins por displayName Y por UUID del weapon
         let skinsDeArma = catalogToUse.skins.filter(skinObj => {
           if (!skinObj || !skinObj.weapon) return false;
-          return skinObj.weapon.displayName === armaNombre || 
+          return skinObj.weapon.displayName === armaNombre ||
                  skinObj.weapon.uuid === armaUUID ||
                  skinObj.weapon.displayName?.toLowerCase() === armaNombre.toLowerCase();
         });
-        
+
         // Si no encuentra skins por weapon (porque weapon es undefined), usar filtrado por nombre
         if (skinsDeArma.length === 0) {
           console.log('🔧 Usando filtrado alternativo por nombre de skin...');
-          
+
           // Buscar skins que contengan el nombre del arma en su displayName
           skinsDeArma = catalogToUse.skins.filter(skinObj => {
             if (!skinObj || !skinObj.displayName) return false;
-            
+
             // Buscar skins que contengan el nombre del arma
             const skinName = skinObj.displayName.toLowerCase();
             const weaponName = armaNombre.toLowerCase();
-            
+
             // Lista de palabras clave para identificar tipos de armas melee
             const meleeKeywords = ['knife', 'karambit', 'axe', 'sword', 'dagger', 'blade', 'melee'];
-            
+
             // Si es una arma melee, verificar si la skin es de tipo melee
             if (weaponName === 'melee' || meleeKeywords.some(keyword => weaponName.includes(keyword))) {
               return meleeKeywords.some(keyword => skinName.includes(keyword));
@@ -722,10 +610,10 @@ export default function MySkins() {
               return skinName.includes(weaponName);
             }
           });
-          
+
           console.log('🔧 SKINS ENCONTRADAS POR NOMBRE:', skinsDeArma.map(s => s.displayName));
         }
-        
+
         console.log('🔍 DEBUG MODAL:', {
           armaNombre,
           armaUUID,
@@ -735,7 +623,7 @@ export default function MySkins() {
           catalogSkinsCount: catalogToUse.skins?.length || 0,
           catalogWeaponsCount: catalogToUse.weapons?.length || 0
         });
-        
+
         // Debug adicional: mostrar algunas skins del catálogo para verificar estructura
         if (catalogToUse.skins && catalogToUse.skins.length > 0) {
           const sampleSkins = catalogToUse.skins.slice(0, 3);
@@ -744,11 +632,11 @@ export default function MySkins() {
             weapon: s.weapon?.displayName,
             weaponUUID: s.weapon?.uuid
           })));
-          
+
           // Buscar específicamente skins de Vandal en el catálogo
-          const vandalSkins = catalogToUse.skins.filter(s => 
-            s.weapon && s.weapon.displayName && 
-            (s.weapon.displayName.toLowerCase().includes('vandal') || 
+          const vandalSkins = catalogToUse.skins.filter(s =>
+            s.weapon && s.weapon.displayName &&
+            (s.weapon.displayName.toLowerCase().includes('vandal') ||
              s.weapon.displayName === 'Vandal')
           );
           console.log('🔍 VANDAL SKINS EN CATÁLOGO:', vandalSkins.map(s => ({
@@ -759,16 +647,16 @@ export default function MySkins() {
         } else {
           console.log('❌ CATÁLOGO DE SKINS VACÍO O NO DISPONIBLE');
         }
-        
+
         // Mostrar solo las que el usuario tiene (por nombre base)
         let skinsParaModal = skinsDeArma.filter(skinObj => skinsPorBase[skinObj.displayName]);
-        
+
         console.log('🎯 SKINS PARA MODAL:', skinsParaModal.map(s => s.displayName));
-        
+
         // Si no hay skins específicas para esta arma, mostrar todas las skins de la arma que el usuario tiene
         if (skinsParaModal.length === 0) {
           console.log('🔍 Buscando skins alternativas...');
-          
+
           // Buscar skins por coincidencia parcial o por weapon UUID
           skinsParaModal = skinsDeArma.filter(skinObj => {
             // Buscar si alguna skin del usuario pertenece a esta arma
@@ -776,40 +664,40 @@ export default function MySkins() {
               const skinLevelObj = skinlevels.find(s => s.uuid === userSkin.ItemID);
               if (!skinLevelObj) return false;
               const baseName = skinLevelObj.displayName.replace(/ Level \d+$/, '').trim();
-              
+
               // Comparación más flexible
               return baseName === skinObj.displayName ||
                      baseName.toLowerCase().includes(skinObj.displayName.toLowerCase()) ||
                      skinObj.displayName.toLowerCase().includes(baseName.toLowerCase());
             });
-            
+
             if (hasUserSkin) {
               console.log('✅ Encontrada skin del usuario:', skinObj.displayName);
             }
             return hasUserSkin;
           });
-          
+
           // Si aún no hay skins, mostrar TODAS las skins de la arma (para debugging)
           if (skinsParaModal.length === 0 && skinsDeArma.length > 0) {
             console.log('⚠️ Mostrando TODAS las skins de la arma para debugging');
             skinsParaModal = skinsDeArma;
           }
-          
+
           // Si aún no hay skins, crear skins básicas desde los datos del usuario
           if (skinsParaModal.length === 0) {
             console.log('🔧 Creando skins básicas desde datos del usuario...');
-            
+
             // Buscar skins del usuario que pertenezcan a esta arma específica
             const userSkinsForWeapon = allSkins.filter(userSkin => {
               const skinLevelObj = skinlevels.find(s => s.uuid === userSkin.ItemID);
               if (!skinLevelObj) return false;
-              
+
               const baseName = skinLevelObj.displayName.replace(/ Level \d+$/, '').trim().toLowerCase();
               const weaponName = armaNombre.toLowerCase();
-              
+
               // Lista de palabras clave para identificar tipos de armas melee
               const meleeKeywords = ['knife', 'karambit', 'axe', 'sword', 'dagger', 'blade', 'melee'];
-              
+
               // Si es una arma melee, verificar si la skin es de tipo melee
               if (weaponName === 'melee' || meleeKeywords.some(keyword => weaponName.includes(keyword))) {
                 return meleeKeywords.some(keyword => baseName.includes(keyword));
@@ -818,14 +706,14 @@ export default function MySkins() {
                 return baseName.includes(weaponName);
               }
             });
-            
+
             console.log('🔧 USER SKINS FOR WEAPON:', userSkinsForWeapon);
-            
+
             // Crear objetos de skin básicos
             skinsParaModal = userSkinsForWeapon.map(userSkin => {
               const skinLevelObj = skinlevels.find(s => s.uuid === userSkin.ItemID);
               const baseName = skinLevelObj?.displayName.replace(/ Level \d+$/, '').trim() || 'Unknown Skin';
-              
+
               return {
                 displayName: baseName,
                 displayIcon: skinLevelObj?.displayIcon || '',
@@ -837,13 +725,13 @@ export default function MySkins() {
                 levels: [skinLevelObj].filter(Boolean)
               };
             });
-            
+
             console.log('🔧 SKINS BÁSICAS CREADAS:', skinsParaModal.map(s => s.displayName));
           }
         }
-        
+
         console.log('🎯 SKINS FINALES PARA MODAL:', skinsParaModal.map(s => s.displayName));
-        
+
         // Ordenar por precio ascendente usando el contexto global
         if (skinsParaModal.length > 0) {
           skinsParaModal = sortSkinsByPriceAsc(Object.fromEntries(skinsParaModal.map(s => [s.displayName, skinsPorBase[s.displayName] || []]))).map(([name, obj]) => skinsDeArma.find(s => s.displayName === name));
@@ -859,7 +747,7 @@ export default function MySkins() {
 
         return (
           <div
-            style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            className={styles.modalOverlay}
             onClick={e => { if (e.target === e.currentTarget) closeModal(); }}
           >
             <WeaponDetail
@@ -879,7 +767,7 @@ export default function MySkins() {
   const renderAllSkins = () => (
     <div className={styles.inventoryGrid}>
       {allSkins.length === 0 ? (
-        <div style={{ color: '#fff', textAlign: 'center' }}>No hay skins guardados.</div>
+        <div className={styles.emptyText}>No hay skins guardados.</div>
       ) : (
         allSkins.map((skin, idx) => {
           const skinObj = getSkinById(skin.ItemID);
@@ -898,121 +786,46 @@ export default function MySkins() {
               </div>
               <div className={styles.skinName}>{skinObj?.displayName || skin.ItemID}</div>
               <div className={styles.unlockedLevels}>Niveles desbloqueados: {unlockedLevels}</div>
-        </div>
+            </div>
           );
         })
       )}
     </div>
   );
 
-  // Navbar
-  const Navbar = () => (
-        <div style={{
-      width: '100%',
-          position: 'fixed',
-          top: 0,
-          left: 0,
-      zIndex: 100,
-      background: 'rgba(20, 25, 35, 0.98)',
-      boxShadow: '0 2px 12px #0007',
-          display: 'flex',
-          justifyContent: 'center',
-            alignItems: 'center',
-      padding: '18px 0',
-      gap: 32
-    }}>
-      <button onClick={() => navigate('/')} style={{ background: 'none', color: '#fff', border: 'none', fontWeight: 'bold', fontSize: 20, letterSpacing: 2, cursor: 'pointer', padding: '8px 24px', borderRadius: 8, transition: 'background 0.2s' }}>Home</button>
-      <button onClick={() => navigate('/mis-skins')} style={{ background: '#ff4655', color: '#fff', border: 'none', fontWeight: 'bold', fontSize: 20, letterSpacing: 2, cursor: 'pointer', padding: '8px 24px', borderRadius: 8, transition: 'background 0.2s' }}>Loadout</button>
-      <button onClick={() => navigate('/inventory')} style={{ background: 'none', color: '#fff', border: 'none', fontWeight: 'bold', fontSize: 20, letterSpacing: 2, cursor: 'pointer', padding: '8px 24px', borderRadius: 8, transition: 'background 0.2s' }}>Inventory</button>
-                    </div>
-  );
-
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#0d0d0d',
-      color: '#fff',
-      position: 'relative'
-    }}>
-      {/* Background: dark red radial gradient from top-center, same as ValorantBuilder */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: 'radial-gradient(ellipse 80% 55% at 50% 0%, rgba(120,15,15,0.55) 0%, rgba(60,5,5,0.2) 45%, transparent 70%)',
-        zIndex: -1,
-        pointerEvents: 'none'
-      }} />
-      
-      <Navbar />
-      
+    <div className={styles.page}>
+      <div className={styles.backdrop} />
+
+      <InventoryNavbar />
+
       {/* Header Section */}
-      <div style={{
-        background: 'rgba(10, 10, 10, 0.95)',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        padding: '20px 40px',
-        marginTop: 90
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 style={{ 
-              color: '#fff', 
-              margin: 0, 
-              fontSize: 28, 
-              fontWeight: 'bold',
-              letterSpacing: '1px'
-            }}>
-              COLLECTION
-            </h1>
-            <p style={{
-              color: 'rgba(255,255,255,0.5)',
-              margin: '4px 0 0 0',
-              fontSize: 14,
-            }}>
-              {riotAccount.name} ({riotAccount.nickname || riotAccount.puuid})
-            </p>
-          </div>
-          
-          {/* Top Right Currency Display */}
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            {riotAccount?.wallet?.Balances && (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img 
-                    src="/assets/icons/20px-White_Valorant_Points_VALORANT.png" 
-                    alt="VP"
-                    style={{ width: 20, height: 20 }}
-                  />
-                  <span style={{ color: '#fff', fontSize: 14, fontWeight: 'bold' }}>
-                    {riotAccount.wallet.Balances['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741'] || 0}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img 
-                    src="/assets/icons/radianitepoints.png" 
-                    alt="RP"
-                    style={{ width: 20, height: 20 }}
-                  />
-                  <span style={{ color: '#fff', fontSize: 14, fontWeight: 'bold' }}>
-                    {riotAccount.wallet.Balances['e59aa87c-4cbf-517a-5983-6e81511be9b7'] || 0}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img 
-                    src="/assets/icons/kingdompoints.png" 
-                    alt="KP"
-                    style={{ width: 20, height: 20 }}
-                  />
-                  <span style={{ color: '#fff', fontSize: 14, fontWeight: 'bold' }}>
-                    {(riotAccount.wallet.Balances['85ca954a-41f2-ce94-9b45-8ca3dd39a00d'] || 0).toLocaleString()}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
+      <div className={styles.headerBar}>
+        <div>
+          <div className={styles.headerEyebrow}>Loadout</div>
+          <h1 className={styles.headerTitle}>Current Loadout</h1>
+          <p className={styles.headerSub}>
+            {riotAccount.name} ({riotAccount.nickname || riotAccount.puuid})
+          </p>
         </div>
+
+        {/* Top Right Currency Display */}
+        {riotAccount?.wallet?.Balances && (
+          <div className={styles.walletRow}>
+            <div className={styles.walletChip}>
+              <img src="/assets/icons/20px-White_Valorant_Points_VALORANT.png" alt="VP" style={{ width: 18, height: 18 }} />
+              {riotAccount.wallet.Balances['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741'] || 0}
+            </div>
+            <div className={styles.walletChip}>
+              <img src="/assets/icons/radianitepoints.png" alt="RP" style={{ width: 18, height: 18 }} />
+              {riotAccount.wallet.Balances['e59aa87c-4cbf-517a-5983-6e81511be9b7'] || 0}
+            </div>
+            <div className={styles.walletChip}>
+              <img src="/assets/icons/kingdompoints.png" alt="KP" style={{ width: 18, height: 18 }} />
+              {(riotAccount.wallet.Balances['85ca954a-41f2-ce94-9b45-8ca3dd39a00d'] || 0).toLocaleString()}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main Content */}
@@ -1021,7 +834,7 @@ export default function MySkins() {
         {activeTab === 'loadout' && renderLoadout()}
         {activeTab === 'inventory' && renderAllSkins()}
       </div>
-      
+
       {/* Notificación animada */}
       <Notification
         isVisible={notification.isVisible}
@@ -1032,4 +845,4 @@ export default function MySkins() {
       />
     </div>
   );
-} 
+}

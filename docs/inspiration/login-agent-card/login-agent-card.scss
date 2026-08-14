@@ -1,0 +1,178 @@
+@import url("https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Teko:wght@600&display=swap");
+
+/* COLORS */
+$vlrnt-blk: #0f1923;
+$vlrnt-red: #ff4654;
+
+/* FONT */
+$font-stack: "Rajdhani", sans-serif;
+
+body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    border: 10px solid $vlrnt-red;
+    background-color: $vlrnt-blk;
+    color: $vlrnt-blk;
+    font: 400 18px/22px $font-stack;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    margin: 0;
+    width: 830px;
+    height: 560px;
+    background-color: white;
+
+    div {
+        box-sizing: border-box;
+        display: inline-block;
+        height: 100%;
+        padding: 36px;
+    }
+
+    div.heading-block {
+        width: 348px;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+
+        .vlrnt-logo {
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .vlrnt-logo img {
+            width: 100px;
+        }
+    }
+
+    div.signup-form {
+        width: 482px;
+    }
+}
+
+.heading-block {
+    background-color: $vlrnt-red;
+    color: white;
+
+    h1 {
+        margin: 0;
+        font: 700 64px/66px $font-stack;
+        text-transform: uppercase;
+        letter-spacing: -2px;
+    }
+}
+
+.signup-form {
+    p {
+        margin: 0;
+    }
+
+    form {
+        margin: 30px 0;
+    }
+
+    form * {
+        display: block;
+        font-family: "Rajdhani", sans-serif;
+    }
+
+    label,
+    .button-box {
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    label {
+        margin: 8px 0;
+    }
+
+    input {
+        width: 90%;
+        height: 40px;
+        margin-bottom: 30px;
+        padding: 0 8px;
+        font: 400 18px $font-stack;
+    }
+
+    select {
+        width: 95%;
+        height: 48px;
+        margin-bottom: 30px;
+        padding: 0 8px;
+        font: 400 18px $font-stack;
+    }
+
+    /* Button and hover effect */
+    div.button-box {
+        display: inline-block;
+        width: auto;
+        border: 1px solid rgba(15, 25, 35, 0.4);
+        padding: 6px;
+
+        .button-mask {
+            cursor: pointer;
+            position: relative;
+            padding: 18px 60px;
+            display: block;
+            //min-width: 200px;
+            //height: 50px;
+            overflow: hidden;
+            color: white;
+            background-color: $vlrnt-red;
+        }
+
+        .button-mask:before {
+            content: "";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: -5%;
+            width: 130%;
+            height: 100%;
+            background-color: $vlrnt-blk;
+            transform: translateX(-100%) skew(-15deg);
+            transition: transform 0.4s ease;
+        }
+
+        .button-mask:hover:before {
+            transform: translateX(0) skew(-15deg);
+        }
+
+        .button-mask span {
+            position: relative;
+            z-index: 1;
+        }
+    }
+}
+
+/* Outlined text background */
+
+.bg-text-stroke {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 72px 48px;
+    z-index: -1;
+
+    span {
+        font: 700 21rem "Teko", sans-serif;
+        line-height: 0.8;
+        text-transform: uppercase;
+        -webkit-text-fill-color: rgba(0, 0, 0, 0);
+        -webkit-text-stroke-color: rgba(255, 255, 255, 0.3);
+        -webkit-text-stroke-width: 1px;
+    }
+}
