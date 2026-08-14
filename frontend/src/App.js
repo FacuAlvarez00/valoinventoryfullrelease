@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { InventoryProvider, useInventory } from "./context/InventoryContext";
-import { LanguageProvider } from "./context/LanguageContext";
 import { AuthPage } from "./components/auth";
 import { HomePage, LandingPage, PageWrapper, LoadingScreen, AppHeader } from "./components/ui";
 import appStyles from "./App.module.css";
@@ -31,19 +30,19 @@ function groupWeaponsByCategory(weapons) {
   return categories;
 }
 
-// Extrae el codename de un arma desde su assetPath
+// Extract a weapon codename from its asset path
 function getWeaponCodename(weapon) {
   console.log('🔧 [DEBUG] getWeaponCodename for:', weapon.displayName, 'assetPath:', weapon.assetPath);
   
-  // Ejemplo assetPath: ShooterGame/Content/Equippables/Guns/Rifles/AK/AK_PrimaryAsset
-  // Para melee: ShooterGame/Content/Equippables/Melee/Melee_PrimaryAsset
+  // Gun example: ShooterGame/Content/Equippables/Guns/Rifles/AK/AK_PrimaryAsset
+  // Melee example: ShooterGame/Content/Equippables/Melee/Melee_PrimaryAsset
   const match = weapon.assetPath && weapon.assetPath.match(/Guns\/[^\/]+\/([^\/]+)/);
   if (match) {
     console.log('🔧 [DEBUG] Found gun codename:', match[1]);
     return match[1];
   }
   
-  // Si no es un arma de fuego, prueba con melee
+  // If it is not a firearm, try the melee path
   const meleeMatch = weapon.assetPath && weapon.assetPath.match(/Melee\/([^\/]+)/);
   if (meleeMatch) {
     console.log("🔧 [DEBUG] CODENAME MELEE:", meleeMatch[1], weapon.displayName, weapon.assetPath);
@@ -54,7 +53,7 @@ function getWeaponCodename(weapon) {
   return weapon.displayName;
 }
 
-// Función de fallback que usa la lógica original
+// Fallback for catalog entries that cannot be resolved by item ID
 function getSkinsForWeaponFallback(skins, weapon) {
   console.log('🔄 [DEBUG] Using fallback method for weapon:', weapon.displayName);
   
@@ -62,7 +61,7 @@ function getSkinsForWeaponFallback(skins, weapon) {
   let all = [];
   
   if (weapon.assetPath && weapon.assetPath.includes("/Melee/")) {
-    // Para cuchillos
+    // Melee weapons
     all = skins.filter(
       (skin) =>
         skin.assetPath &&
@@ -70,16 +69,16 @@ function getSkinsForWeaponFallback(skins, weapon) {
         skin.displayIcon
     );
   } else {
-    // Para armas regulares
+    // Firearms
     all = skins.filter((skin) => {
       if (!skin.assetPath || !skin.displayIcon) return false;
       
-      // Buscar por codename en assetPath
+      // Match the codename in the asset path
       if (codename && skin.assetPath.toLowerCase().includes('/' + codename + '/')) {
         return true;
       }
       
-      // Buscar por nombre del arma
+      // Match the weapon name in the asset path
       const weaponNameInPath = weapon.displayName.toLowerCase().replace(/\s+/g, '');
       if (skin.assetPath.toLowerCase().includes(weaponNameInPath)) {
         return true;
@@ -115,7 +114,7 @@ function getSkinsForWeapon(userSkins, weapon, catalog, fallbackSkins = []) {
     fallbackSkinsCount: fallbackSkins?.length || 0
   });
   
-  // Log de las primeras skins del usuario
+  // Log a small sample of the user's skins
   if (userSkins && userSkins.length > 0) {
     console.log('🔍 [DEBUG] Sample user skins:', userSkins.slice(0, 3).map(s => ({
       ItemID: s.ItemID,
@@ -123,18 +122,18 @@ function getSkinsForWeapon(userSkins, weapon, catalog, fallbackSkins = []) {
     })));
   }
   
-  // Si no hay datos del inventario, usar fallback con la lógica original
+  // Fall back when inventory or catalog data is unavailable
   if (!userSkins || userSkins.length === 0 || !catalog) {
     console.log('❌ [DEBUG] No user skins or catalog available, using fallback');
     return getSkinsForWeaponFallback(fallbackSkins, weapon);
   }
   
-  // Usar la misma lógica que InventorySkins.jsx
+  // Use the same catalog matching strategy as InventorySkins
   const skinlevels = catalog.skinlevels || [];
   const catalogSkins = catalog.skins || [];
   
-  // Agrupar userSkins por nombre base usando el catálogo de skinlevels
-  const skinsPorBase = {};
+  // Group the user's skins by base name using the skin-level catalog
+  const skinsByBaseName = {};
   let matchedSkins = 0;
   let unmatchedSkins = 0;
   
@@ -146,30 +145,30 @@ function getSkinsForWeapon(userSkins, weapon, catalog, fallbackSkins = []) {
     }
     matchedSkins++;
     const baseName = skinLevelObj.displayName.split(' Level ')[0].trim();
-    if (!skinsPorBase[baseName]) skinsPorBase[baseName] = [];
-    skinsPorBase[baseName].push(skinLevelObj);
+    if (!skinsByBaseName[baseName]) skinsByBaseName[baseName] = [];
+    skinsByBaseName[baseName].push(skinLevelObj);
   });
   
   console.log('🔍 [DEBUG] Skins processing:', {
     totalUserSkins: userSkins.length,
     matchedSkins,
     unmatchedSkins,
-    basesFound: Object.keys(skinsPorBase).length,
-    baseNames: Object.keys(skinsPorBase).slice(0, 5)
+    basesFound: Object.keys(skinsByBaseName).length,
+    baseNames: Object.keys(skinsByBaseName).slice(0, 5)
   });
   
-  // Buscar skins que pertenecen a esta arma
+  // Find skins that belong to this weapon
   const weaponSkins = [];
   
-  Object.entries(skinsPorBase).forEach(([baseName, skinLevels]) => {
-    // Buscar el objeto base de la skin en el catálogo
+  Object.entries(skinsByBaseName).forEach(([baseName, skinLevels]) => {
+    // Find the base skin in the catalog
     let skinBaseObj = catalogSkins.find(s => s.displayName === baseName);
     if (!skinBaseObj) {
       skinBaseObj = catalogSkins.find(s => s.displayName.toLowerCase().includes(baseName.toLowerCase()));
     }
     
     if (skinBaseObj) {
-      // Verificar si esta skin pertenece al arma seleccionada
+      // Check whether the skin belongs to the selected weapon
       const uuidMatch = skinBaseObj.weaponUuid === weapon.uuid;
       const nameMatch1 = skinBaseObj.displayName.toLowerCase().includes(weapon.displayName.toLowerCase());
       const nameMatch2 = weapon.displayName.toLowerCase().includes(skinBaseObj.displayName.toLowerCase());
@@ -194,7 +193,7 @@ function getSkinsForWeapon(userSkins, weapon, catalog, fallbackSkins = []) {
       });
       
       if (belongsToWeapon) {
-        // Agregar todos los niveles de esta skin
+        // Include every owned level for this skin
         skinLevels.forEach(level => {
           if (level.displayIcon) {
             weaponSkins.push(level);
@@ -220,7 +219,7 @@ function AppContent() {
   const [weapons, setWeapons] = useState([]);
   const [skins, setSkins] = useState([]);
   const [selectedWeapon, setSelectedWeapon] = useState(null);
-  const [equippedSkins, setEquippedSkins] = useState({}); // { weaponUuid: skinObj }
+  const [equippedSkins, setEquippedSkins] = useState({}); // { weaponUuid: skinObject }
   const [loading, setLoading] = useState(true);
   const [authView, setAuthView] = useState('landing'); // 'landing' | 'auth'
   const [authInitialLogin, setAuthInitialLogin] = useState(true);
@@ -236,7 +235,7 @@ function AppContent() {
       ]);
       setWeapons(weaponsRes.data);
       setSkins(skinsRes.data);
-      // LOG para depuración
+      // Development sample for catalog diagnostics
       console.log("PRIMERA SKIN", skinsRes.data[0]);
       setLoading(false);
     }
@@ -247,12 +246,12 @@ function AppContent() {
     if (!skin) return;
     const codename = getWeaponCodename(weapon).toLowerCase();
     setEquippedSkins((prev) => ({ ...prev, [codename]: skin }));
-    setSelectedWeapon(null); // volver a la galería
+    setSelectedWeapon(null); // Return to the gallery
   };
 
-  if (authLoading) return <LoadingScreen fullscreen text="Iniciando sesión..." />;
+  if (authLoading) return <LoadingScreen fullscreen text="Signing in..." />;
 
-  // Si no está autenticado, mostrar landing o login/register
+  // Show the landing or authentication flow when signed out
   if (!user) {
     if (authView === 'landing') {
       return (
@@ -270,9 +269,9 @@ function AppContent() {
     );
   }
 
-  if (loading) return <LoadingScreen fullscreen text="Cargando datos..." />;
+  if (loading) return <LoadingScreen fullscreen text="Loading data..." />;
 
-  // Si hay un arma seleccionada, mostrar su detalle
+  // Show details for the selected weapon
   if (selectedWeapon) {
     console.log('🎯 [DEBUG] WeaponDetail render:', {
       selectedWeapon: selectedWeapon.displayName,
@@ -301,7 +300,7 @@ function AppContent() {
     );
   }
 
-  // Mostrar la skin equipada en la galería, si existe, si no la default
+  // Show the equipped skin in the gallery or use the default weapon image
   const weaponsByCategory = groupWeaponsByCategory(
     weapons.map((weapon) => {
       const codename = getWeaponCodename(weapon).toLowerCase();
@@ -321,7 +320,6 @@ function AppContent() {
         onWeaponSelect={setSelectedWeapon}
       />
 
-      {/* Botón de bandera flotante */}
     </div>
   );
 }
@@ -337,31 +335,29 @@ function AccountLayout() {
 
 function App() {
   return (
-    <LanguageProvider>
-      <AuthProvider>
-        <InventoryProvider>
-          <Router>
-            <Routes>
-              <Route path="/" element={<AppContent />} />
-              <Route element={<AccountLayout />}>
-                <Route path="details" element={<InventoryDetails />} />
-                <Route path="mis-skins" element={<MySkins />} />
-                <Route path="inventory" element={<InventoryDashboard />} />
-                <Route path="inventory/skins" element={<InventorySkins />} />
-                <Route path="inventory/battlepass" element={<InventoryBattlepass />} />
-                <Route path="inventory/buddies" element={<InventoryBuddies />} />
-                <Route path="inventory/cards" element={<InventoryCards />} />
-                <Route path="inventory/sprays" element={<InventorySprays />} />
-                <Route path="inventory/flex" element={<InventoryFlex />} />
-                <Route path="inventory/titles" element={<InventoryTitles />} />
-                <Route path="inventory/agents" element={<InventoryAgents />} />
-              </Route>
-              <Route path="/share/:token" element={<SharedView />} />
-            </Routes>
-          </Router>
-        </InventoryProvider>
-      </AuthProvider>
-    </LanguageProvider>
+    <AuthProvider>
+      <InventoryProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<AppContent />} />
+            <Route element={<AccountLayout />}>
+              <Route path="details" element={<InventoryDetails />} />
+              <Route path="loadout" element={<MySkins />} />
+              <Route path="inventory" element={<InventoryDashboard />} />
+              <Route path="inventory/skins" element={<InventorySkins />} />
+              <Route path="inventory/battlepass" element={<InventoryBattlepass />} />
+              <Route path="inventory/buddies" element={<InventoryBuddies />} />
+              <Route path="inventory/cards" element={<InventoryCards />} />
+              <Route path="inventory/sprays" element={<InventorySprays />} />
+              <Route path="inventory/flex" element={<InventoryFlex />} />
+              <Route path="inventory/titles" element={<InventoryTitles />} />
+              <Route path="inventory/agents" element={<InventoryAgents />} />
+            </Route>
+            <Route path="/share/:token" element={<SharedView />} />
+          </Routes>
+        </Router>
+      </InventoryProvider>
+    </AuthProvider>
   );
 }
 

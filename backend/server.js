@@ -18,39 +18,39 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// --- Rutas
+// Routes
 app.use('/api/auth', authRoutes);
 
-// --- Catálogo cacheado (skins, weapons, chromas, skinlevels, precios)
+// Cached catalog: skins, weapons, chromas, skin levels, and prices
 app.get('/api/catalog', (req, res) => {
   if (!catalogCache.isReady()) {
-    return res.status(503).json({ success: false, message: 'Catálogo cargando, reintentá en unos segundos' });
+    return res.status(503).json({ success: false, message: 'The catalog is loading. Try again in a few seconds.' });
   }
   const { weapons, skins, chromas, skinlevels, weaponSkins, lastUpdated } = catalogCache.get();
   res.json({ success: true, weapons, skins, chromas, skinlevels, weaponSkins, lastUpdated });
 });
 
-// --- Healthcheck (útil para Render)
+// Health check
 app.get('/health', (req, res) => res.status(200).json({ ok: true }));
 
-// --- Proxy HenrikDev (igual que tenías)
+// HenrikDev proxy
 app.get('/api/account-level/:nickname', async (req, res) => {
   try {
     const { nickname } = req.params;
     if (!nickname || !nickname.includes('#')) {
-      return res.status(400).json({ error: 'Formato de nickname inválido' });
+      return res.status(400).json({ error: 'Invalid nickname format' });
     }
     const [name, tag] = nickname.split('#');
     const response = await fetch(`https://api.henrikdev.xyz/valorant/v1/account/${name}/${tag}`, {
       headers: { authorization: process.env.HENRIKDEV_API_KEY || '' }
     });
     if (!response.ok) {
-      return res.status(response.status).json({ error: 'No se pudo obtener el nivel de cuenta' });
+      return res.status(response.status).json({ error: 'The account level could not be loaded' });
     }
     const data = await response.json();
     return res.json({ account_level: data.data?.account_level || null });
   } catch (err) {
-    return res.status(500).json({ error: 'Error interno del servidor' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -84,7 +84,7 @@ async function startServer() {
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
-    // Cargar catálogo en segundo plano (no bloquea el arranque del servidor)
+    // Load the catalog in the background without blocking server startup
     catalogCache.init().catch(e => console.error('❌ CatalogCache init error:', e));
   } catch (error) {
     console.error('❌ Error starting server:', error);

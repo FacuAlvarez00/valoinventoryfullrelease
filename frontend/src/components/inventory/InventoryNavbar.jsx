@@ -4,9 +4,9 @@ import { useInventory } from '../../context/InventoryContext';
 import styles from './InventoryNavbar.module.css';
 
 const ACCOUNT_SECTIONS = [
-  { label: 'Resumen', path: '/details', matches: pathname => pathname === '/details' },
-  { label: 'Loadout', path: '/mis-skins', matches: pathname => pathname === '/mis-skins' },
-  { label: 'Inventario', path: '/inventory', matches: pathname => pathname.startsWith('/inventory') },
+  { label: 'Overview', path: '/details', matches: pathname => pathname === '/details' },
+  { label: 'Loadout', path: '/loadout', matches: pathname => pathname === '/loadout' },
+  { label: 'Inventory', path: '/inventory', matches: pathname => pathname.startsWith('/inventory') },
 ];
 
 export default function InventoryNavbar() {
@@ -25,11 +25,11 @@ export default function InventoryNavbar() {
   };
 
   return (
-    <section className={styles.scopeBar} aria-label="Cuenta y navegación">
+    <section className={styles.scopeBar} aria-label="Account navigation">
       <div className={styles.inner}>
         <button type="button" className={styles.backButton} onClick={() => navigate('/')}>
           <span aria-hidden="true">←</span>
-          Todas las cuentas
+          All accounts
         </button>
 
         <div className={styles.accountHeader}>
@@ -39,11 +39,11 @@ export default function InventoryNavbar() {
               {riotId && <div className={styles.riotId}>{riotId}</div>}
             </>
           ) : (
-            <div className={styles.accountNameSkeleton} aria-label="Cargando cuenta" />
+            <div className={styles.accountNameSkeleton} aria-label="Loading account" />
           )}
         </div>
 
-        <nav className={styles.sections} aria-label="Secciones de la cuenta">
+        <nav className={styles.sections} aria-label="Account sections">
           {ACCOUNT_SECTIONS.map(section => {
             const active = section.matches(location.pathname);
             return (

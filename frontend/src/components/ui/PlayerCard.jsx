@@ -31,7 +31,7 @@ export default function PlayerCard({ identity, name, puuid, nickname }) {
   }, [identity, playerName, playerTag]);
 
   if (!identity || !identity.PlayerCardID || !identity.PlayerTitleID) {
-    return <div className={styles.empty}>No hay datos de identidad</div>;
+    return <div className={styles.empty}>No identity data is available.</div>;
   }
 
   return (

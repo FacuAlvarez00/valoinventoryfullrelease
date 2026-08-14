@@ -72,7 +72,7 @@ function LoadoutWeaponImage({ src, alt }) {
 
 function LoadoutPageSkeleton() {
   return (
-    <div className={styles.page} aria-busy="true" aria-label="Cargando loadout">
+    <div className={styles.page} aria-busy="true" aria-label="Loading loadout">
       <div className={styles.headerRow}>
         <div>
           <div className={styles.headerEyebrow}>Loadout</div>
@@ -99,33 +99,33 @@ export default function MySkins() {
     riotAccount, setRiotAccount, loading, error, catalog, catalogLoading, weaponSkins, sortSkinsByPriceAsc
   } = useInventory();
   const { notification, showSuccess, showError, hideNotification } = useNotification();
-  // Para todos los skins
+  // Complete skin collection
   const [skins, setSkins] = useState([]);
   const [detailedSkins, setDetailedSkins] = useState([]);
-  // Para el loadout
+  // Current loadout
   const [loadout, setLoadout] = useState(null);
   const [loadoutSkins, setLoadoutSkins] = useState({});
-  // Estado general
+  // Shared state
   const [skinsLoading, setSkinsLoading] = useState(false);
   const [skinsError, setSkinsError] = useState('');
   const [chromaMap, setChromaMap] = useState({});
   const [chromaImages, setChromaImages] = useState({});
-  // Guardar slotToSkinLevel en el estado para usarlo en el render
+  // Keep the skin level for each slot available during render
   const [slotToSkinLevel, setSlotToSkinLevel] = useState({});
-  // Estado para las armas default
+  // Default weapon state
   const [defaultWeapons, setDefaultWeapons] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalWeapon, setModalWeapon] = useState(null);
-  // Estado para tabs
+  // Tab state
   const [activeTab, setActiveTab] = useState('loadout');
   const [showUpdatePopup, setShowUpdatePopup] = useState(false);
   const [updateToken, setUpdateToken] = useState('');
   const [updateStatus, setUpdateStatus] = useState('');
 
-  // Obtener el JWT del localStorage
+  // Read the JWT from local storage
   const getJWT = () => localStorage.getItem('authToken');
 
-  // Cargar loadout automáticamente al entrar al tab
+  // Load the account loadout when the view opens
   useEffect(() => {
     if (activeTab === 'loadout') {
       fetchLoadoutAndDetails();
@@ -133,19 +133,19 @@ export default function MySkins() {
     // eslint-disable-next-line
   }, [activeTab]);
 
-  // Obtener todos los skins (como antes)
+  // Fetch the complete skin collection
   const fetchSkins = async () => {
     setSkinsLoading(true);
     setSkinsError('');
     setDetailedSkins([]);
     const token = localStorage.getItem('riot_token');
     if (!token) {
-      setSkinsError('Falta el token de Riot.');
+      setSkinsError('The Riot token is missing.');
       setSkinsLoading(false);
       return;
     }
     try {
-      // 1. Obtener los skins del backend
+      // Fetch skins from the backend
       const res = await fetch(`${API_BASE}/api/auth/riot/skins`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -153,12 +153,12 @@ export default function MySkins() {
       });
       const data = await res.json();
       if (!data.success) {
-        setSkinsError('No se pudieron obtener los skins.');
+        setSkinsError('Skins could not be loaded.');
         setSkinsLoading(false);
         return;
       }
       setSkins(data.skins.Entitlements || []);
-      // 2. Obtener detalles de los skins
+      // Fetch skin details
       const itemIDs = (data.skins.Entitlements || []).map(s => s.ItemID);
       if (itemIDs.length === 0) {
         setSkinsLoading(false);
@@ -174,33 +174,33 @@ export default function MySkins() {
         setDetailedSkins(detailsData.skinLevels);
       }
     } catch (e) {
-      setSkinsError('Error obteniendo skins.');
+      setSkinsError('Failed to load skins.');
       console.error(e);
     }
     setSkinsLoading(false);
   };
 
-  // Obtener todos los chromas al montar el componente
+  // Fetch chromas when the component mounts
   useEffect(() => {
     const fetchChromas = async () => {
       try {
         const res = await fetch('https://valorant-api.com/v1/weapons/skinchromas');
         const data = await res.json();
         if (data.status === 200) {
-          // Crear un mapa uuid -> chroma
+          // Build a UUID-to-chroma map
           const map = {};
           data.data.forEach(chroma => { map[chroma.uuid] = chroma; });
           setChromaMap(map);
 
         }
       } catch (e) {
-        console.error('Error obteniendo chromas:', e);
+        console.error('Failed to load chromas:', e);
       }
     };
     fetchChromas();
   }, []);
 
-  // Obtener el loadout y los detalles de los skinlevels equipados
+  // Fetch the loadout and equipped skin-level details
   const fetchLoadoutAndDetails = async () => {
     setSkinsLoading(true);
     setSkinsError('');
@@ -211,12 +211,12 @@ export default function MySkins() {
     const puuid = localStorage.getItem('riot_puuid');
     const entitlementToken = localStorage.getItem('riot_entitlement_token');
     if (!riotToken || !puuid || !entitlementToken) {
-      setSkinsError('Faltan datos de autenticación de Riot.');
+      setSkinsError('Riot authentication data is missing.');
       setSkinsLoading(false);
       return;
     }
     try {
-      // 1. Obtener el loadout actual
+      // Fetch the current loadout
       const res = await fetch(`${API_BASE}/api/auth/riot/loadout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -225,20 +225,20 @@ export default function MySkins() {
       const data = await res.json();
       console.log('🔍 LOADOUT DATA:', data.loadout);
       if (!data.success) {
-        setSkinsError('No se pudo obtener el loadout.');
+        setSkinsError('The loadout could not be loaded.');
         setSkinsLoading(false);
         return;
       }
       setLoadout(data.loadout);
 
-      // Debug: Verificar si hay datos de loadout
+      // Ensure the API returned loadout data
       if (!data.loadout || !data.loadout.Guns) {
-        console.log('⚠️ No hay datos de loadout o Guns');
-        setSkinsError('No se encontraron datos de loadout.');
+        console.log('⚠️ No loadout or gun data is available');
+        setSkinsError('No loadout data was found.');
         setSkinsLoading(false);
         return;
       }
-      // 2. Obtener los skinlevels y chromas equipados para cada arma
+      // Resolve equipped skin levels and chromas for each weapon
       const equipped = data.loadout?.Guns || [];
       const slotToSkinLevel = {};
       const slotToChroma = {};
@@ -253,7 +253,7 @@ export default function MySkins() {
       console.log('🔍 SLOT TO SKIN LEVEL:', slotToSkinLevel);
       console.log('🔍 SLOT TO CHROMA:', slotToChroma);
       console.log('🔍 EQUIPPED GUNS:', equipped.map(g => ({ ID: g.ID, SkinLevelID: g.SkinLevelID, ChromaID: g.ChromaID })));
-      // 3. Obtener detalles de los skinlevels
+      // Fetch skin-level details
       const itemIDs = Object.values(slotToSkinLevel).filter(Boolean);
       if (itemIDs.length === 0) {
         setSkinsLoading(false);
@@ -274,7 +274,7 @@ export default function MySkins() {
       }
       setLoadoutSkins(prev => ({ ...skinLevelMap, _chromas: slotToChroma }));
       setSlotToSkinLevel(slotToSkinLevel);
-      // 4. Obtener la imagen fullRender de cada chroma equipado
+      // Resolve the full render for each equipped chroma
       const chromaPromises = Object.entries(slotToChroma).map(async ([slot, chromaId]) => {
         if (!chromaId) return [slot, null];
         const chromaRes = await fetch(`https://valorant-api.com/v1/weapons/skinchromas/${chromaId}`);
@@ -286,13 +286,13 @@ export default function MySkins() {
       chromaResults.forEach(([slot, img]) => { chromaImagesMap[slot] = img; });
       setChromaImages(chromaImagesMap);
     } catch (e) {
-      setSkinsError('Error obteniendo loadout.');
+      setSkinsError('Failed to load the loadout.');
       console.error(e);
     }
     setSkinsLoading(false);
   };
 
-  // Obtener las armas default al montar el componente
+  // Fetch default weapons when the component mounts
   useEffect(() => {
     const fetchDefaultWeapons = async () => {
       try {
@@ -302,13 +302,13 @@ export default function MySkins() {
           setDefaultWeapons(data.data);
         }
       } catch (e) {
-        console.error('Error obteniendo armas default:', e);
+        console.error('Failed to load default weapons:', e);
       }
     };
     fetchDefaultWeapons();
   }, []);
 
-  // Completar los slots vacíos con la skin estándar sin tocar las selecciones existentes.
+  // Fill empty slots with the standard skin without changing existing selections
   useEffect(() => {
     if (!riotAccount || catalogLoading || !catalog.weapons.length) return;
 
@@ -361,42 +361,42 @@ export default function MySkins() {
   const getChromaById = (id) => catalog.chromas.find(c => c.uuid === id);
 
 
-  // Crear un mapeo de slot (ID de arma) a skinlevel y chroma equipado
+  // Map each weapon slot to its equipped skin level and chroma
   // slotToSkinLevel: { slot: SkinLevelID }, loadoutSkins: { slot: skinLevelObj }, chromaImages: { slot: chromaImg }
 
-  // Función para abrir el modal con el arma seleccionada
+  // Open the selector for a weapon
   const handleWeaponClick = (weapon) => {
     setModalWeapon(weapon);
     setModalOpen(true);
   };
 
-  // Función para cerrar el modal
+  // Close the weapon selector
   const closeModal = () => {
     setModalOpen(false);
     setModalWeapon(null);
   };
 
-  // Función para equipar skin
+  // Equip a skin
   const handleEquipSkin = (skin) => {
     console.log('🎯 Equipando skin:', skin);
 
     if (!modalWeapon || !riotAccount) {
-      showError('Error: No se puede equipar la skin');
+      showError('The skin cannot be equipped.');
       return;
     }
 
-    // Encontrar el arma en el loadout
+    // Find the weapon in the current loadout
     const weaponUuid = modalWeapon.uuid;
     const isMelee = modalWeapon.displayName.toLowerCase() === 'melee';
 
-    // Crear el objeto de skin equipada
+    // Build the equipped skin object
     const equippedSkin = {
       ID: weaponUuid,
       SkinLevelID: skin.levels?.[0]?.uuid || skin.uuid,
       ChromaID: skin.chromas?.[0]?.uuid || null
     };
 
-    // Actualizar el estado local del loadout
+    // Update local loadout state
     const updatedLoadout = { ...riotAccount.loadout };
 
     if (isMelee) {
@@ -411,29 +411,29 @@ export default function MySkins() {
       }
     }
 
-    // Actualizar el estado de la cuenta Riot
+    // Update the Riot account state
     const updatedRiotAccount = {
       ...riotAccount,
       loadout: updatedLoadout
     };
 
-    // Actualizar el contexto
+    // Update the shared account context
     setRiotAccount(updatedRiotAccount);
 
     console.log('🎯 Loadout actualizado:', updatedLoadout);
     console.log('🎯 Skin equipada:', equippedSkin);
 
-    // Cerrar el modal
+    // Close the modal
     closeModal();
 
     showSuccess(`Skin ${skin.displayName} equipada!`);
   };
 
-  // Función para actualizar la cuenta Riot
+  // Refresh the Riot account
   const handleUpdateAccount = async () => {
     setUpdateStatus('');
     if (!updateToken) {
-      setUpdateStatus('Pega el nuevo token de Riot.');
+      setUpdateStatus('Paste the new Riot token.');
       return;
     }
     try {
@@ -448,29 +448,29 @@ export default function MySkins() {
       });
       const data = await res.json();
       if (data.success) {
-        setUpdateStatus('Cuenta actualizada correctamente.');
+        setUpdateStatus('Account updated successfully.');
         setShowUpdatePopup(false);
         setUpdateToken('');
         setRiotAccount(data.riotAccount);
       } else {
-        setUpdateStatus(data.message || 'Error al actualizar la cuenta.');
+        setUpdateStatus(data.message || 'Failed to update the account.');
       }
     } catch (e) {
-      setUpdateStatus('Error de red al actualizar la cuenta.');
+      setUpdateStatus('A network error occurred while updating the account.');
     }
   };
 
-  // Mostrar loading/error
+  // Loading and error states
   if (loading) return <LoadoutPageSkeleton />;
   if (error) return <div style={{ color: 'var(--vi-red)', textAlign: 'center', marginTop: 80 }}>{error}</div>;
   if (!riotAccount) return null;
 
-  // Utilidades para renderizar loadout y skins
+  // Loadout and skin rendering helpers
   const loadoutGuns = riotAccount?.loadout?.Guns || [];
   const loadoutMelee = riotAccount?.loadout?.Melee || null;
   const allSkins = riotAccount?.skins || [];
 
-  // Categorías de armas para el layout - 4 columnas como en Valorant
+  // Valorant weapon categories arranged in four columns
   const weaponCategories = [
     {
       name: 'SIDEARMS',
@@ -502,7 +502,7 @@ export default function MySkins() {
     }
   ];
 
-  // Mapeo de nombre a uuid de arma
+  // Map weapon names to UUIDs
   const weaponNameToUuid = {};
   catalog.weapons.forEach(w => { weaponNameToUuid[w.displayName] = w.uuid; });
 
@@ -511,7 +511,7 @@ export default function MySkins() {
   loadoutGuns.forEach(gun => { loadoutMap[gun.ID] = gun; });
   if (loadoutMelee) loadoutMap[loadoutMelee.ID] = loadoutMelee;
 
-  // Helper para obtener imagen de skin equipada
+  // Resolve the equipped skin image
   const getWeaponImgSrc = (weaponObj, isMelee = false) => {
     let imgSrc = weaponObj.displayIcon;
     if (isMelee) {
@@ -566,7 +566,7 @@ export default function MySkins() {
     </div>
   );
 
-  // Render de loadout agrupado por categoría, siempre mostrando todas las armas, solo imagen y nombre del arma
+  // Render every weapon slot grouped by category
   const renderLoadout = () => (
     <div className={styles.loadoutWrap}>
       {/* Main Weapon Grid */}
@@ -600,38 +600,38 @@ export default function MySkins() {
           nickname={riotAccount?.nickname || ''}
         />
       </div>
-      {/* Modal de skins por arma */}
+      {/* Weapon skin modal */}
       {modalOpen && modalWeapon && (() => {
-        // Verificar que el catálogo esté cargado
+        // Ensure the skin catalog is available
         if (catalogLoading || !catalog.weapons || catalog.weapons.length === 0) {
           return (
             <div className={styles.catalogLoadingOverlay}>
               <div className={styles.catalogLoadingClose}>
-                <TacticalButton onClick={closeModal}>Cerrar</TacticalButton>
+                <TacticalButton onClick={closeModal}>Close</TacticalButton>
               </div>
               <div className={styles.catalogLoadingText}>
-                {catalogLoading ? 'Cargando catálogo de skins...' : 'Error cargando catálogo. Intenta recargar la página.'}
+                {catalogLoading ? 'Loading skin catalog...' : 'The catalog could not be loaded. Refresh the page and try again.'}
               </div>
             </div>
           );
         }
 
-        // Todas las skins que existen para esta arma puntual, según el catálogo (no el catálogo global de skins)
+        // Catalog skins for this specific weapon
         const weaponCatalogEntry = catalog.weapons.find(w => w.uuid === modalWeapon.uuid);
         const allWeaponSkins = weaponCatalogEntry?.skins || [];
 
-        // Qué niveles de skin posee realmente la cuenta (Entitlements)
+        // Skin levels actually owned by the account
         const ownedLevelIds = new Set((riotAccount?.skins || []).map(skin => skin.ItemID));
 
-        // Skin base/estándar del arma (siempre disponible, no es un ítem comprable) — se excluye "Random Favorite Skin"
+        // The standard weapon skin is always available and is not a purchasable item
         const defaultSkin = getDefaultSkin(weaponCatalogEntry);
 
-        // Skins premium que la cuenta realmente posee (algún nivel de la skin está en sus Entitlements)
+        // Premium skins with at least one owned entitlement level
         const ownedSkins = allWeaponSkins.filter(s =>
           s.contentTierUuid && s.levels?.some(lvl => ownedLevelIds.has(lvl.uuid))
         );
 
-        // Ordenar las poseídas por precio ascendente usando el contexto global
+        // Sort owned skins by ascending price with the shared pricing context
         const sortedOwnedSkins = ownedSkins.length > 0
           ? sortSkinsByPriceAsc(Object.fromEntries(ownedSkins.map(s => [s.displayName, s.levels || []])))
               .map(([name]) => ownedSkins.find(s => s.displayName === name))
@@ -639,7 +639,7 @@ export default function MySkins() {
 
         const skinsParaModal = defaultSkin ? [defaultSkin, ...sortedOwnedSkins] : sortedOwnedSkins;
 
-        // Determinar índice de la skin actualmente equipada para abrir el carrusel en ella
+        // Open the carousel at the currently equipped skin
         const isMeleeModal = modalWeapon.displayName.toLowerCase() === 'melee';
         const equippedSkinLevelId = isMeleeModal
           ? riotAccount?.loadout?.Melee?.SkinLevelID
@@ -666,11 +666,11 @@ export default function MySkins() {
     </div>
   );
 
-  // Render de todos los skins con imágenes y nombres
+  // Render every skin with its image and name
   const renderAllSkins = () => (
     <div className={styles.inventoryGrid}>
       {allSkins.length === 0 ? (
-        <div className={styles.emptyText}>No hay skins guardados.</div>
+        <div className={styles.emptyText}>No saved skins.</div>
       ) : (
         allSkins.map((skin, idx) => {
           const skinObj = getSkinById(skin.ItemID);
@@ -688,7 +688,7 @@ export default function MySkins() {
                 ))}
               </div>
               <div className={styles.skinName}>{skinObj?.displayName || skin.ItemID}</div>
-              <div className={styles.unlockedLevels}>Niveles desbloqueados: {unlockedLevels}</div>
+              <div className={styles.unlockedLevels}>Unlocked levels: {unlockedLevels}</div>
             </div>
           );
         })
@@ -728,12 +728,12 @@ export default function MySkins() {
 
       {/* Main Content */}
       <div className={styles.mainContent}>
-        {/* Renderizar la sección activa */}
+        {/* Active section */}
         {activeTab === 'loadout' && renderLoadout()}
         {activeTab === 'inventory' && renderAllSkins()}
       </div>
 
-      {/* Notificación animada */}
+      {/* Animated notification */}
       <Notification
         isVisible={notification.isVisible}
         message={notification.message}

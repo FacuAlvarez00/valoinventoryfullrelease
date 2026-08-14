@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useInventory } from '../../context/InventoryContext';
-import useStaticAgents from '../../hooks/useStaticAgents'; //
+import useStaticAgents from '../../hooks/useStaticAgents';
 import { getDefaultBattlePassImage } from '../../data/battlePassImages';
 import styles from './InventoryDashboard.module.css';
 
@@ -9,28 +9,28 @@ export default function InventoryDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { riotAccount, catalog, weaponSkins, getSkinPrice } = useInventory();
-  const { staticAgents } = useStaticAgents(); // 👈 nuevo
+  const { staticAgents } = useStaticAgents();
 
   // ----- SKINS -----
   const allSkins = riotAccount?.skins || [];
   const skinlevels = catalog?.skinlevels || [];
-  const skinsPorBase = {};
+  const skinsByBaseName = {};
   allSkins.forEach(skin => {
     const skinLevelObj = skinlevels.find(s => s.uuid === skin.ItemID);
     if (!skinLevelObj) return;
     const baseName = skinLevelObj.displayName.split(' Level ')[0].trim();
-    if (!skinsPorBase[baseName]) skinsPorBase[baseName] = [];
-    skinsPorBase[baseName].push(skinLevelObj);
+    if (!skinsByBaseName[baseName]) skinsByBaseName[baseName] = [];
+    skinsByBaseName[baseName].push(skinLevelObj);
   });
-  const totalTarjetasSkins = Object.keys(skinsPorBase).length;
+  const totalSkinCards = Object.keys(skinsByBaseName).length;
 
-  // Calcular VP gastados en skins
+  // Calculate VP spent on skins
   const totalVPSkins = useMemo(() => {
-    return Object.keys(skinsPorBase).reduce((acc, baseName) => {
+    return Object.keys(skinsByBaseName).reduce((acc, baseName) => {
       const price = getSkinPrice(baseName);
       return price ? acc + price : acc;
     }, 0);
-  }, [skinsPorBase, getSkinPrice]);
+  }, [skinsByBaseName, getSkinPrice]);
 
   // ----- BUDDIES / PASSES / CARDS / SPRAYS / TITLES / FLEX -----
   const totalBuddies = (riotAccount?.buddies || []).length;
@@ -38,10 +38,10 @@ export default function InventoryDashboard() {
   const totalCards = (riotAccount?.cards || []).length;
   const totalSprays = (riotAccount?.sprays || []).length;
   const totalTitles = (riotAccount?.titles || []).length;
-  // Flex por defecto (1) + flex del usuario
+  // One default flex item plus the user's entitlements
   const totalFlex = 1 + (riotAccount?.flex?.Entitlements || []).length;
 
-  // Contar Radiant e Immortal Buddies
+  // Count Radiant and Immortal buddies
   const radiantBuddies = useMemo(() => {
     if (!riotAccount?.buddies || riotAccount.buddies.length === 0) return 0;
     return riotAccount.buddies.filter(buddy =>
@@ -58,32 +58,32 @@ export default function InventoryDashboard() {
     ).length;
   }, [riotAccount?.buddies]);
 
-  // Calcular VP gastados en battle passes (1000 VP por battle pass)
+  // Estimate battle passes at 1,000 VP each
   const totalVPBattlePasses = totalBattlePasses * 1000;
 
-  // ----- AGENTS (merge backend + estáticos) -----
+  // ----- AGENTS -----
   const mergedAgents = useMemo(() => {
     const backend = Array.isArray(riotAccount?.agents) ? riotAccount.agents : [];
     const byKey = new Map();
     [...backend, ...staticAgents].forEach(a => {
-      // clave robusta para evitar duplicados
+      // Use a stable key to avoid duplicates
       const key = (a.uuid || a.ItemID || a.id || a.displayName || '').toString().toLowerCase();
       if (!byKey.has(key)) byKey.set(key, a);
     });
     return Array.from(byKey.values());
   }, [riotAccount, staticAgents]);
 
-  const totalAgents = mergedAgents.length; // 👈 ahora sí cuenta 7+5=12
+  const totalAgents = mergedAgents.length;
 
-  // Calcular total de VP gastados (skins + battle passes)
-  const totalVPGastados = totalVPSkins + totalVPBattlePasses;
+  // Combine the estimated skin and battle pass value
+  const totalVPSpent = totalVPSkins + totalVPBattlePasses;
 
-  // ----- FOTOS REPRESENTATIVAS POR CATEGORÍA -----
+  // Representative artwork by category
   const firstAgentImg = mergedAgents?.[0]?.fullPortrait || null;
   const battlePassImg = totalBattlePasses > 0 ? getDefaultBattlePassImage() : null;
 
   const sections = [
-    { key: 'skins',      label: 'SKINS',       count: totalTarjetasSkins, vpSpent: totalVPSkins, img: '/assets/dashboard/SKINS.webp' },
+    { key: 'skins',      label: 'SKINS',       count: totalSkinCards, vpSpent: totalVPSkins, img: '/assets/dashboard/SKINS.webp' },
     { key: 'battlepass', label: 'BATTLEPASSES',count: totalBattlePasses,  vpSpent: totalVPBattlePasses, img: battlePassImg },
     { key: 'buddies',    label: 'GUNBUDDIES',  count: totalBuddies, img: '/assets/dashboard/GUNBUDDIES.jpg' },
     { key: 'cards',      label: 'CARDS',       count: totalCards, img: '/assets/dashboard/CARDS.webp' },
@@ -111,10 +111,10 @@ export default function InventoryDashboard() {
           </p>
         </div>
 
-        <div className={styles.totalValue} aria-label={`${totalVPGastados.toLocaleString()} VP estimated value`}>
+        <div className={styles.totalValue} aria-label={`${totalVPSpent.toLocaleString()} VP estimated value`}>
           <span className={styles.totalValueLabel}>Estimated value</span>
           <span className={styles.totalValueAmount}>
-            {totalVPGastados.toLocaleString()}
+            {totalVPSpent.toLocaleString()}
             <img
               src="/assets/icons/20px-White_Valorant_Points_VALORANT.png"
               alt="VP"

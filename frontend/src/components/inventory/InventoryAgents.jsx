@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../../context/InventoryContext';
 import LoadingScreen from '../ui/LoadingScreen';
-import { BackButton } from '../ui/kit';
+import InventoryCategoryHeader from './InventoryCategoryHeader';
 import styles from './InventoryList.module.css';
 
 const STATIC_AGENT_IDS = [
@@ -28,7 +27,7 @@ async function fetchStaticAgents(signal) {
 
   const results = await Promise.allSettled(reqs);
 
-  // Mapeo manual de roles en inglés para los 5 agentes predeterminados
+  // English role mapping for the five default agents
   const roleMapping = {
     '320b2a48-4d9b-a075-30f1-1f93a9b638fa': 'Initiator', // Sova
     '569fdd95-4d10-43ab-ca70-79becc718b46': 'Sentinel',  // Sage
@@ -37,45 +36,44 @@ async function fetchStaticAgents(signal) {
     'add6443a-41bd-e414-f6ad-e58d267f4e95': 'Duelist',  // Jett
   };
 
-  // Normalizo el shape a lo que pinta el componente
+  // Normalize the API response for the component
   return results
     .filter((r) => r.status === 'fulfilled' && r.value)
     .map(({ value }) => ({
       uuid: value.uuid,
       displayName: value.displayName,
-      fullPortrait: value.fullPortrait, // puede venir null en algunos agentes; el componente ya lo maneja
+      fullPortrait: value.fullPortrait,
       role: roleMapping[value.uuid] || value.role?.displayName || null,
       processed: true,
-      index: -1, // para distinguir de los del backend si querés
+      index: -1,
       source: 'static',
     }));
 }
 
 export default function InventoryAgents() {
-  const navigate = useNavigate();
   const { riotAccount, loading, error } = useInventory();
   const [agentsDetails, setAgentsDetails] = useState([]);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
   useEffect(() => {
-    // Cargo todo: estáticos + (si existen) los del backend
+    // Load the static agents and any agents returned by the backend
     const controller = new AbortController();
     const { signal } = controller;
 
     const load = async () => {
       setDetailsLoading(true);
       try {
-        // 1) Traigo los 5 fijos
+        // Load the five default agents
         const staticAgents = await fetchStaticAgents(signal);
 
-        // 2) Tomo los del backend si existen (ya vienen con detalles según tu comentario)
+        // Normalize agents returned by the backend
         const backendAgents = Array.isArray(riotAccount?.agents)
           ? riotAccount.agents.map((agent, idx) => ({
               ...agent,
               processed: true,
               index: idx,
               source: 'backend',
-              // normalizo por si el backend trae role como objeto o string
+              // The backend may return a role as an object or a string
               role:
                 typeof agent.role === 'string'
                   ? agent.role
@@ -84,7 +82,7 @@ export default function InventoryAgents() {
             }))
           : [];
 
-        // 3) Merge con dedupe por uuid/displayName
+        // Merge and deduplicate by UUID or display name
         const byKey = new Map();
         [...staticAgents, ...backendAgents].forEach((a) => {
           const key = a.uuid || a.displayName;
@@ -93,7 +91,7 @@ export default function InventoryAgents() {
 
         setAgentsDetails(Array.from(byKey.values()));
       } catch (e) {
-        console.error('Error cargando agentes:', e);
+        console.error('Failed to load agents:', e);
       } finally {
         setDetailsLoading(false);
       }
@@ -106,15 +104,19 @@ export default function InventoryAgents() {
   return (
     <>
       <div className={styles.page}>
-        <BackButton onClick={() => navigate('/inventory')} style={{ marginBottom: 24 }}>Volver al Dashboard</BackButton>
-        <h2 className={styles.pageTitle}>AGENTS</h2>
+        <InventoryCategoryHeader
+          title="Agents"
+          description="See the playable agents available to this account."
+          count={agentsDetails.length}
+          countLabel="agents"
+        />
 
-        {loading && <LoadingScreen fullscreen={false} text="Cargando agentes..." />}
+        {loading && <LoadingScreen fullscreen={false} text="Loading agents..." />}
 
         {error && <div className={styles.errorState}>Error: {error}</div>}
 
         {detailsLoading && (
-          <div className={styles.loadingNote}>Cargando detalles de agents...</div>
+          <div className={styles.loadingNote}>Loading agent details...</div>
         )}
 
         {agentsDetails.length > 0 && (
@@ -135,7 +137,7 @@ export default function InventoryAgents() {
                   <div className={`${styles.cardImagePlaceholder} ${styles.cardImagePlaceholderTall}`} style={{ marginBottom: 16, fontSize: 48 }}>👤</div>
                 )}
                 <h3 className={styles.cardName} style={{ fontSize: 18 }}>
-                  {agent.displayName || 'Agent Desconocido'}
+                  {agent.displayName || 'Unknown agent'}
                 </h3>
                 {agent.role && <p className={styles.cardMeta}>{agent.role}</p>}
               </div>
@@ -144,7 +146,7 @@ export default function InventoryAgents() {
         )}
 
         {!detailsLoading && agentsDetails.length === 0 && (
-          <div className={styles.emptyState} style={{ marginTop: 24 }}>No se pudieron cargar agentes.</div>
+          <div className={styles.emptyState} style={{ marginTop: 24 }}>Agents could not be loaded.</div>
         )}
       </div>
     </>

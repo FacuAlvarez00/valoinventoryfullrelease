@@ -46,7 +46,7 @@ export default function SkinSlider({ skins, onSkinChange, initialIndex = 0 }) {
   };
 
   if (!validSkins.length) {
-    return <div className={styles.empty}>No hay skins disponibles</div>;
+    return <div className={styles.empty}>No skins are available.</div>;
   }
 
   return (

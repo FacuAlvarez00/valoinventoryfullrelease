@@ -1,20 +1,45 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getSkinPrice, isGoldenSkin } from '../../utils/pricing';
+import { getDefaultBattlePassImage } from '../../data/battlePassImages';
 import styles from './SharedView.module.css';
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://valoinventory-1.onrender.com';
 
-const SECTIONS = [
-  { key: 'skins',      label: 'SKINS' },
-  { key: 'battlepass', label: 'BATTLEPASSES' },
-  { key: 'buddies',    label: 'GUNBUDDIES' },
-  { key: 'cards',      label: 'CARDS' },
-  { key: 'sprays',     label: 'SPRAYS' },
-  { key: 'flex',       label: 'FLEX' },
-  { key: 'titles',     label: 'TITLES' },
-  { key: 'agents',     label: 'AGENTS' },
-];
+const CATEGORY_ART = {
+  skins: '/assets/dashboard/SKINS.webp',
+  buddies: '/assets/dashboard/GUNBUDDIES.jpg',
+  cards: '/assets/dashboard/CARDS.webp',
+  sprays: '/assets/dashboard/SPRAYS.jpg',
+  flex: '/assets/dashboard/FLEX.jpg',
+  titles: '/assets/dashboard/TITLES.webp',
+};
+
+function SharedViewSkeleton() {
+  return (
+    <div className={styles.page} aria-busy="true" aria-label="Loading shared inventory">
+      <header className={styles.publicHeader}>
+        <div className={styles.brand}>VALO<span>INVENTORY</span></div>
+        <div className={styles.skeletonBadge} />
+      </header>
+      <main className={styles.main}>
+        <div className={styles.skeletonHero}>
+          <div className={styles.skeletonIdentity}>
+            <div className={styles.skeletonLineShort} />
+            <div className={styles.skeletonTitle} />
+            <div className={styles.skeletonLine} />
+          </div>
+          <div className={styles.skeletonValue} />
+        </div>
+        <div className={styles.categoryGrid}>
+          {Array.from({ length: 8 }).map((_, index) => (
+            <div key={index} className={styles.skeletonCategory} />
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
 
 export default function SharedView() {
   const { token } = useParams();
@@ -23,7 +48,8 @@ export default function SharedView() {
   const [error, setError] = useState('');
   const [catalog, setCatalog] = useState({ skins: [], skinlevels: [], chromas: [] });
   const [weaponSkins, setWeaponSkins] = useState([]);
-  const [activeSection, setActiveSection] = useState(null);
+  const [activeSection, setActiveSection] = useState('skins');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -31,7 +57,11 @@ export default function SharedView() {
       try {
         const accRes = await fetch(`${API_BASE}/api/auth/public/account/${token}`);
         const accData = await accRes.json();
-        if (!accData.success) { setError(accData.message || 'Link inválido'); setLoading(false); return; }
+        if (!accData.success) {
+          setError(accData.message || 'Invalid link');
+          setLoading(false);
+          return;
+        }
         setAccount(accData.account);
 
         const [skinsRes, skinlevelsRes, chromasRes, wsRes] = await Promise.all([
@@ -51,224 +81,277 @@ export default function SharedView() {
         const wsData = await wsRes.json().catch(() => []);
         setWeaponSkins(Array.isArray(wsData) ? wsData : []);
       } catch {
-        setError('Error cargando los datos.');
+        setError('Failed to load the inventory.');
       }
       setLoading(false);
     };
     fetchAll();
   }, [token]);
 
-  const skinsPorBase = useMemo(() => {
+  const skinsByBaseName = useMemo(() => {
     if (!account || !catalog.skinlevels.length) return {};
     const map = {};
-    account.skins.forEach(skin => {
-      const lvl = catalog.skinlevels.find(s => s.uuid === skin.ItemID);
-      if (!lvl) return;
-      const base = lvl.displayName.split(' Level ')[0].trim();
+    (account.skins || []).forEach(skin => {
+      const level = catalog.skinlevels.find(item => item.uuid === skin.ItemID);
+      if (!level) return;
+      const base = level.displayName.split(' Level ')[0].trim();
       if (!map[base]) map[base] = [];
-      map[base].push(lvl);
+      map[base].push(level);
     });
     return map;
   }, [account, catalog.skinlevels]);
 
-  const skinsOrdenadas = useMemo(() => {
-    return Object.entries(skinsPorBase).sort((a, b) => {
-      const pa = getSkinPrice(a[0], weaponSkins);
-      const pb = getSkinPrice(b[0], weaponSkins);
-      if (pa && pb) return pb - pa;
-      if (pa) return -1;
-      if (pb) return 1;
+  const sortedSkins = useMemo(() => (
+    Object.entries(skinsByBaseName).sort((a, b) => {
+      const priceA = getSkinPrice(a[0], weaponSkins);
+      const priceB = getSkinPrice(b[0], weaponSkins);
+      if (priceA && priceB) return priceB - priceA;
+      if (priceA) return -1;
+      if (priceB) return 1;
       return 0;
-    });
-  }, [skinsPorBase, weaponSkins]);
+    })
+  ), [skinsByBaseName, weaponSkins]);
 
-  const totalVPSkins = useMemo(() => {
-    return Object.keys(skinsPorBase).reduce((acc, name) => acc + (getSkinPrice(name, weaponSkins) || 0), 0);
-  }, [skinsPorBase, weaponSkins]);
+  const totalVPSkins = useMemo(() => (
+    Object.keys(skinsByBaseName).reduce(
+      (sum, name) => sum + (getSkinPrice(name, weaponSkins) || 0),
+      0
+    )
+  ), [skinsByBaseName, weaponSkins]);
 
   const totalVPBattlePasses = (account?.battlePasses?.length || 0) * 1000;
   const totalVP = totalVPSkins + totalVPBattlePasses;
   const totalFlex = 1 + (account?.flex?.Entitlements?.length || 0);
 
   const sections = useMemo(() => [
-    { key: 'skins',      label: 'SKINS',       count: Object.keys(skinsPorBase).length, vpSpent: totalVPSkins },
-    { key: 'battlepass', label: 'BATTLEPASSES', count: account?.battlePasses?.length || 0, vpSpent: totalVPBattlePasses },
-    { key: 'buddies',    label: 'GUNBUDDIES',  count: account?.buddies?.length || 0 },
-    { key: 'cards',      label: 'CARDS',       count: account?.cards?.length || 0 },
-    { key: 'sprays',     label: 'SPRAYS',      count: account?.sprays?.length || 0 },
-    { key: 'flex',       label: 'FLEX',        count: totalFlex },
-    { key: 'titles',     label: 'TITLES',      count: account?.titles?.length || 0 },
-    { key: 'agents',     label: 'AGENTS',      count: account?.agents?.length || 0 },
-  ], [account, skinsPorBase, totalVPSkins, totalVPBattlePasses, totalFlex]);
+    { key: 'skins', label: 'Skins', count: Object.keys(skinsByBaseName).length, vpSpent: totalVPSkins, img: CATEGORY_ART.skins },
+    { key: 'battlepass', label: 'Battlepasses', count: account?.battlePasses?.length || 0, vpSpent: totalVPBattlePasses, img: account?.battlePasses?.length ? getDefaultBattlePassImage() : null },
+    { key: 'buddies', label: 'Gunbuddies', count: account?.buddies?.length || 0, img: CATEGORY_ART.buddies },
+    { key: 'cards', label: 'Cards', count: account?.cards?.length || 0, img: CATEGORY_ART.cards },
+    { key: 'sprays', label: 'Sprays', count: account?.sprays?.length || 0, img: CATEGORY_ART.sprays },
+    { key: 'flex', label: 'Flex', count: totalFlex, img: CATEGORY_ART.flex },
+    { key: 'titles', label: 'Titles', count: account?.titles?.length || 0, img: CATEGORY_ART.titles },
+    { key: 'agents', label: 'Agents', count: account?.agents?.length || 0, img: account?.agents?.[0]?.fullPortrait || account?.agents?.[0]?.displayIcon },
+  ], [account, skinsByBaseName, totalVPSkins, totalVPBattlePasses, totalFlex]);
 
-  if (loading) return (
-    <div className={styles.center}>
-      <div className={styles.loadingText}>Cargando inventario...</div>
-    </div>
-  );
+  const activeCategory = sections.find(section => section.key === activeSection) || sections[0];
+  const totalItems = sections.reduce((sum, section) => sum + section.count, 0);
+  const riotId = account?.nickname || account?.name || 'Shared account';
+  const accountLabel = account?.name && account.name !== riotId ? account.name : null;
+
+  const copyShareLink = async () => {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const input = document.createElement('textarea');
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+  };
+
+  if (loading) return <SharedViewSkeleton />;
 
   if (error) return (
-    <div className={styles.center}>
-      <div className={styles.errorText}>Error: {error}</div>
-      <div className={styles.errorSub}>El link puede ser inválido o haber expirado.</div>
+    <div className={styles.errorPage}>
+      <div className={styles.brand}>VALO<span>INVENTORY</span></div>
+      <div className={styles.errorPanel}>
+        <span className={styles.headerEyebrow}>Public inventory</span>
+        <h1>This inventory is unavailable</h1>
+        <p>{error}. Its owner may have disabled the link.</p>
+        <a href="/">Go to ValoInventory</a>
+      </div>
     </div>
   );
 
   return (
     <div className={styles.page}>
-      {/* Navbar */}
-      <div className={styles.navbar}>
-        <div className={styles.navIdentity}>
-          <div className={styles.navAvatar}>
-            {(account.nickname || account.name || '?').charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <div className={styles.navName}>{account.nickname || account.name}</div>
-            <div className={styles.navUpdated}>
-              Actualizado: {account.lastUpdated ? new Date(account.lastUpdated).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+      <header className={styles.publicHeader}>
+        <a href="/" className={styles.brand}>VALO<span>INVENTORY</span></a>
+        <span className={styles.publicBadge}><i aria-hidden="true" /> Public inventory</span>
+      </header>
+
+      <main className={styles.main}>
+        <section className={styles.hero} aria-labelledby="shared-account-name">
+          <div className={styles.heroIdentity}>
+            <span className={styles.headerEyebrow}>Shared account</span>
+            <h1 id="shared-account-name" className={styles.accountTitle}>{riotId}</h1>
+            <div className={styles.accountMeta}>
+              {accountLabel && <span>{accountLabel}</span>}
+              <span>
+                Updated {account.lastUpdated
+                  ? new Date(account.lastUpdated).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
+                  : 'N/A'}
+              </span>
             </div>
           </div>
-        </div>
-        <div className={styles.navBrand}>VALO<span className={styles.navBrandAccent}>INVENTORY</span></div>
-      </div>
 
-      {/* Dashboard */}
-      <div className={styles.dashboard}>
-        <div className={styles.dashboardHeader}>
-          <h2 className={styles.heading}>Inventory</h2>
-          <div className={styles.totalValue}>
-            Total Value: {totalVP.toLocaleString()}
-            <img src="/assets/icons/20px-White_Valorant_Points_VALORANT.png" alt="VP" style={{ width: 16, height: 16 }} />
-          </div>
-        </div>
-
-        <div className={styles.tileGrid}>
-          {sections.map(sec => (
-            <div
-              key={sec.key}
-              onClick={() => setActiveSection(activeSection === sec.key ? null : sec.key)}
-              className={`${styles.tile} ${activeSection === sec.key ? styles.tileActive : ''}`}
-            >
-              {sec.vpSpent !== undefined && (
-                <div className={styles.tileVp}>
-                  {sec.vpSpent.toLocaleString()}
-                  <img src="/assets/icons/20px-White_Valorant_Points_VALORANT.png" alt="VP" style={{ width: 12, height: 12 }} />
-                </div>
-              )}
-              <div className={styles.tileLabel}>{sec.label}</div>
-              <div className={styles.tileCount}>{sec.count}</div>
+          <div className={styles.heroActions}>
+            <div className={styles.valueBlock}>
+              <span className={styles.valueLabel}>Estimated value</span>
+              <strong className={styles.valueAmount}>
+                {totalVP.toLocaleString()}
+                <img src="/assets/icons/20px-White_Valorant_Points_VALORANT.png" alt="VP" />
+              </strong>
             </div>
-          ))}
-        </div>
-      </div>
+            <button type="button" className={styles.copyButton} onClick={copyShareLink}>
+              {copied ? 'Link copied' : 'Copy link'}
+            </button>
+          </div>
+        </section>
 
-      {/* Detail panel */}
-      {activeSection && (
-        <div className={styles.detailWrap}>
-          <div className={styles.detailInner}>
+        <section className={styles.summaryStrip} aria-label="Inventory summary">
+          <div><strong>{Object.keys(skinsByBaseName).length.toLocaleString()}</strong><span>Skins</span></div>
+          <div><strong>{totalItems.toLocaleString()}</strong><span>Total items</span></div>
+          <div><strong>{sections.filter(section => section.count > 0).length}</strong><span>Categories</span></div>
+        </section>
 
-            {activeSection === 'skins' && (
-              <div className={`${styles.detailGrid} ${styles.detailGridSkins}`}>
-                {skinsOrdenadas.map(([baseName, skins], idx) => {
-                  let skinBaseObj = catalog.skins.find(s => s.displayName === baseName);
-                  if (!skinBaseObj) skinBaseObj = catalog.skins.find(s => s.displayName.toLowerCase().includes(baseName.toLowerCase()));
-                  let imgSrc = skinBaseObj?.chromas?.[0]?.fullRender || skins.find(s => s.displayIcon)?.displayIcon || '';
-                  const price = getSkinPrice(baseName, weaponSkins);
-                  const golden = isGoldenSkin(baseName);
-                  return (
-                    <div key={idx} className={`${styles.skinCard} ${golden ? styles.skinCardGolden : ''}`}>
-                      {price ? (
-                        <div className={styles.skinPrice}>{price.toLocaleString()}</div>
-                      ) : <div style={{ height: 22 }} />}
-                      <div className={styles.skinImgWrap}>
-                        {imgSrc && <img src={imgSrc} alt={baseName} className={styles.skinImg} />}
-                      </div>
-                      <div className={styles.skinName}>{baseName}</div>
+        <section className={styles.collection} aria-labelledby="collection-title">
+          <div className={styles.sectionHeading}>
+            <div>
+              <span className={styles.headerEyebrow}>Collection</span>
+              <h2 id="collection-title">Inventory</h2>
+            </div>
+            <span className={styles.sectionHint}>Select a category to explore</span>
+          </div>
+
+          <div className={styles.categoryGrid}>
+            {sections.map(section => (
+              <button
+                key={section.key}
+                type="button"
+                className={`${styles.categoryCard} ${activeSection === section.key ? styles.categoryCardActive : ''}`}
+                onClick={() => setActiveSection(section.key)}
+                aria-pressed={activeSection === section.key}
+              >
+                {section.img && <img src={section.img} alt="" className={styles.categoryArt} />}
+                <span className={styles.categoryOverlay} />
+                {section.vpSpent !== undefined && (
+                  <span className={styles.categoryValue}>
+                    {section.vpSpent.toLocaleString()}
+                    <img src="/assets/icons/20px-White_Valorant_Points_VALORANT.png" alt="VP" />
+                  </span>
+                )}
+                <span className={styles.categoryContent}>
+                  <strong>{section.label}</strong>
+                  <span><b>{section.count.toLocaleString()}</b> items</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.detailSection} aria-live="polite">
+          <div className={styles.detailHeader}>
+            <div>
+              <span className={styles.detailEyebrow}>Showing</span>
+              <h2>{activeCategory.label}</h2>
+            </div>
+            <span className={styles.detailCount}>{activeCategory.count.toLocaleString()} items</span>
+          </div>
+
+          {activeSection === 'skins' && (
+            <div className={`${styles.detailGrid} ${styles.skinGrid}`}>
+              {sortedSkins.map(([baseName, ownedLevels]) => {
+                let skinBase = catalog.skins.find(skin => skin.displayName === baseName);
+                if (!skinBase) skinBase = catalog.skins.find(skin => skin.displayName.toLowerCase().includes(baseName.toLowerCase()));
+                const image = skinBase?.chromas?.[0]?.fullRender || ownedLevels.find(level => level.displayIcon)?.displayIcon || '';
+                const price = getSkinPrice(baseName, weaponSkins);
+                return (
+                  <article key={baseName} className={`${styles.skinCard} ${isGoldenSkin(baseName) ? styles.skinCardGolden : ''}`}>
+                    {price > 0 && <span className={styles.skinPrice}>{price.toLocaleString()} VP</span>}
+                    <div className={styles.skinImageWrap}>
+                      {image && <img src={image} alt="" className={styles.skinImage} loading="lazy" />}
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                    <h3>{baseName}</h3>
+                  </article>
+                );
+              })}
+              {!sortedSkins.length && <div className={styles.emptyState}>No skins in this collection.</div>}
+            </div>
+          )}
 
-            {activeSection === 'battlepass' && (
-              <div className={styles.chip}>
-                {(account.battlePasses || []).map((bp, idx) => (
-                  <div key={idx} className={styles.chipItem}>
-                    {bp.displayName || bp.ItemID || `Battle Pass ${idx + 1}`}
-                  </div>
-                ))}
-                {!account.battlePasses?.length && <div className={styles.emptyNote}>Sin battle passes</div>}
-              </div>
-            )}
+          {activeSection === 'battlepass' && (
+            <div className={styles.textItems}>
+              {(account.battlePasses || []).map((item, index) => <span key={item.ItemID || index}>{item.displayName || item.ItemID || `Battle Pass ${index + 1}`}</span>)}
+              {!account.battlePasses?.length && <div className={styles.emptyState}>No battlepasses in this collection.</div>}
+            </div>
+          )}
 
-            {activeSection === 'buddies' && (
-              <div className={styles.detailGrid}>
-                {(account.buddies || []).map((buddy, idx) => (
-                  <div key={idx} className={styles.itemCard}>
-                    {buddy.displayIcon && <img src={buddy.displayIcon} alt={buddy.displayName} className={styles.itemImg} />}
-                    <div className={styles.itemName}>{buddy.displayName || 'Buddy'}</div>
-                  </div>
-                ))}
-                {!account.buddies?.length && <div className={styles.emptyNote}>Sin buddies</div>}
-              </div>
-            )}
+          {activeSection === 'buddies' && (
+            <div className={styles.detailGrid}>
+              {(account.buddies || []).map((item, index) => (
+                <article key={item.ItemID || index} className={styles.itemCard}>
+                  {item.displayIcon && <img src={item.displayIcon} alt="" loading="lazy" />}
+                  <h3>{item.displayName || 'Gunbuddy'}</h3>
+                </article>
+              ))}
+              {!account.buddies?.length && <div className={styles.emptyState}>No gunbuddies in this collection.</div>}
+            </div>
+          )}
 
-            {activeSection === 'cards' && (
-              <div className={styles.detailGrid}>
-                {(account.cards || []).map((card, idx) => (
-                  <div key={idx} className={styles.tileImgCard}>
-                    {card.smallArt && <img src={card.smallArt} alt={card.displayName} className={styles.tileImg} />}
-                    <div className={styles.tileImgName}>{card.displayName || 'Card'}</div>
-                  </div>
-                ))}
-                {!account.cards?.length && <div className={styles.emptyNote}>Sin cards</div>}
-              </div>
-            )}
+          {activeSection === 'cards' && (
+            <div className={styles.detailGrid}>
+              {(account.cards || []).map((item, index) => (
+                <article key={item.ItemID || index} className={`${styles.itemCard} ${styles.playerCard}`}>
+                  {(item.smallArt || item.displayIcon) && <img src={item.smallArt || item.displayIcon} alt="" loading="lazy" />}
+                  <h3>{item.displayName || 'Player card'}</h3>
+                </article>
+              ))}
+              {!account.cards?.length && <div className={styles.emptyState}>No player cards in this collection.</div>}
+            </div>
+          )}
 
-            {activeSection === 'sprays' && (
-              <div className={styles.detailGrid}>
-                {(account.sprays || []).map((spray, idx) => (
-                  <div key={idx} className={styles.itemCard}>
-                    {spray.displayIcon && <img src={spray.displayIcon} alt={spray.displayName} className={styles.itemImg} />}
-                    <div className={styles.itemName}>{spray.displayName || 'Spray'}</div>
-                  </div>
-                ))}
-                {!account.sprays?.length && <div className={styles.emptyNote}>Sin sprays</div>}
-              </div>
-            )}
+          {activeSection === 'sprays' && (
+            <div className={styles.detailGrid}>
+              {(account.sprays || []).map((item, index) => (
+                <article key={item.ItemID || index} className={styles.itemCard}>
+                  {item.displayIcon && <img src={item.displayIcon} alt="" loading="lazy" />}
+                  <h3>{item.displayName || 'Spray'}</h3>
+                </article>
+              ))}
+              {!account.sprays?.length && <div className={styles.emptyState}>No sprays in this collection.</div>}
+            </div>
+          )}
 
-            {activeSection === 'flex' && (
-              <div className={styles.emptyNote}>
-                {totalFlex} item{totalFlex !== 1 ? 's' : ''} flex
-              </div>
-            )}
+          {activeSection === 'flex' && (
+            <div className={styles.textItems}>
+              <span>Standard flex</span>
+              {(account.flex?.Entitlements || []).map((item, index) => <span key={item.ItemID || index}>{item.displayName || `Flex ${index + 1}`}</span>)}
+            </div>
+          )}
 
-            {activeSection === 'titles' && (
-              <div className={styles.chip}>
-                {(account.titles || []).map((title, idx) => (
-                  <div key={idx} className={styles.chipItem}>
-                    {title.titleText || title.displayName || 'Title'}
-                  </div>
-                ))}
-                {!account.titles?.length && <div className={styles.emptyNote}>Sin títulos</div>}
-              </div>
-            )}
+          {activeSection === 'titles' && (
+            <div className={styles.textItems}>
+              {(account.titles || []).map((item, index) => <span key={item.ItemID || index}>{item.titleText || item.displayName || 'Title'}</span>)}
+              {!account.titles?.length && <div className={styles.emptyState}>No titles in this collection.</div>}
+            </div>
+          )}
 
-            {activeSection === 'agents' && (
-              <div className={styles.detailGrid}>
-                {(account.agents || []).map((agent, idx) => (
-                  <div key={idx} className={styles.tileImgCard}>
-                    {agent.displayIconSmall && <img src={agent.displayIconSmall} alt={agent.displayName} className={styles.tileImg} />}
-                    <div className={styles.tileImgName}>{agent.displayName || 'Agent'}</div>
-                  </div>
-                ))}
-                {!account.agents?.length && <div className={styles.emptyNote}>Sin agentes</div>}
-              </div>
-            )}
+          {activeSection === 'agents' && (
+            <div className={styles.detailGrid}>
+              {(account.agents || []).map((item, index) => (
+                <article key={item.ItemID || item.uuid || index} className={styles.itemCard}>
+                  {(item.displayIconSmall || item.displayIcon || item.fullPortrait) && (
+                    <img src={item.displayIconSmall || item.displayIcon || item.fullPortrait} alt="" loading="lazy" />
+                  )}
+                  <h3>{item.displayName || 'Agent'}</h3>
+                </article>
+              ))}
+              {!account.agents?.length && <div className={styles.emptyState}>No agents in this collection.</div>}
+            </div>
+          )}
+        </section>
+      </main>
 
-          </div>
-        </div>
-      )}
+      <footer className={styles.footer}>
+        <span>Inventory shared with ValoInventory</span>
+      </footer>
     </div>
   );
 }

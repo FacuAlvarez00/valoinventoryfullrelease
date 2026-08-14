@@ -10,6 +10,7 @@ export { default as InventoryTitles } from './InventoryTitles';
 export { default as InventoryFlex } from './InventoryFlex';
 export { default as InventoryDetails } from './InventoryDetails';
 export { default as InventoryNavbar } from './InventoryNavbar';
+export { default as InventoryCategoryHeader } from './InventoryCategoryHeader';
 export { default as MySkins } from './MySkins';
 export { default as AllSkins } from './AllSkins';
 export { default as SharedView } from './SharedView';

@@ -2,10 +2,137 @@
    Titles, Flex, Agents, Battlepass. */
 
 .page {
-  padding: 32px;
+  padding: 32px clamp(20px, 3vw, 40px) 48px;
   min-height: 100vh;
   background: var(--vi-black);
   color: var(--vi-offwhite);
+}
+
+.categoryHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.categoryHeaderMain {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.categoryHeading {
+  min-width: 0;
+}
+
+.categoryEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: var(--vi-red);
+  font-family: var(--vi-font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.categoryEyebrow::before {
+  width: 14px;
+  height: 2px;
+  background: var(--vi-red);
+  content: '';
+}
+
+.categoryTitle {
+  margin: 0;
+  color: var(--vi-white);
+  font-family: var(--vi-font-heading);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.categoryDescription {
+  max-width: 620px;
+  margin: 10px 0 0;
+  color: rgba(236, 232, 225, 0.52);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.categoryHeaderAside {
+  display: flex;
+  flex-shrink: 0;
+  align-items: stretch;
+  gap: 20px;
+}
+
+.categoryCount,
+.categoryMetric {
+  display: grid;
+  min-width: 128px;
+  grid-template-columns: auto auto;
+  align-content: center;
+  column-gap: 7px;
+  padding-left: 20px;
+  border-left: 1px solid var(--vi-border);
+}
+
+.categoryCountLabel,
+.categoryMetricLabel {
+  grid-column: 1 / -1;
+  color: rgba(236, 232, 225, 0.42);
+  font-family: var(--vi-font-heading);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+}
+
+.categoryCountValue,
+.categoryMetricValue {
+  color: var(--vi-white);
+  font-family: var(--vi-font-heading);
+  font-size: 24px;
+  line-height: 1.15;
+}
+
+.categoryCountUnit {
+  align-self: end;
+  padding-bottom: 3px;
+  color: rgba(236, 232, 225, 0.45);
+  font-size: 11px;
+}
+
+.categoryCountFiltered {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+  color: var(--vi-red);
+  font-size: 11px;
+}
+
+.categoryMetricValue {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 7px;
+}
+
+.categoryMetricValue img {
+  width: 17px;
+  height: 17px;
+}
+
+.categoryActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .headerRow {
@@ -45,7 +172,7 @@
 }
 
 .searchWrap {
-  width: 220px;
+  width: min(280px, 100%);
 }
 
 .pageTitle {
@@ -58,10 +185,37 @@
   margin: 0 0 24px;
 }
 
+@media (max-width: 720px) {
+  .categoryHeaderMain {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .categoryHeaderAside {
+    width: 100%;
+  }
+
+  .categoryCount,
+  .categoryMetric {
+    flex: 1;
+    padding: 12px 14px;
+    border: 1px solid var(--vi-border);
+  }
+
+  .categoryActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .searchWrap {
+    width: 100%;
+  }
+}
+
 /* ---- Grids ---- */
 
-/* Columnas de tamaño fijo (no 1fr): las cards mantienen su tamaño real sin
-   estirarse cuando hay pocos items, el espacio sobrante queda vacío. */
+/* Fixed-size columns keep cards from stretching when only a few items exist. */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, 200px);
@@ -73,9 +227,7 @@
 }
 
 .gridBP {
-  grid-template-columns: repeat(3, 1fr);
-  max-width: 1200px;
-  margin: 0 auto;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 
 /* ---- Cards ---- */
@@ -85,6 +237,10 @@
   border: 1px solid var(--vi-border);
   border-radius: 4px;
   padding: 16px;
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   text-align: center;
   cursor: default;
   transition: transform 0.2s ease-out, border-color 0.2s ease-out, filter 0.2s ease-out;
@@ -383,4 +539,12 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
+}
+
+@media (max-width: 520px) {
+  .grid,
+  .gridWide,
+  .gridBP {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

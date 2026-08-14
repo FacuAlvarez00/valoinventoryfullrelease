@@ -16,12 +16,12 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Verificar si hay un token guardado al cargar la app
+  // Restore a saved session when the application starts
   useEffect(() => {
     const initializeAuth = async () => {
       const savedToken = localStorage.getItem('authToken');
       const savedUser = localStorage.getItem('user');
-      
+
       if (savedToken && savedUser) {
         const result = await verifyTokenValidity(savedToken);
 
@@ -29,19 +29,19 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('authToken');
           localStorage.removeItem('user');
         } else {
-          // 'valid' o 'unreachable' — conservar la sesión
+          // Preserve the session when the token is valid or the API is temporarily unreachable
           setToken(savedToken);
           setUser(JSON.parse(savedUser));
         }
       }
-      
+
       setLoading(false);
     };
 
     initializeAuth();
   }, []);
 
-  // Función para hacer login
+  // Sign in with username and password
   const login = async (username, password) => {
     try {
       const response = await fetch(`${API_BASE}/api/auth/login`, {
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Función para registrar usuario
+  // Register a user
   const register = async (username, email, password) => {
     try {
       const response = await fetch(`${API_BASE}/api/auth/register`, {
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Función para hacer logout
+  // Sign out locally
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -103,7 +103,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
   };
 
-  // Función para verificar si el token es válido (función interna)
+  // Validate a token against the profile endpoint
   const verifyTokenValidity = async (tokenToVerify) => {
     if (!tokenToVerify) return 'expired';
 
@@ -119,22 +119,22 @@ export const AuthProvider = ({ children }) => {
       clearTimeout(timeout);
       return response.status === 401 ? 'expired' : 'valid';
     } catch (error) {
-      // Timeout o error de red — asumir que el token sigue siendo válido
+      // Keep the local session during a timeout or temporary network error
       return 'unreachable';
     }
   };
 
-  // Función para verificar si el token actual es válido
+  // Validate the current token
   const verifyToken = async () => {
     if (!token) return false;
     const result = await verifyTokenValidity(token);
     return result === 'valid';
   };
 
-  // Función para hacer requests con manejo automático de errores 401
+  // Make authenticated requests and handle unauthorized responses
   const makeAuthenticatedRequest = async (url, options = {}) => {
     if (!token) {
-      throw new Error('No hay token de autenticación');
+      throw new Error('No authentication token is available');
     }
 
     const response = await fetch(url, {
@@ -145,10 +145,10 @@ export const AuthProvider = ({ children }) => {
       },
     });
 
-    // Si el token es inválido, hacer logout automático
+    // Clear the session when the API rejects the token
     if (response.status === 401) {
       logout();
-      throw new Error('Token expirado. Por favor, inicia sesión nuevamente.');
+      throw new Error('Your session has expired. Please sign in again.');
     }
 
     return response;
@@ -170,4 +170,4 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-}; 
+};

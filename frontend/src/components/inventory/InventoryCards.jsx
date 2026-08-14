@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../../context/InventoryContext';
 import LoadingScreen from '../ui/LoadingScreen';
-import { BackButton, SearchInput, Modal } from '../ui/kit';
+import { SearchInput, Modal } from '../ui/kit';
+import InventoryCategoryHeader from './InventoryCategoryHeader';
 import styles from './InventoryList.module.css';
 
 export default function InventoryCards() {
-  const navigate = useNavigate();
   const { riotAccount, loading, error } = useInventory();
   const [cardsDetails, setCardsDetails] = useState([]);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -15,46 +14,46 @@ export default function InventoryCards() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    console.log('🃏 [InventoryCards] Componente montado');
+    console.log('🃏 [InventoryCards] Component mounted');
     console.log('🃏 [InventoryCards] riotAccount:', riotAccount);
     console.log('🃏 [InventoryCards] loading:', loading);
     console.log('🃏 [InventoryCards] error:', error);
 
     if (riotAccount) {
-      console.log('🃏 [InventoryCards] Propiedades del riotAccount:', Object.keys(riotAccount));
-      console.log('🃏 [InventoryCards] ¿Tiene cards?', 'cards' in riotAccount);
-      console.log('🃏 [InventoryCards] Valor de cards:', riotAccount.cards);
-      console.log('🃏 [InventoryCards] Tipo de cards:', typeof riotAccount.cards);
-      console.log('🃏 [InventoryCards] ¿Es array?', Array.isArray(riotAccount.cards));
+      console.log('🃏 [InventoryCards] Riot account properties:', Object.keys(riotAccount));
+      console.log('🃏 [InventoryCards] Has cards:', 'cards' in riotAccount);
+      console.log('🃏 [InventoryCards] Card value:', riotAccount.cards);
+      console.log('🃏 [InventoryCards] Card type:', typeof riotAccount.cards);
+      console.log('🃏 [InventoryCards] Is array:', Array.isArray(riotAccount.cards));
 
       if (riotAccount.cards && Array.isArray(riotAccount.cards)) {
-        console.log('🃏 [InventoryCards] Cards encontradas:', riotAccount.cards);
-        console.log('🃏 [InventoryCards] Cantidad de Cards:', riotAccount.cards.length);
+        console.log('🃏 [InventoryCards] Cards found:', riotAccount.cards);
+        console.log('🃏 [InventoryCards] Card count:', riotAccount.cards.length);
 
-        // Las cards ya vienen con detalles del backend, solo las procesamos
+        // Cards already include their backend details
         processCardsDetails();
       } else {
-        console.log('🃏 [InventoryCards] No hay cards válidas en riotAccount');
-        console.log('🃏 [InventoryCards] riotAccount.cards es:', riotAccount.cards);
+        console.log('🃏 [InventoryCards] No valid cards found in the Riot account');
+        console.log('🃏 [InventoryCards] riotAccount.cards value:', riotAccount.cards);
       }
     } else {
-      console.log('🃏 [InventoryCards] No hay riotAccount');
+      console.log('🃏 [InventoryCards] No Riot account is available');
     }
   }, [riotAccount, loading]);
 
   const processCardsDetails = async () => {
     if (!riotAccount || !riotAccount.cards || riotAccount.cards.length === 0) {
-      console.log('🃏 [InventoryCards] No hay cards para procesar');
+      console.log('🃏 [InventoryCards] No cards to process');
       return;
     }
 
-    console.log('🃏 [InventoryCards] Procesando', riotAccount.cards.length, 'cards');
+    console.log('🃏 [InventoryCards] Processing', riotAccount.cards.length, 'cards');
     setDetailsLoading(true);
 
     try {
-      // Las cards ya vienen con detalles del backend, solo las organizamos
+      // Normalize the backend card details
       const details = riotAccount.cards.map((card, idx) => {
-        console.log(`🃏 [InventoryCards] Procesando card ${idx + 1}/${riotAccount.cards.length}:`, card);
+        console.log(`🃏 [InventoryCards] Processing card ${idx + 1}/${riotAccount.cards.length}:`, card);
 
         return {
           ...card,
@@ -63,11 +62,11 @@ export default function InventoryCards() {
         };
       });
 
-      console.log('🃏 [InventoryCards] Todas las cards procesadas:', details);
+      console.log('🃏 [InventoryCards] Processed cards:', details);
       setCardsDetails(details);
 
     } catch (error) {
-      console.error('🃏 [InventoryCards] Error general en processCardsDetails:', error);
+      console.error('🃏 [InventoryCards] processCardsDetails failed:', error);
     } finally {
       setDetailsLoading(false);
     }
@@ -83,7 +82,7 @@ export default function InventoryCards() {
     setSelectedCard(null);
   };
 
-  // Filtrar cards basado en el término de búsqueda
+  // Filter cards by the search term
   const filteredCards = cardsDetails.filter(card =>
     card.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -91,50 +90,47 @@ export default function InventoryCards() {
   return (
     <>
       <div className={styles.page}>
-        <div className={styles.headerRow}>
-          <BackButton onClick={() => navigate('/inventory')}>Volver al Dashboard</BackButton>
-
-          <div className={styles.headerRight}>
-            <div className={styles.countGroup}>
-              <span className={styles.countText}>Total: {cardsDetails.length}</span>
-              {searchTerm && <span className={styles.countMuted}>({filteredCards.length} encontradas)</span>}
-            </div>
+        <InventoryCategoryHeader
+          title="Player Cards"
+          description="Review the player cards collected by this account."
+          count={cardsDetails.length}
+          countLabel="cards"
+          visibleCount={searchTerm ? filteredCards.length : undefined}
+          actions={(
             <div className={styles.searchWrap}>
               <SearchInput
-                placeholder="Buscar cards..."
+                placeholder="Search player cards..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-          </div>
-        </div>
+          )}
+        />
 
-        <h2 className={styles.pageTitle}>CARDS</h2>
-
-        {loading && <LoadingScreen fullscreen={false} text="Cargando cards..." />}
+        {loading && <LoadingScreen fullscreen={false} text="Loading cards..." />}
 
         {error && <div className={styles.errorState}>Error: {error}</div>}
 
         {!riotAccount && !loading && (
-          <div className={styles.emptyState}>No hay cuenta Riot seleccionada</div>
+          <div className={styles.emptyState}>No Riot account is selected.</div>
         )}
 
         {riotAccount && !riotAccount.cards && !loading && (
-          <div className={styles.emptyState}>No se encontraron Cards para esta cuenta</div>
+          <div className={styles.emptyState}>No cards were found for this account.</div>
         )}
 
         {detailsLoading && (
-          <div className={styles.loadingNote}>Cargando detalles de cards...</div>
+          <div className={styles.loadingNote}>Loading card details...</div>
         )}
 
         {riotAccount && riotAccount.cards && riotAccount.cards.length === 0 && !loading && (
-          <div className={styles.emptyState}>No tienes Cards en esta cuenta</div>
+          <div className={styles.emptyState}>This account does not own any cards.</div>
         )}
 
         {cardsDetails.length > 0 && filteredCards.length === 0 && searchTerm ? (
-          <div className={styles.emptyState}>No se encontraron cards que coincidan con "{searchTerm}"</div>
+          <div className={styles.emptyState}>No cards match "{searchTerm}".</div>
         ) : cardsDetails.length > 0 && (
-          <div className={`${styles.grid} ${styles.gridWide}`} style={{ gap: 16, maxWidth: 1400, margin: '0 auto' }}>
+          <div className={`${styles.grid} ${styles.gridWide}`}>
             {filteredCards.map((card, index) => (
               <div
                 key={card.ItemID || index}
@@ -159,7 +155,7 @@ export default function InventoryCards() {
                     <div className={styles.pcardPlaceholder}>
                       <div style={{ textAlign: 'center' }}>
                         <div style={{ fontSize: 32, marginBottom: 4 }}>🃏</div>
-                        Imagen no disponible
+                        Image unavailable
                       </div>
                     </div>
                   )}
@@ -167,14 +163,14 @@ export default function InventoryCards() {
                 </div>
 
                 <div className={styles.pcardFooter}>
-                  <h3 className={styles.pcardName}>{card.displayName || 'Card Desconocida'}</h3>
+                  <h3 className={styles.pcardName}>{card.displayName || 'Unknown card'}</h3>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Modal para mostrar las 3 variantes de la card */}
+        {/* Modal with the three player card variants */}
         <Modal open={modalOpen && !!selectedCard} onClose={closeModal} maxWidth={1000}>
           {selectedCard && (
             <div className={styles.modalBody}>
@@ -196,7 +192,7 @@ export default function InventoryCards() {
                         className={styles.pcardModalImg}
                       />
                     ) : (
-                      <div className={styles.pcardModalMissing}>{label} no disponible</div>
+                      <div className={styles.pcardModalMissing}>{label} unavailable</div>
                     )}
                   </div>
                 ))}

@@ -4,18 +4,18 @@ const mongoose = require('mongoose');
 const connectDB = async () => {
   const uri =
     process.env.MONGODB_URI ||
-    process.env.MONGO_URI; // acepta ambos nombres
+    process.env.MONGO_URI; // Support both environment variable names
 
   if (!uri) {
-    throw new Error('Falta MONGODB_URI/MONGO_URI en las variables de entorno');
+    throw new Error('MONGODB_URI or MONGO_URI is missing from the environment');
   }
 
-  // LOG seguro para confirmar qué se está leyendo (no imprime la pass)
+  // Log a redacted URI to confirm which database is being used
   const safe = uri.replace(/(\/\/[^:]+:)[^@]+@/, '$1********@');
-  console.log('🔌 Usando MONGO URI:', safe);
+  console.log('🔌 Using MongoDB URI:', safe);
 
   await mongoose.connect(uri);
-  console.log('✅ Conectado a MongoDB Atlas');
+  console.log('✅ Connected to MongoDB Atlas');
 };
 
 module.exports = { connectDB };

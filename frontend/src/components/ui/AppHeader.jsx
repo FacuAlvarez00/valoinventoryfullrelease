@@ -1,13 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useLanguage } from '../../context/LanguageContext';
 import styles from './AppHeader.module.css';
 
 export default function AppHeader() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { language, changeLanguage, getLanguageName, availableLanguages } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -60,49 +58,32 @@ export default function AppHeader() {
               aria-controls="account-settings-menu"
             >
               <span className={styles.avatar} aria-hidden="true">{userInitial}</span>
-              <span className={styles.settingsLabel}>Ajustes</span>
+              <span className={styles.settingsLabel}>Settings</span>
               <span className={styles.chevron} aria-hidden="true">⌄</span>
             </button>
 
             {menuOpen && (
               <div id="account-settings-menu" className={styles.menu} role="menu">
                 <div className={styles.accountSummary}>
-                  <span className={styles.accountEyebrow}>Tu cuenta</span>
+                  <span className={styles.accountEyebrow}>Your account</span>
                   <strong className={styles.accountName}>{user.username}</strong>
                   {user.email && <span className={styles.accountEmail}>{user.email}</span>}
                 </div>
 
                 <div className={styles.menuSection}>
-                  <span className={styles.menuSectionLabel}>Cuenta</span>
+                  <span className={styles.menuSectionLabel}>Account</span>
                   <button type="button" className={styles.menuItem} role="menuitem" onClick={goToAccounts}>
                     <span>
-                      <strong>Administrar cuentas Riot</strong>
-                      <small>Agregar, actualizar o eliminar cuentas</small>
+                      <strong>Manage Riot accounts</strong>
+                      <small>Add, update, or delete accounts</small>
                     </span>
                     <span className={styles.menuArrow} aria-hidden="true">→</span>
                   </button>
                 </div>
 
-                <div className={styles.menuSection}>
-                  <span className={styles.menuSectionLabel}>Idioma</span>
-                  <div className={styles.languageOptions} role="group" aria-label="Seleccionar idioma">
-                    {availableLanguages.map(lang => (
-                      <button
-                        key={lang}
-                        type="button"
-                        className={`${styles.languageOption} ${language === lang ? styles.languageOptionActive : ''}`}
-                        onClick={() => changeLanguage(lang)}
-                        aria-pressed={language === lang}
-                      >
-                        {getLanguageName(lang)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 <div className={styles.logoutSection}>
                   <button type="button" className={styles.logoutButton} role="menuitem" onClick={handleLogout}>
-                    Cerrar sesión
+                    Sign out
                   </button>
                 </div>
               </div>

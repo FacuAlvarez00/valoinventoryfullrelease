@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLanguage } from '../../context/LanguageContext';
 import styles from './Notification.module.css';
 
 const Notification = ({
@@ -10,8 +9,6 @@ const Notification = ({
   duration = 3000,
   onClose
 }) => {
-  const { t } = useLanguage();
-
   useEffect(() => {
     if (isVisible && duration > 0) {
       const timer = setTimeout(() => {
@@ -58,7 +55,7 @@ const Notification = ({
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
       >
-        {/* Icono animado */}
+        {/* Animated icon */}
         <motion.div
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
@@ -74,7 +71,7 @@ const Notification = ({
           {tone.icon}
         </motion.div>
 
-        {/* Mensaje */}
+        {/* Message */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -84,7 +81,7 @@ const Notification = ({
           {message}
         </motion.div>
 
-        {/* Botón de cerrar */}
+        {/* Close button */}
         <motion.button
           whileHover={{ scale: 1.1, rotate: 90 }}
           whileTap={{ scale: 0.9 }}
@@ -93,11 +90,12 @@ const Notification = ({
             onClose();
           }}
           className={styles.closeBtn}
+          aria-label="Close notification"
         >
           ×
         </motion.button>
 
-        {/* Barra de progreso */}
+        {/* Progress bar */}
         <motion.div
           initial={{ scaleX: 1 }}
           animate={{ scaleX: 0 }}

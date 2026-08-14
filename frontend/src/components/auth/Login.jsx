@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useLanguage } from '../../context/LanguageContext';
 import { motion, useReducedMotion } from 'framer-motion';
 import { TacticalButton, TextField } from '../ui/kit';
 import styles from './Auth.module.css';
@@ -13,7 +12,6 @@ export default function Login({ onSwitchToRegister }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-  const { t } = useLanguage();
   const reduced = useReducedMotion();
 
   const handleChange = (e) => {
@@ -67,14 +65,14 @@ export default function Login({ onSwitchToRegister }) {
 
         <div className={styles.formSide}>
           <div className={styles.header}>
-            <h2 className={styles.heading}>{t.login}</h2>
+            <h2 className={styles.heading}>Sign in</h2>
           </div>
 
           {error && <div className={styles.error}>{error}</div>}
 
           <form className={styles.form} onSubmit={handleSubmit}>
             <TextField
-              label={t.username}
+              label="Username"
               type="text"
               name="username"
               value={formData.username}
@@ -82,7 +80,7 @@ export default function Login({ onSwitchToRegister }) {
               placeholder="Enter your username or email"
             />
             <TextField
-              label={t.password}
+              label="Password"
               type="password"
               name="password"
               value={formData.password}
@@ -91,14 +89,14 @@ export default function Login({ onSwitchToRegister }) {
             />
 
             <TacticalButton type="submit" size="lg" fullWidth disabled={loading} className={styles.submit}>
-              {loading ? t.loading : t.loginButton}
+              {loading ? 'Signing in...' : 'Sign in'}
             </TacticalButton>
           </form>
 
           <div className={styles.switchRow}>
-            <span>{t.dontHaveAccount} </span>
+            <span>Don't have an account? </span>
             <button type="button" className={styles.switchBtn} onClick={onSwitchToRegister}>
-              {t.register}
+              Register
             </button>
           </div>
         </div>

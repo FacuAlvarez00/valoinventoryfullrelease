@@ -2,9 +2,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwt';
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: false, // Cambia a true si usas HTTPS
+  secure: false, // Set to true when HTTPS is enabled
   sameSite: 'lax',
-  maxAge: 24 * 60 * 60 * 1000 // 1 día
+  maxAge: 24 * 60 * 60 * 1000 // One day
 };
 
 const RIOT_HEADERS = {
@@ -46,4 +46,4 @@ module.exports = {
   RIOT_HEADERS,
   RIOT_ENDPOINTS,
   RIOT_ENTITLEMENT_IDS
-}; 
+};

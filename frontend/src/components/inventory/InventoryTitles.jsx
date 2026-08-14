@@ -1,58 +1,57 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../../context/InventoryContext';
 import LoadingScreen from '../ui/LoadingScreen';
-import { BackButton, SearchInput } from '../ui/kit';
+import { SearchInput } from '../ui/kit';
+import InventoryCategoryHeader from './InventoryCategoryHeader';
 import styles from './InventoryList.module.css';
 
 export default function InventoryTitles() {
-  const navigate = useNavigate();
   const { riotAccount, loading, error } = useInventory();
   const [titlesDetails, setTitlesDetails] = useState([]);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    console.log('🏆 [InventoryTitles] Componente montado');
+    console.log('🏆 [InventoryTitles] Component mounted');
     console.log('🏆 [InventoryTitles] riotAccount:', riotAccount);
     console.log('🏆 [InventoryTitles] loading:', loading);
     console.log('🏆 [InventoryTitles] error:', error);
 
     if (riotAccount) {
-      console.log('🏆 [InventoryTitles] Propiedades del riotAccount:', Object.keys(riotAccount));
-      console.log('🏆 [InventoryTitles] ¿Tiene titles?', 'titles' in riotAccount);
-      console.log('🏆 [InventoryTitles] Valor de titles:', riotAccount.titles);
-      console.log('🏆 [InventoryTitles] Tipo de titles:', typeof riotAccount.titles);
-      console.log('🏆 [InventoryTitles] ¿Es array?', Array.isArray(riotAccount.titles));
+      console.log('🏆 [InventoryTitles] Riot account properties:', Object.keys(riotAccount));
+      console.log('🏆 [InventoryTitles] Has titles:', 'titles' in riotAccount);
+      console.log('🏆 [InventoryTitles] Title value:', riotAccount.titles);
+      console.log('🏆 [InventoryTitles] Title type:', typeof riotAccount.titles);
+      console.log('🏆 [InventoryTitles] Is array:', Array.isArray(riotAccount.titles));
 
       if (riotAccount.titles && Array.isArray(riotAccount.titles)) {
-        console.log('🏆 [InventoryTitles] Titles encontrados:', riotAccount.titles);
-        console.log('🏆 [InventoryTitles] Cantidad de Titles:', riotAccount.titles.length);
+        console.log('🏆 [InventoryTitles] Titles found:', riotAccount.titles);
+        console.log('🏆 [InventoryTitles] Title count:', riotAccount.titles.length);
 
-        // Los titles ya vienen con detalles del backend, solo los procesamos
+        // Titles already include their backend details
         processTitlesDetails();
       } else {
-        console.log('🏆 [InventoryTitles] No hay titles válidos en riotAccount');
-        console.log('🏆 [InventoryTitles] riotAccount.titles es:', riotAccount.titles);
+        console.log('🏆 [InventoryTitles] No valid titles found in the Riot account');
+        console.log('🏆 [InventoryTitles] riotAccount.titles value:', riotAccount.titles);
       }
     } else {
-      console.log('🏆 [InventoryTitles] No hay riotAccount');
+      console.log('🏆 [InventoryTitles] No Riot account is available');
     }
   }, [riotAccount, loading]);
 
   const processTitlesDetails = async () => {
     if (!riotAccount || !riotAccount.titles || riotAccount.titles.length === 0) {
-      console.log('🏆 [InventoryTitles] No hay titles para procesar');
+      console.log('🏆 [InventoryTitles] No titles to process');
       return;
     }
 
-    console.log('🏆 [InventoryTitles] Procesando', riotAccount.titles.length, 'titles');
+    console.log('🏆 [InventoryTitles] Processing', riotAccount.titles.length, 'titles');
     setDetailsLoading(true);
 
     try {
-      // Los titles ya vienen con detalles del backend, solo los organizamos
+      // Normalize the backend title details
       const details = riotAccount.titles.map((title, idx) => {
-        console.log(`🏆 [InventoryTitles] Procesando title ${idx + 1}/${riotAccount.titles.length}:`, title);
+        console.log(`🏆 [InventoryTitles] Processing title ${idx + 1}/${riotAccount.titles.length}:`, title);
 
         return {
           ...title,
@@ -61,17 +60,17 @@ export default function InventoryTitles() {
         };
       });
 
-      console.log('🏆 [InventoryTitles] Todos los titles procesados:', details);
+      console.log('🏆 [InventoryTitles] Processed titles:', details);
       setTitlesDetails(details);
 
     } catch (error) {
-      console.error('🏆 [InventoryTitles] Error general en processTitlesDetails:', error);
+      console.error('🏆 [InventoryTitles] processTitlesDetails failed:', error);
     } finally {
       setDetailsLoading(false);
     }
   };
 
-  // Filtrar titles basado en el término de búsqueda
+  // Filter titles by the search term
   const filteredTitles = titlesDetails.filter(title =>
     title.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -79,48 +78,45 @@ export default function InventoryTitles() {
   return (
     <>
       <div className={styles.page}>
-        <div className={styles.headerRow}>
-          <BackButton onClick={() => navigate('/inventory')}>Volver al Dashboard</BackButton>
-
-          <div className={styles.headerRight}>
-            <div className={styles.countGroup}>
-              <span className={styles.countText}>Total: {titlesDetails.length}</span>
-              {searchTerm && <span className={styles.countMuted}>({filteredTitles.length} encontrados)</span>}
-            </div>
+        <InventoryCategoryHeader
+          title="Player Titles"
+          description="Review every title available to this account."
+          count={titlesDetails.length}
+          countLabel="titles"
+          visibleCount={searchTerm ? filteredTitles.length : undefined}
+          actions={(
             <div className={styles.searchWrap}>
               <SearchInput
-                placeholder="Buscar titles..."
+                placeholder="Search player titles..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-          </div>
-        </div>
+          )}
+        />
 
-        <h2 className={styles.pageTitle}>TITLES</h2>
-
-        {loading && <LoadingScreen fullscreen={false} text="Cargando titles..." />}
+        {loading && <LoadingScreen fullscreen={false} text="Loading titles..." />}
 
         {error && <div className={styles.errorState}>Error: {error}</div>}
 
         {!riotAccount && !loading && (
-          <div className={styles.emptyState}>No hay cuenta Riot seleccionada</div>
+          <div className={styles.emptyState}>No Riot account is selected.</div>
         )}
 
         {riotAccount && !riotAccount.titles && !loading && (
-          <div className={styles.emptyState}>No se encontraron Titles para esta cuenta</div>
+          <div className={styles.emptyState}>No titles were found for this account.</div>
         )}
 
         {detailsLoading && (
-          <div className={styles.loadingNote}>Cargando detalles de titles...</div>
+          <div className={styles.loadingNote}>Loading title details...</div>
         )}
 
         {riotAccount && riotAccount.titles && riotAccount.titles.length === 0 && !loading && (
-          <div className={styles.emptyState}>No tienes Titles en esta cuenta</div>
+          <div className={styles.emptyState}>This account does not own any titles.</div>
         )}
 
         {titlesDetails.length > 0 && filteredTitles.length === 0 && searchTerm && (
-          <div className={styles.emptyState}>No se encontraron titles que coincidan con "{searchTerm}"</div>
+          <div className={styles.emptyState}>No titles match "{searchTerm}".</div>
         )}
 
         {filteredTitles.length > 0 && (
@@ -128,7 +124,7 @@ export default function InventoryTitles() {
             {filteredTitles.map((title, index) => (
               <div key={title.ItemID || index} className={styles.card}>
                 <h3 className={styles.cardName}>
-                  {title.displayName || 'Title Desconocido'}
+                  {title.displayName || 'Unknown title'}
                 </h3>
               </div>
             ))}

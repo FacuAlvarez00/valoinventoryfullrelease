@@ -4,59 +4,59 @@ const User = require('../models/User');
 class RiotController {
   static async getSkins(req, res) {
     const { riotToken } = req.body;
-    
+
     if (!riotToken) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Falta el token de Riot' 
+      return res.status(400).json({
+        success: false,
+        message: 'The Riot token is missing'
       });
     }
 
     try {
       const userinfo = await RiotService.getUserInfo(riotToken);
       const puuid = userinfo.sub;
-      
+
       if (!puuid) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'No se pudo obtener el PUUID' 
+        return res.status(400).json({
+          success: false,
+          message: 'The PUUID could not be resolved'
         });
       }
 
       const entitlementData = await RiotService.getEntitlementToken(riotToken);
       const entitlementToken = entitlementData.entitlements_token;
-      
+
       if (!entitlementToken) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'No se pudo obtener el entitlement token' 
+        return res.status(400).json({
+          success: false,
+          message: 'The entitlement token could not be obtained'
         });
       }
 
       const skinsData = await RiotService.getSkins(puuid, entitlementToken, riotToken);
-      
-      return res.json({ 
-        success: true, 
-        puuid, 
-        entitlementToken, 
-        skins: skinsData 
+
+      return res.json({
+        success: true,
+        puuid,
+        entitlementToken,
+        skins: skinsData
       });
     } catch (err) {
-      console.error('Error en el flujo de Riot:', err);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Error en el flujo de Riot' 
+      console.error('Riot authentication flow failed:', err);
+      return res.status(500).json({
+        success: false,
+        message: 'The Riot authentication flow failed'
       });
     }
   }
 
   static async getSkinDetails(req, res) {
     const { itemIDs } = req.body;
-    
+
     if (!itemIDs || !Array.isArray(itemIDs)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Faltan los itemIDs' 
+      return res.status(400).json({
+        success: false,
+        message: 'itemIDs are required'
       });
     }
 
@@ -64,21 +64,21 @@ class RiotController {
       const skinLevels = await RiotService.getSkinDetails(itemIDs);
       res.json({ success: true, skinLevels });
     } catch (err) {
-      console.error('Error obteniendo detalles de skinlevels:', err);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error obteniendo detalles de skinlevels' 
+      console.error('Failed to load skin-level details:', err);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to load skin-level details'
       });
     }
   }
 
   static async getLoadout(req, res) {
     const { riotToken, puuid, entitlementToken } = req.body;
-    
+
     if (!riotToken || !puuid || !entitlementToken) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Faltan datos requeridos' 
+      return res.status(400).json({
+        success: false,
+        message: 'Required data is missing'
       });
     }
 
@@ -86,28 +86,28 @@ class RiotController {
       const loadoutData = await RiotService.getLoadout(puuid, entitlementToken, riotToken);
       res.json({ success: true, loadout: loadoutData });
     } catch (err) {
-      console.error('Error obteniendo loadout:', err);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error obteniendo loadout' 
+      console.error('Failed to load the loadout:', err);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to load the loadout'
       });
     }
   }
 
   static async addRiotAccount(req, res) {
     const { name, riotToken, url } = req.body;
-    
+
     if (!riotToken) {
       return res.status(400).json({
         success: false,
-        message: 'Falta el token de Riot'
+        message: 'The Riot token is missing'
       });
     }
 
     if (!url) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Falta la URL con el ID Token' 
+      return res.status(400).json({
+        success: false,
+        message: 'The URL containing the ID token is missing'
       });
     }
 
@@ -120,34 +120,34 @@ class RiotController {
       const accountName = (name && name.trim()) ? name.trim() : (userinfo.preferred_username || userinfo.acct?.game_name || nickname);
 
       if (!puuid) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'No se pudo obtener el PUUID' 
+        return res.status(400).json({
+          success: false,
+          message: 'The PUUID could not be resolved'
         });
       }
 
       const entitlementData = await RiotService.getEntitlementToken(riotToken);
       const entitlementToken = entitlementData.entitlements_token;
-      
+
       if (!entitlementToken) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'No se pudo obtener el entitlement token' 
+        return res.status(400).json({
+          success: false,
+          message: 'The entitlement token could not be obtained'
         });
       }
 
-      // Extraer ID Token de la URL
-      console.log('\n🚀 OBTENIENDO INFORMACIÓN DE REGIÓN...');
+      // Extract the ID token from the URL
+      console.log('\n🚀 LOADING REGION INFORMATION...');
       const idToken = RiotService.extractIdTokenFromUrl(url);
-      
+
       if (!idToken) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'No se pudo extraer el ID Token de la URL' 
+        return res.status(400).json({
+          success: false,
+          message: 'The ID token could not be extracted from the URL'
         });
       }
 
-      // Obtener datos iniciales incluyendo información de región
+      // Load initial account data, including region information
       const [skinsData, loadoutData, buddiesData, battlePassesData, cardsData, spraysData, titlesData, agentsData, walletData, flexData, userInfoData, regionInfo] = await Promise.all([
         RiotService.getSkins(puuid, entitlementToken, riotToken),
         RiotService.getLoadout(puuid, entitlementToken, riotToken),
@@ -163,27 +163,27 @@ class RiotController {
         RiotService.getRegionInfo(idToken, riotToken)
       ]);
 
-      // Console.log destacado para mostrar la respuesta del endpoint de región
+      // Log the region endpoint response for diagnostics
       console.log('\n' + '='.repeat(80));
-      console.log('🌍🌍🌍 RESPUESTA DEL ENDPOINT RIOT GEO AL AGREGAR CUENTA 🌍🌍🌍');
+      console.log('🌍🌍🌍 RIOT GEO RESPONSE WHILE ADDING ACCOUNT 🌍🌍🌍');
       console.log('='.repeat(80));
-      console.log('📊 RESPUESTA COMPLETA:', JSON.stringify(regionInfo, null, 2));
-      console.log('📋 TOKEN:', regionInfo.token || 'NO DISPONIBLE');
-      console.log('🌎 REGIÓN PBE:', regionInfo.affinities?.pbe || 'NO DISPONIBLE');
-      console.log('🌎 REGIÓN LIVE:', regionInfo.affinities?.live || 'NO DISPONIBLE');
+      console.log('📊 COMPLETE RESPONSE:', JSON.stringify(regionInfo, null, 2));
+      console.log('📋 TOKEN:', regionInfo.token || 'UNAVAILABLE');
+      console.log('🌎 PBE REGION:', regionInfo.affinities?.pbe || 'UNAVAILABLE');
+      console.log('🌎 LIVE REGION:', regionInfo.affinities?.live || 'UNAVAILABLE');
       console.log('='.repeat(80) + '\n');
 
       // DEBUG WALLET - Similar a como debuggeamos battlepass y buddies
       console.log('💰 [RiotController] ===== DEBUG WALLET =====');
       console.log('💰 [RiotController] Wallet data completo:', JSON.stringify(walletData, null, 2));
-      console.log('💰 [RiotController] ¿Tiene Balances?', 'Balances' in walletData);
+      console.log('💰 [RiotController] Has balances:', 'Balances' in walletData);
 
-      // DEBUG FLEX - Mostrar datos de flex en consola
+      // Flex diagnostics
       console.log('🏆 [RiotController] ===== DEBUG FLEX =====');
       console.log('🏆 [RiotController] Flex data completo:', JSON.stringify(flexData, null, 2));
-      console.log('🏆 [RiotController] ¿Tiene Entitlements?', 'Entitlements' in flexData);
+      console.log('🏆 [RiotController] Has entitlements:', 'Entitlements' in flexData);
 
-      // DEBUG USERINFO - Mostrar datos de userinfo en consola
+      // User information diagnostics
       console.log('👤 [RiotController] ===== DEBUG USERINFO =====');
       console.log('👤 [RiotController] UserInfo data completo:', JSON.stringify(userInfoData, null, 2));
       console.log('👤 [RiotController] PUUID:', userInfoData?.sub);
@@ -199,21 +199,21 @@ class RiotController {
           });
         });
       } else {
-        console.log('💰 [RiotController] No hay balances o no es un objeto');
+        console.log('💰 [RiotController] No balances found or the value is not an object');
       }
       console.log('💰 [RiotController] ===== FIN DEBUG WALLET =====');
 
-      // Obtener detalles de las monedas
+      // Load currency details
       let currencyDetails = [];
       if (walletData.Balances && typeof walletData.Balances === 'object') {
         const currencyIds = Object.keys(walletData.Balances);
-        console.log('💰 [RiotController] Obteniendo detalles de monedas para IDs:', currencyIds);
+        console.log('💰 [RiotController] Loading currency details for IDs:', currencyIds);
         currencyDetails = await RiotService.getCurrencyDetails(currencyIds);
-        console.log('💰 [RiotController] Detalles de monedas obtenidos:', currencyDetails.length);
+        console.log('💰 [RiotController] Currency details loaded:', currencyDetails.length);
       }
 
 
-      // Obtener detalles de las cards, sprays, titles, agents y buddies
+      // Load card, spray, title, agent, and buddy details
       let cardsWithDetails = [];
       let spraysWithDetails = [];
       let titlesWithDetails = [];
@@ -245,16 +245,16 @@ class RiotController {
         agentsWithDetails = await RiotService.getAgentDetails(agentIDs);
       }
 
-      // Verificar que la cuenta no esté ya agregada
+      // Prevent duplicate linked accounts
       const alreadyExists = req.user.riotAccounts.some(acc => acc.puuid === puuid);
       if (alreadyExists) {
         return res.status(400).json({
           success: false,
-          message: 'Esta cuenta de Riot ya fue agregada anteriormente.'
+          message: 'This Riot account is already linked.'
         });
       }
 
-      // Agregar la cuenta al usuario
+      // Link the account to the user
       const newAccount = {
         name: accountName,
         puuid,
@@ -278,52 +278,52 @@ class RiotController {
       req.user.riotAccounts.push(newAccount);
       await req.user.save();
 
-      // Console.log para confirmar que regionInfo se guardó en la DB
+      // Confirm that region information was persisted
       console.log('\n' + '='.repeat(60));
-      console.log('💾 REGION INFO GUARDADA EN LA BASE DE DATOS 💾');
+      console.log('💾 REGION INFORMATION SAVED TO THE DATABASE 💾');
       console.log('='.repeat(60));
       console.log('📊 RegionInfo guardado:', JSON.stringify(regionInfo, null, 2));
-      console.log('🌎 Región Live:', regionInfo?.affinities?.live);
-      console.log('🌎 Región PBE:', regionInfo?.affinities?.pbe);
+      console.log('🌎 Live region:', regionInfo?.affinities?.live);
+      console.log('🌎 PBE region:', regionInfo?.affinities?.pbe);
       console.log('='.repeat(60) + '\n');
 
-      res.json({ 
-        success: true, 
-        message: 'Cuenta Riot agregada exitosamente',
+      res.json({
+        success: true,
+        message: 'Riot account added successfully',
         account: newAccount
       });
     } catch (err) {
-      console.error('Error agregando cuenta Riot:', err);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error agregando cuenta Riot' 
+      console.error('Failed to add Riot account:', err);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to add the Riot account'
       });
     }
   }
 
   static async refreshAccount(req, res) {
     const { puuid, riotToken, url } = req.body;
-    
+
     if (!puuid || !riotToken) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Faltan datos requeridos (puuid y riotToken)' 
+      return res.status(400).json({
+        success: false,
+        message: 'Required data is missing (puuid and riotToken)'
       });
     }
 
     if (!url) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Falta la URL con el ID Token' 
+      return res.status(400).json({
+        success: false,
+        message: 'The URL containing the ID token is missing'
       });
     }
 
     try {
       const account = req.user.riotAccounts.find(acc => acc.puuid === puuid);
       if (!account) {
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Cuenta Riot no encontrada' 
+        return res.status(404).json({
+          success: false,
+          message: 'Riot account not found'
         });
       }
 
@@ -334,27 +334,27 @@ class RiotController {
         : undefined;
 
       if (tokenPuuid !== account.puuid) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'El token no corresponde a esta cuenta' 
+        return res.status(400).json({
+          success: false,
+          message: 'The token does not belong to this account'
         });
       }
 
       const entitlementData = await RiotService.getEntitlementToken(riotToken);
       const entitlementToken = entitlementData.entitlements_token;
 
-      // Extraer ID Token de la URL para obtener información de región
-      console.log('\n🚀 OBTENIENDO INFORMACIÓN DE REGIÓN (REFRESH)...');
+      // Extract the ID token from the URL to obtain region information
+      console.log('\n🚀 LOADING REGION INFORMATION (REFRESH)...');
       const idToken = RiotService.extractIdTokenFromUrl(url);
-      
+
       if (!idToken) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'No se pudo extraer el ID Token de la URL' 
+        return res.status(400).json({
+          success: false,
+          message: 'The ID token could not be extracted from the URL'
         });
       }
 
-      // Obtener datos actualizados incluyendo información de región
+      // Load refreshed account data, including region information
       const [skinsData, loadoutData, buddiesData, battlePassesData, cardsData, spraysData, titlesData, agentsData, walletData, flexData, userInfoData, regionInfo] = await Promise.all([
         RiotService.getSkins(tokenPuuid, entitlementToken, riotToken),
         RiotService.getLoadout(tokenPuuid, entitlementToken, riotToken),
@@ -370,27 +370,27 @@ class RiotController {
         RiotService.getRegionInfo(idToken, riotToken)
       ]);
 
-      // Console.log destacado para mostrar la respuesta del endpoint de región
+      // Log the region endpoint response for diagnostics
       console.log('\n' + '='.repeat(80));
-      console.log('🌍🌍🌍 RESPUESTA DEL ENDPOINT RIOT GEO AL ACTUALIZAR CUENTA 🌍🌍🌍');
+      console.log('🌍🌍🌍 RIOT GEO RESPONSE WHILE UPDATING ACCOUNT 🌍🌍🌍');
       console.log('='.repeat(80));
-      console.log('📊 RESPUESTA COMPLETA:', JSON.stringify(regionInfo, null, 2));
-      console.log('📋 TOKEN:', regionInfo.token || 'NO DISPONIBLE');
-      console.log('🌎 REGIÓN PBE:', regionInfo.affinities?.pbe || 'NO DISPONIBLE');
-      console.log('🌎 REGIÓN LIVE:', regionInfo.affinities?.live || 'NO DISPONIBLE');
+      console.log('📊 COMPLETE RESPONSE:', JSON.stringify(regionInfo, null, 2));
+      console.log('📋 TOKEN:', regionInfo.token || 'UNAVAILABLE');
+      console.log('🌎 PBE REGION:', regionInfo.affinities?.pbe || 'UNAVAILABLE');
+      console.log('🌎 LIVE REGION:', regionInfo.affinities?.live || 'UNAVAILABLE');
       console.log('='.repeat(80) + '\n');
 
       // DEBUG WALLET - Similar a como debuggeamos battlepass y buddies
       console.log('💰 [RiotController] ===== DEBUG WALLET (REFRESH) =====');
       console.log('💰 [RiotController] Wallet data completo:', JSON.stringify(walletData, null, 2));
-      console.log('💰 [RiotController] ¿Tiene Balances?', 'Balances' in walletData);
+      console.log('💰 [RiotController] Has balances:', 'Balances' in walletData);
 
-      // DEBUG FLEX - Mostrar datos de flex en consola (REFRESH)
+      // Flex diagnostics during refresh
       console.log('🏆 [RiotController] ===== DEBUG FLEX (REFRESH) =====');
       console.log('🏆 [RiotController] Flex data completo:', JSON.stringify(flexData, null, 2));
-      console.log('🏆 [RiotController] ¿Tiene Entitlements?', 'Entitlements' in flexData);
+      console.log('🏆 [RiotController] Has entitlements:', 'Entitlements' in flexData);
 
-      // DEBUG USERINFO - Mostrar datos de userinfo en consola (REFRESH)
+      // User information diagnostics during refresh
       console.log('👤 [RiotController] ===== DEBUG USERINFO (REFRESH) =====');
       console.log('👤 [RiotController] UserInfo data completo:', JSON.stringify(userInfoData, null, 2));
       console.log('👤 [RiotController] PUUID:', userInfoData?.sub);
@@ -406,20 +406,20 @@ class RiotController {
           });
         });
       } else {
-        console.log('💰 [RiotController] No hay balances o no es un objeto');
+        console.log('💰 [RiotController] No balances found or the value is not an object');
       }
       console.log('💰 [RiotController] ===== FIN DEBUG WALLET (REFRESH) =====');
 
-      // Obtener detalles de las monedas
+      // Load currency details
       let currencyDetails = [];
       if (walletData.Balances && typeof walletData.Balances === 'object') {
         const currencyIds = Object.keys(walletData.Balances);
-        console.log('💰 [RiotController] Obteniendo detalles de monedas para IDs:', currencyIds);
+        console.log('💰 [RiotController] Loading currency details for IDs:', currencyIds);
         currencyDetails = await RiotService.getCurrencyDetails(currencyIds);
-        console.log('💰 [RiotController] Detalles de monedas obtenidos:', currencyDetails.length);
+        console.log('💰 [RiotController] Currency details loaded:', currencyDetails.length);
       }
 
-      // Obtener detalles de las cards, sprays, titles, agents y buddies
+      // Load card, spray, title, agent, and buddy details
       let cardsWithDetails = [];
       let spraysWithDetails = [];
       let titlesWithDetails = [];
@@ -451,7 +451,7 @@ class RiotController {
         agentsWithDetails = await RiotService.getAgentDetails(agentIDs);
       }
 
-      // Actualizar la cuenta
+      // Update the linked account
       account.name = userinfo.preferred_username || userinfo.acct?.game_name || nickname;
       account.nickname = nickname;
       account.loadout = loadoutData;
@@ -471,67 +471,67 @@ class RiotController {
 
       await req.user.save();
 
-      // Console.log para confirmar que regionInfo se actualizó en la DB
+      // Confirm that region information was updated in the database
       console.log('\n' + '='.repeat(60));
-      console.log('💾 REGION INFO ACTUALIZADA EN LA BASE DE DATOS 💾');
+      console.log('💾 REGION INFORMATION UPDATED IN THE DATABASE 💾');
       console.log('='.repeat(60));
       console.log('📊 RegionInfo actualizado:', JSON.stringify(regionInfo, null, 2));
-      console.log('🌎 Región Live:', regionInfo?.affinities?.live);
-      console.log('🌎 Región PBE:', regionInfo?.affinities?.pbe);
+      console.log('🌎 Live region:', regionInfo?.affinities?.live);
+      console.log('🌎 PBE region:', regionInfo?.affinities?.pbe);
       console.log('='.repeat(60) + '\n');
 
-      res.json({ 
-        success: true, 
-        message: 'Cuenta Riot actualizada exitosamente',
+      res.json({
+        success: true,
+        message: 'Riot account updated successfully',
         account
       });
     } catch (err) {
-      console.error('Error actualizando cuenta Riot:', err);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error actualizando cuenta Riot' 
+      console.error('Failed to update Riot account:', err);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update the Riot account'
       });
     }
   }
 
   static async removeRiotAccount(req, res) {
     const { puuid } = req.params;
-    
+
     try {
-      // Buscar la cuenta por puuid en lugar de accountId
+      // Find the account by PUUID
       const accountIndex = req.user.riotAccounts.findIndex(acc => acc.puuid === puuid);
-      
+
       if (accountIndex === -1) {
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Cuenta Riot no encontrada' 
+        return res.status(404).json({
+          success: false,
+          message: 'Riot account not found'
         });
       }
 
-      // Eliminar la cuenta usando el índice
+      // Remove the account by index
       req.user.riotAccounts.splice(accountIndex, 1);
       await req.user.save();
 
-      res.json({ 
-        success: true, 
-        message: 'Cuenta Riot eliminada exitosamente' 
+      res.json({
+        success: true,
+        message: 'Riot account deleted successfully'
       });
     } catch (err) {
-      console.error('Error eliminando cuenta Riot:', err);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error eliminando cuenta Riot' 
+      console.error('Failed to delete Riot account:', err);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete the Riot account'
       });
     }
   }
 
   static async getSprayDetails(req, res) {
     const { itemIDs } = req.body;
-    
+
     if (!itemIDs || !Array.isArray(itemIDs)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Faltan los itemIDs' 
+      return res.status(400).json({
+        success: false,
+        message: 'itemIDs are required'
       });
     }
 
@@ -539,21 +539,21 @@ class RiotController {
       const sprayDetails = await RiotService.getSprayDetails(itemIDs);
       res.json({ success: true, sprayDetails });
     } catch (err) {
-      console.error('Error obteniendo detalles de sprays:', err);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error obteniendo detalles de sprays' 
+      console.error('Failed to load spray details:', err);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to load spray details'
       });
     }
   }
 
   static async getTitleDetails(req, res) {
     const { itemIDs } = req.body;
-    
+
     if (!itemIDs || !Array.isArray(itemIDs)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Faltan los itemIDs' 
+      return res.status(400).json({
+        success: false,
+        message: 'itemIDs are required'
       });
     }
 
@@ -561,55 +561,55 @@ class RiotController {
       const titleDetails = await RiotService.getTitleDetails(itemIDs);
       res.json({ success: true, titleDetails });
     } catch (err) {
-      console.error('Error obteniendo detalles de titles:', err);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error obteniendo detalles de titles' 
+      console.error('Failed to load title details:', err);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to load title details'
       });
     }
   }
 
-  // Endpoint de prueba para verificar sprays
+  // Diagnostic endpoint for spray entitlements
   static async testSprays(req, res) {
     const { riotToken } = req.body;
-    
+
     if (!riotToken) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Falta el token de Riot' 
+      return res.status(400).json({
+        success: false,
+        message: 'The Riot token is missing'
       });
     }
 
     try {
       const userinfo = await RiotService.getUserInfo(riotToken);
       const puuid = userinfo.sub;
-      
+
       if (!puuid) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'No se pudo obtener el PUUID' 
+        return res.status(400).json({
+          success: false,
+          message: 'The PUUID could not be resolved'
         });
       }
 
       const entitlementData = await RiotService.getEntitlementToken(riotToken);
       const entitlementToken = entitlementData.entitlements_token;
-      
+
       if (!entitlementToken) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'No se pudo obtener el entitlement token' 
+        return res.status(400).json({
+          success: false,
+          message: 'The entitlement token could not be obtained'
         });
       }
 
-      // Probar con diferentes IDs de entitlement para sprays
+      // Test several entitlement IDs for spray data
       const sprayEntitlementIDs = [
         '4e60e748-bce6-4faa-9327-ebbe6089d5fe', // ID actual
         'd5f120f8-ff8c-4aac-8ea3-4e9b8f2b3c4d', // ID anterior
-        'f85cb6f7-33e5-4dc8-b609-ec7212301948', // ID de battle passes (para comparar)
+        'f85cb6f7-33e5-4dc8-b609-ec7212301948', // Battle pass ID used for comparison
       ];
 
       const results = {};
-      
+
       for (const entitlementID of sprayEntitlementIDs) {
         try {
           console.log(`🎨 [TestSprays] Probando entitlement ID: ${entitlementID}`);
@@ -620,14 +620,14 @@ class RiotController {
               Authorization: `Bearer ${riotToken}`
             }
           });
-          
+
           const data = await response.json();
           results[entitlementID] = {
             status: response.status,
             data: data,
             entitlementsCount: data.Entitlements ? data.Entitlements.length : 0
           };
-          console.log(`🎨 [TestSprays] Resultado para ${entitlementID}:`, results[entitlementID]);
+          console.log(`🎨 [TestSprays] Result for ${entitlementID}:`, results[entitlementID]);
         } catch (error) {
           results[entitlementID] = {
             error: error.message
@@ -635,18 +635,18 @@ class RiotController {
         }
       }
 
-      // Usar el ID que funcione mejor
-      const bestResult = Object.entries(results).find(([id, result]) => 
+      // Use the entitlement ID with the best result
+      const bestResult = Object.entries(results).find(([id, result]) =>
         result.entitlementsCount > 0
       );
-      
+
       let spraysData = results['4e60e748-bce6-4faa-9327-ebbe6089d5fe'].data;
       if (bestResult) {
         spraysData = bestResult[1].data;
-        console.log(`🎨 [TestSprays] Usando mejor resultado: ${bestResult[0]} con ${bestResult[1].entitlementsCount} sprays`);
+        console.log(`🎨 [TestSprays] Using best result: ${bestResult[0]} with ${bestResult[1].entitlementsCount} sprays`);
       }
-      
-      // Obtener detalles de los sprays si hay alguno
+
+      // Load spray details when results exist
       let spraysWithDetails = [];
       if (spraysData.Entitlements && spraysData.Entitlements.length > 0) {
         console.log('🎨 [TestSprays] Sprays encontrados:', spraysData.Entitlements.length);
@@ -654,37 +654,37 @@ class RiotController {
         const sprayIDs = spraysData.Entitlements.map(spray => spray.ItemID);
         console.log('🎨 [TestSprays] IDs de sprays:', sprayIDs);
         spraysWithDetails = await RiotService.getSprayDetails(sprayIDs);
-        console.log('🎨 [TestSprays] Sprays con detalles:', spraysWithDetails);
+        console.log('🎨 [TestSprays] Sprays with details:', spraysWithDetails);
       } else {
-        console.log('🎨 [TestSprays] No se encontraron sprays');
+        console.log('🎨 [TestSprays] No sprays found');
       }
-      
-      return res.json({ 
-        success: true, 
-        puuid, 
-        entitlementToken, 
+
+      return res.json({
+        success: true,
+        puuid,
+        entitlementToken,
         sprays: spraysData,
         spraysWithDetails: spraysWithDetails,
         testResults: results
       });
     } catch (err) {
-      console.error('Error en el test de sprays:', err);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Error en el test de sprays',
-        error: err.message 
+      console.error('Spray test failed:', err);
+      return res.status(500).json({
+        success: false,
+        message: 'The spray test failed',
+        error: err.message
       });
     }
   }
 
-    // Endpoint para probar la API de Valorant directamente
+    // Diagnostic endpoint for direct Valorant API calls
   static async testValorantAPI(req, res) {
     const { itemID } = req.body;
-    
+
     if (!itemID) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Falta el itemID' 
+      return res.status(400).json({
+        success: false,
+        message: 'itemID is required'
       });
     }
 
@@ -693,27 +693,27 @@ class RiotController {
       console.log(`🎨 [TestValorantAPI] Probando itemID: ${itemID}`);
       const url = `https://valorant-api.com/v1/sprays/${itemID}`;
       console.log(`🎨 [TestValorantAPI] URL: ${url}`);
-      
+
       const response = await fetch(url);
       console.log(`🎨 [TestValorantAPI] Status: ${response.status}`);
       console.log(`🎨 [TestValorantAPI] Headers:`, Object.fromEntries(response.headers.entries()));
-      
+
       const data = await response.json();
-      console.log(`🎨 [TestValorantAPI] Respuesta completa:`, JSON.stringify(data, null, 2));
-      
-      // Verificar si la respuesta tiene la estructura esperada
+      console.log(`🎨 [TestValorantAPI] Complete response:`, JSON.stringify(data, null, 2));
+
+      // Validate the expected response shape
       if (data.data) {
-        console.log(`🎨 [TestValorantAPI] ✅ Respuesta válida con data`);
+        console.log(`🎨 [TestValorantAPI] ✅ Valid response with data`);
         console.log(`🎨 [TestValorantAPI] displayName: ${data.data.displayName}`);
         console.log(`🎨 [TestValorantAPI] fullTransparentIcon: ${data.data.fullTransparentIcon ? 'PRESENTE' : 'AUSENTE'}`);
       } else {
-        console.log(`🎨 [TestValorantAPI] ❌ Respuesta sin data`);
+        console.log(`🎨 [TestValorantAPI] ❌ Response contains no data`);
       }
-      
+
       console.log(`🎨 [TestValorantAPI] ===== FIN PRUEBA API VALORANT =====`);
-      
-      return res.json({ 
-        success: true, 
+
+      return res.json({
+        success: true,
         itemID,
         status: response.status,
         data: data,
@@ -723,56 +723,56 @@ class RiotController {
       });
     } catch (err) {
       console.error('🎨 [TestValorantAPI] Error probando API de Valorant:', err);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Error probando API de Valorant',
-        error: err.message 
+      return res.status(500).json({
+        success: false,
+        message: 'The Valorant API test failed',
+        error: err.message
       });
     }
   }
 
-  // Endpoint para obtener nombres de jugadores usando Name Service
+  // Resolve player names through Riot Name Service
   static async getNameService(req, res) {
     const { puuids, riotToken } = req.body;
-    
+
     if (!puuids || !Array.isArray(puuids)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Faltan los PUUIDs (debe ser un array)' 
+      return res.status(400).json({
+        success: false,
+        message: 'PUUIDs are required and must be an array'
       });
     }
 
     if (!riotToken) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Falta el token de Riot' 
+      return res.status(400).json({
+        success: false,
+        message: 'The Riot token is missing'
       });
     }
 
     try {
-      // Obtener entitlement token
+      // Obtain the entitlement token
       const entitlementData = await RiotService.getEntitlementToken(riotToken);
       const entitlementToken = entitlementData.entitlements_token;
-      
+
       if (!entitlementToken) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'No se pudo obtener el entitlement token' 
+        return res.status(400).json({
+          success: false,
+          message: 'The entitlement token could not be obtained'
         });
       }
 
       // Llamar al Name Service
       const nameServiceData = await RiotService.getNameService(puuids, entitlementToken, riotToken);
-      
-      return res.json({ 
-        success: true, 
+
+      return res.json({
+        success: true,
         names: nameServiceData
       });
     } catch (err) {
-      console.error('Error obteniendo nombres de jugadores:', err);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Error obteniendo nombres de jugadores',
+      console.error('Failed to load player names:', err);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to load player names',
         error: err.message
       });
     }
@@ -780,78 +780,78 @@ class RiotController {
 
   static async getUserInfoDetailed(req, res) {
     const { riotToken } = req.body;
-    
+
     if (!riotToken) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Falta el token de Riot' 
+      return res.status(400).json({
+        success: false,
+        message: 'The Riot token is missing'
       });
     }
 
     try {
-      console.log('👤 [RiotController] ===== OBTENIENDO USERINFO DETALLADO =====');
-      console.log('👤 [RiotController] Token recibido:', riotToken ? riotToken.substring(0, 20) + '...' : 'No disponible');
-      
+      console.log('👤 [RiotController] ===== LOADING DETAILED USER INFORMATION =====');
+      console.log('👤 [RiotController] Token received:', riotToken ? riotToken.substring(0, 20) + '...' : 'Unavailable');
+
       const userInfoData = await RiotService.getUserInfoDetailed(riotToken);
-      
-      console.log('👤 [RiotController] UserInfo obtenido exitosamente');
-      console.log('👤 [RiotController] ===== FIN OBTENIENDO USERINFO DETALLADO =====');
-      
-      return res.json({ 
-        success: true, 
+
+      console.log('👤 [RiotController] User information loaded successfully');
+      console.log('👤 [RiotController] ===== END DETAILED USER INFORMATION LOOKUP =====');
+
+      return res.json({
+        success: true,
         userInfo: userInfoData
       });
     } catch (err) {
-      console.error('👤 [RiotController] Error obteniendo userinfo detallado:', err);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Error obteniendo información del usuario',
+      console.error('👤 [RiotController] Failed to load detailed user information:', err);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to load user information',
         error: err.message
       });
     }
   }
 
-  // Endpoint para probar la extracción de ID Token y obtener información de región
+  // Test ID-token extraction and region lookup
   static async testRegionInfo(req, res) {
     const { url, riotToken } = req.body;
-    
+
     if (!url) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Falta la URL con el ID Token' 
+      return res.status(400).json({
+        success: false,
+        message: 'The URL containing the ID token is missing'
       });
     }
 
     if (!riotToken) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Falta el token de Riot (auth token)' 
+      return res.status(400).json({
+        success: false,
+        message: 'The Riot authentication token is missing'
       });
     }
 
     try {
-      console.log('\n🚀 INICIANDO TEST DE REGIÓN INFO');
-      
-      // 1. Extraer ID Token de la URL
+      console.log('\n🚀 STARTING REGION INFORMATION TEST');
+
+      // Extract the ID token from the URL
       const idToken = RiotService.extractIdTokenFromUrl(url);
-      
+
       if (!idToken) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'No se pudo extraer el ID Token de la URL' 
+        return res.status(400).json({
+          success: false,
+          message: 'The ID token could not be extracted from the URL'
         });
       }
-      
-      // 2. Obtener información de región usando el ID Token y auth token
+
+      // Fetch region information with the ID token and authentication token
       const regionInfo = await RiotService.getRegionInfo(idToken, riotToken);
-      
-      console.log('✅ TEST DE REGIÓN INFO COMPLETADO EXITOSAMENTE\n');
-      
-      return res.json({ 
+
+      console.log('✅ REGION INFORMATION TEST COMPLETED SUCCESSFULLY\n');
+
+      return res.json({
         success: true,
-        message: 'Información de región obtenida exitosamente',
+        message: 'Region information loaded successfully',
         data: {
-          extractedIdToken: idToken.substring(0, 20) + '...', // Mostrar solo los primeros 20 caracteres por seguridad
+          extractedIdToken: idToken.substring(0, 20) + '...', // Expose only the first 20 characters for safety
           regionInfo: regionInfo,
           summary: {
             hasToken: !!regionInfo.token,
@@ -862,10 +862,10 @@ class RiotController {
         }
       });
     } catch (err) {
-      console.log('❌ ERROR EN TEST DE REGIÓN INFO:', err.message);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Error obteniendo información de región',
+      console.log('❌ REGION INFORMATION TEST FAILED:', err.message);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to load region information',
         error: err.message
       });
     }
@@ -874,4 +874,4 @@ class RiotController {
 
 }
 
-module.exports = RiotController; 
+module.exports = RiotController;

@@ -1,70 +1,69 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../../context/InventoryContext';
 import LoadingScreen from '../ui/LoadingScreen';
-import { BackButton, SearchInput } from '../ui/kit';
+import { SearchInput } from '../ui/kit';
+import InventoryCategoryHeader from './InventoryCategoryHeader';
 import styles from './InventoryList.module.css';
 
 export default function InventorySprays() {
-  const navigate = useNavigate();
   const { riotAccount, loading, error } = useInventory();
   const [spraysDetails, setSpraysDetails] = useState([]);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    console.log('🎨 [InventorySprays] ===== COMPONENTE MONTADO =====');
+    console.log('🎨 [InventorySprays] ===== COMPONENT MOUNTED =====');
     console.log('🎨 [InventorySprays] riotAccount:', riotAccount);
     console.log('🎨 [InventorySprays] loading:', loading);
     console.log('🎨 [InventorySprays] error:', error);
 
     if (riotAccount) {
-      console.log('🎨 [InventorySprays] Propiedades del riotAccount:', Object.keys(riotAccount));
-      console.log('🎨 [InventorySprays] ¿Tiene sprays?', 'sprays' in riotAccount);
-      console.log('🎨 [InventorySprays] Valor de sprays:', riotAccount.sprays);
-      console.log('🎨 [InventorySprays] Tipo de sprays:', typeof riotAccount.sprays);
-      console.log('🎨 [InventorySprays] ¿Es array?', Array.isArray(riotAccount.sprays));
+      console.log('🎨 [InventorySprays] Riot account properties:', Object.keys(riotAccount));
+      console.log('🎨 [InventorySprays] Has sprays:', 'sprays' in riotAccount);
+      console.log('🎨 [InventorySprays] Spray value:', riotAccount.sprays);
+      console.log('🎨 [InventorySprays] Spray type:', typeof riotAccount.sprays);
+      console.log('🎨 [InventorySprays] Is array:', Array.isArray(riotAccount.sprays));
 
       if (riotAccount.sprays && Array.isArray(riotAccount.sprays)) {
-        console.log('🎨 [InventorySprays] Sprays encontrados:', riotAccount.sprays);
-        console.log('🎨 [InventorySprays] Cantidad de Sprays:', riotAccount.sprays.length);
-        console.log('🎨 [InventorySprays] Primeros 3 sprays:', riotAccount.sprays.slice(0, 3));
+        console.log('🎨 [InventorySprays] Sprays found:', riotAccount.sprays);
+        console.log('🎨 [InventorySprays] Spray count:', riotAccount.sprays.length);
+        console.log('🎨 [InventorySprays] First three sprays:', riotAccount.sprays.slice(0, 3));
 
-        // Los sprays ya vienen con detalles del backend, solo los procesamos
+        // Sprays already include their backend details
         processSpraysDetails();
       } else {
-        console.log('🎨 [InventorySprays] No hay sprays válidos en riotAccount');
-        console.log('🎨 [InventorySprays] riotAccount.sprays es:', riotAccount.sprays);
+        console.log('🎨 [InventorySprays] No valid sprays found in the Riot account');
+        console.log('🎨 [InventorySprays] riotAccount.sprays value:', riotAccount.sprays);
         console.log('🎨 [InventorySprays] riotAccount.sprays === null?', riotAccount.sprays === null);
         console.log('🎨 [InventorySprays] riotAccount.sprays === undefined?', riotAccount.sprays === undefined);
         console.log('🎨 [InventorySprays] riotAccount.sprays === []?', JSON.stringify(riotAccount.sprays) === '[]');
       }
     } else {
-      console.log('🎨 [InventorySprays] No hay riotAccount');
+      console.log('🎨 [InventorySprays] No Riot account is available');
     }
-    console.log('🎨 [InventorySprays] ===== FIN COMPONENTE MONTADO =====');
+    console.log('🎨 [InventorySprays] ===== END COMPONENT MOUNT =====');
   }, [riotAccount, loading]);
 
   const processSpraysDetails = async () => {
-    console.log('🎨 [InventorySprays] ===== INICIANDO processSpraysDetails =====');
-    console.log('🎨 [InventorySprays] riotAccount existe?', !!riotAccount);
-    console.log('🎨 [InventorySprays] riotAccount.sprays existe?', !!(riotAccount && riotAccount.sprays));
+    console.log('🎨 [InventorySprays] ===== START processSpraysDetails =====');
+    console.log('🎨 [InventorySprays] Riot account exists:', !!riotAccount);
+    console.log('🎨 [InventorySprays] riotAccount.sprays exists:', !!(riotAccount && riotAccount.sprays));
     console.log('🎨 [InventorySprays] riotAccount.sprays.length:', riotAccount?.sprays?.length);
 
     if (!riotAccount || !riotAccount.sprays || riotAccount.sprays.length === 0) {
-      console.log('🎨 [InventorySprays] No hay sprays para procesar');
-      console.log('🎨 [InventorySprays] ===== FIN processSpraysDetails (sin sprays) =====');
+      console.log('🎨 [InventorySprays] No sprays to process');
+      console.log('🎨 [InventorySprays] ===== END processSpraysDetails (no sprays) =====');
       return;
     }
 
-    console.log('🎨 [InventorySprays] Procesando', riotAccount.sprays.length, 'sprays');
-    console.log('🎨 [InventorySprays] Primer spray completo:', riotAccount.sprays[0]);
+    console.log('🎨 [InventorySprays] Processing', riotAccount.sprays.length, 'sprays');
+    console.log('🎨 [InventorySprays] First complete spray:', riotAccount.sprays[0]);
     setDetailsLoading(true);
 
     try {
-      // Los sprays ya vienen con detalles del backend, solo los organizamos
+      // Normalize the backend spray details
       const details = riotAccount.sprays.map((spray, idx) => {
-        console.log(`🎨 [InventorySprays] Procesando spray ${idx + 1}/${riotAccount.sprays.length}:`, {
+        console.log(`🎨 [InventorySprays] Processing spray ${idx + 1}/${riotAccount.sprays.length}:`, {
           ItemID: spray.ItemID,
           displayName: spray.displayName,
           fullTransparentIcon: spray.fullTransparentIcon,
@@ -78,19 +77,19 @@ export default function InventorySprays() {
         };
       });
 
-      console.log('🎨 [InventorySprays] Todos los sprays procesados:', details);
-      console.log('🎨 [InventorySprays] Cantidad final de detalles:', details.length);
+      console.log('🎨 [InventorySprays] Processed sprays:', details);
+      console.log('🎨 [InventorySprays] Final detail count:', details.length);
       setSpraysDetails(details);
 
     } catch (error) {
-      console.error('🎨 [InventorySprays] Error general en processSpraysDetails:', error);
+      console.error('🎨 [InventorySprays] processSpraysDetails failed:', error);
     } finally {
       setDetailsLoading(false);
-      console.log('🎨 [InventorySprays] ===== FIN processSpraysDetails =====');
+      console.log('🎨 [InventorySprays] ===== END processSpraysDetails =====');
     }
   };
 
-  // Filtrar sprays basado en el término de búsqueda
+  // Filter sprays by the search term
   const filteredSprays = spraysDetails.filter(spray =>
     spray.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -98,48 +97,45 @@ export default function InventorySprays() {
   return (
     <>
       <div className={styles.page}>
-        <div className={styles.headerRow}>
-          <BackButton onClick={() => navigate('/inventory')}>Volver al Dashboard</BackButton>
-
-          <div className={styles.headerRight}>
-            <div className={styles.countGroup}>
-              <span className={styles.countText}>Total: {spraysDetails.length}</span>
-              {searchTerm && <span className={styles.countMuted}>({filteredSprays.length} encontrados)</span>}
-            </div>
+        <InventoryCategoryHeader
+          title="Sprays"
+          description="Browse the sprays unlocked on this account."
+          count={spraysDetails.length}
+          countLabel="sprays"
+          visibleCount={searchTerm ? filteredSprays.length : undefined}
+          actions={(
             <div className={styles.searchWrap}>
               <SearchInput
-                placeholder="Buscar sprays..."
+                placeholder="Search sprays..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-          </div>
-        </div>
+          )}
+        />
 
-        <h2 className={styles.pageTitle}>SPRAYS</h2>
-
-        {loading && <LoadingScreen fullscreen={false} text="Cargando sprays..." />}
+        {loading && <LoadingScreen fullscreen={false} text="Loading sprays..." />}
 
         {error && <div className={styles.errorState}>Error: {error}</div>}
 
         {!riotAccount && !loading && (
-          <div className={styles.emptyState}>No hay cuenta Riot seleccionada</div>
+          <div className={styles.emptyState}>No Riot account is selected.</div>
         )}
 
         {riotAccount && !riotAccount.sprays && !loading && (
-          <div className={styles.emptyState}>No se encontraron Sprays para esta cuenta</div>
+          <div className={styles.emptyState}>No sprays were found for this account.</div>
         )}
 
         {detailsLoading && (
-          <div className={styles.loadingNote}>Cargando detalles de sprays...</div>
+          <div className={styles.loadingNote}>Loading spray details...</div>
         )}
 
         {riotAccount && riotAccount.sprays && riotAccount.sprays.length === 0 && !loading && (
-          <div className={styles.emptyState}>No tienes Sprays en esta cuenta</div>
+          <div className={styles.emptyState}>This account does not own any sprays.</div>
         )}
 
         {spraysDetails.length > 0 && filteredSprays.length === 0 && searchTerm ? (
-          <div className={styles.emptyState}>No se encontraron sprays que coincidan con "{searchTerm}"</div>
+          <div className={styles.emptyState}>No sprays match "{searchTerm}".</div>
         ) : spraysDetails.length > 0 && (
           <div className={styles.grid}>
             {filteredSprays.map((spray, index) => (
@@ -152,7 +148,7 @@ export default function InventorySprays() {
                     decoding="async"
                     className={styles.cardImage}
                     onError={(e) => {
-                      console.log('🎨 [InventorySprays] Error cargando imagen:', spray.fullTransparentIcon);
+                      console.log('🎨 [InventorySprays] Failed to load image:', spray.fullTransparentIcon);
                       e.target.style.display = 'none';
                       e.target.nextSibling.style.display = 'block';
                     }}
@@ -162,7 +158,7 @@ export default function InventorySprays() {
                   <div className={styles.cardImagePlaceholder}>🎨</div>
                 )}
                 <h3 className={styles.cardName} style={{ whiteSpace: 'normal' }}>
-                  {spray.displayName || 'Spray Desconocido'}
+                  {spray.displayName || 'Unknown spray'}
                 </h3>
               </div>
             ))}

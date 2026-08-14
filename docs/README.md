@@ -2,6 +2,12 @@
 
 Esta carpeta contiene referencias visuales y snippets de inspiracion para la UI de ValoInventory. No es codigo productivo de la app: sirve como material de consulta antes de tocar componentes del frontend.
 
+## Planes activos
+
+- [`SCALABLE_PAGINATION_AND_SHARING_PLAN.md`](./SCALABLE_PAGINATION_AND_SHARING_PLAN.md): plan operativo, tracker por ramas y estrategia obligatoria de testing para paginación, performance y publicaciones escalables.
+- [`MVP_AUTH_CLERK_PLAN.md`](./MVP_AUTH_CLERK_PLAN.md): plan conectado para delegar login, Google OAuth y JWT a Clerk con migración segura y testing obligatorio.
+- [`MVP_SECURITY_HARDENING_PLAN.md`](./MVP_SECURITY_HARDENING_PLAN.md): plan prioritario para cerrar endpoints, endurecer Express y migrar shares a tokens públicos aleatorios, hasheados, rotables y revocables.
+
 ## Estructura
 
 ```text

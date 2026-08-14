@@ -16,10 +16,10 @@ export default function Inventory() {
     const fetchAccount = async () => {
       setLoading(true);
       setError('');
-      // Eliminar cualquier declaración local de setRiotAccount
+      // The account state is owned by InventoryContext
       const puuid = localStorage.getItem('selected_riot_puuid');
       if (!puuid) {
-        setError('No hay cuenta Riot seleccionada.');
+        setError('No Riot account is selected.');
         setLoading(false);
         return;
       }
@@ -34,13 +34,13 @@ export default function Inventory() {
             console.log('🔍 [Inventory] Currency details:', acc.currencyDetails);
             console.log('🔍 [Inventory] Account properties:', Object.keys(acc));
           } else {
-            setError('No se encontró la cuenta Riot seleccionada.');
+            setError('The selected Riot account was not found.');
           }
         } else {
-          setError('No se pudo obtener el perfil del usuario.');
+          setError('The user profile could not be loaded.');
         }
       } catch (e) {
-        setError('Error de red al obtener la cuenta Riot.');
+        setError('A network error occurred while loading the Riot account.');
       }
       setLoading(false);
     };
@@ -76,7 +76,7 @@ export default function Inventory() {
     fetchCatalog();
   }, []);
 
-  // Cargar weaponSkins al inicio
+  // Load skin pricing metadata on startup
   useEffect(() => {
     fetch('https://vinfo-api.com/json/weaponSkins')
       .then(res => res.json())
@@ -86,17 +86,17 @@ export default function Inventory() {
       });
   }, []);
 
-  // Funciones de mapeo
+  // Catalog lookup helpers
   const getWeaponById = (id) => catalog.weapons.find(w => w.uuid === id);
   const getSkinById = (id) => catalog.skins.find(s => s.uuid === id);
   const getChromaById = (id) => catalog.chromas.find(c => c.uuid === id);
 
-  // Loadout y skins
+  // Loadout and skins
   const loadoutGuns = riotAccount?.loadout?.Guns || [];
   const loadoutMelee = riotAccount?.loadout?.Melee || null;
   const allSkins = riotAccount?.skins || [];
 
-  // Categorías de armas para el layout
+  // Weapon categories used by the layout
   const weaponCategories = [
     { name: 'SIDEARMS', weapons: ['CLASSIC', 'SHORTY', 'FRENZY', 'GHOST', 'SHERIFF'] },
     { name: 'SMGS', weapons: ['STINGER', 'SPECTRE'] },
@@ -107,126 +107,120 @@ export default function Inventory() {
     { name: 'MELEE', weapons: ['MELEE'] }
   ];
 
-  // Mapeo de nombre a uuid de arma
+  // Map weapon names to UUIDs
   const weaponNameToUuid = {};
   catalog.weapons.forEach(w => { weaponNameToUuid[w.displayName.toUpperCase()] = w.uuid; });
 
-  // Mapeo de uuid de arma a objeto de loadout
+  // Map weapon UUIDs to loadout entries
   const loadoutMap = {};
   loadoutGuns.forEach(gun => { loadoutMap[gun.ID] = gun; });
   if (loadoutMelee) loadoutMap[loadoutMelee.ID] = loadoutMelee;
 
-  // Render de loadout agrupado por categoría, siempre mostrando todas las armas, solo imagen y nombre del arma
+  // Render every owned skin grouped by base name
   const renderLoadout = () => (
     <div style={{ marginBottom: 40 }}>
-      <h2 style={{ color: '#ff4655', textAlign: 'center', marginBottom: 24, fontSize: 32, letterSpacing: 2, fontWeight: 'bold', textTransform: 'uppercase' }}>TODAS MIS SKINS</h2>
+      <h2 style={{ color: '#ff4655', textAlign: 'center', marginBottom: 24, fontSize: 32, letterSpacing: 2, fontWeight: 'bold', textTransform: 'uppercase' }}>ALL MY SKINS</h2>
       {allSkins.length === 0 ? (
-        <div style={{ color: '#fff', textAlign: 'center' }}>No hay skins guardados.</div>
+        <div style={{ color: '#fff', textAlign: 'center' }}>No saved skins.</div>
       ) : (
         (() => {
-          // Agrupar allSkins por nombre base usando el catálogo de skinlevels
+          // Group skins by base name using the skin-level catalog
           const skinlevels = catalog.skinlevels || [];
-          const skinsPorBase = {};
+          const skinsByBaseName = {};
           allSkins.forEach(skin => {
             const skinLevelObj = skinlevels.find(s => s.uuid === skin.ItemID);
-            if (!skinLevelObj) return; // Ignorar si no se encuentra el objeto completo
+            if (!skinLevelObj) return;
             const baseName = skinLevelObj.displayName.replace(/ Level \d+$/, '').trim();
-            if (!skinsPorBase[baseName]) skinsPorBase[baseName] = [];
-            skinsPorBase[baseName].push(skinLevelObj);
+            if (!skinsByBaseName[baseName]) skinsByBaseName[baseName] = [];
+            skinsByBaseName[baseName].push(skinLevelObj);
           });
-          // Ordenar las skins por precio descendente, las que no tienen precio al final
-          const skinsOrdenadas = Object.entries(skinsPorBase).sort((a, b) => {
-            // Excepción especial para el skin "VCT LOCK//IN Misericórdia"
-            const precioA = a[0] === 'VCT LOCK//IN Misericórdia' ? 5440 : 
+          // Sort skins by descending price and put unpriced skins last
+          const sortedSkins = Object.entries(skinsByBaseName).sort((a, b) => {
+            // Custom price for the VCT LOCK//IN skin
+            const priceA = a[0] === 'VCT LOCK//IN Misericórdia' ? 5440 :
               (() => {
                 const skinA = weaponSkins.find(s => s.name === a[0]);
                 return skinA?.price ? Object.values(skinA.price)[0] : null;
               })();
-            
-            const precioB = b[0] === 'VCT LOCK//IN Misericórdia' ? 5440 : 
+
+            const priceB = b[0] === 'VCT LOCK//IN Misericórdia' ? 5440 :
               (() => {
                 const skinB = weaponSkins.find(s => s.name === b[0]);
                 return skinB?.price ? Object.values(skinB.price)[0] : null;
               })();
-            
-            if (precioA && precioB) return precioB - precioA;
-            if (precioA) return -1;
-            if (precioB) return 1;
+
+            if (priceA && priceB) return priceB - priceA;
+            if (priceA) return -1;
+            if (priceB) return 1;
             return 0;
           });
-          return skinsOrdenadas.map(([baseName, skins], idx) => {
-            // Debug temporal para verificar nombres
+          return sortedSkins.map(([baseName, skins], idx) => {
+            // Temporary display-name diagnostic
             if (baseName.includes('VCT') || baseName.includes('Misericórdia')) {
-              console.log('🔍 [Inventory] Procesando skin:', baseName, 'idx:', idx);
+              console.log('🔍 [Inventory] Processing skin:', baseName, 'index:', idx);
             }
-            
-            // 1. Buscar la skin base por nombre exacto o parcial
+
+            // Find the base skin by exact or partial display name
             let skinBaseObj = catalog.skins.find(s => s.displayName === baseName);
             if (!skinBaseObj) {
               skinBaseObj = catalog.skins.find(s => s.displayName.toLowerCase().includes(baseName.toLowerCase()));
             }
-            // Definir imgSrc (imagen principal de la skin) usando siempre el nivel base (level 0)
-            const nivelBase = skins.find(
+            // Prefer the base level image
+            const baseLevel = skins.find(
               s => !/Level \d+$/i.test(s.displayName) || s.levelItem === null
             );
-            let imgSrc = nivelBase?.displayIcon || '';
-            // Buscar todos los chromas de la skin base
-            const chromasBase = skinBaseObj ? catalog.chromas.filter(c => c.skinUuid === skinBaseObj.uuid) : [];
+            let imgSrc = baseLevel?.displayIcon || '';
 
-            // Supongamos que tienes el array weaponSkins cargado desde https://vinfo-api.com/json/weaponSkins
-            // y el nombre base y los niveles desbloqueados de cada skin
-            // (esto debe ir dentro del map de cada casilla)
-            const nombreBase = baseName;
-            const nivelesDesbloqueados = skins.map(s => s.displayName);
-            // Determinar el nivel más alto (por ejemplo, el que tenga el número más alto en "Level X")
-            let nivelMasAlto = nombreBase;
+            const unlockedLevels = skins.map(s => s.displayName);
+            // Determine the highest unlocked level
+            let highestLevelName = baseName;
             let maxLevel = 0;
-            nivelesDesbloqueados.forEach(n => {
+            unlockedLevels.forEach(n => {
               const match = n.match(/Level (\d+)/);
               if (match) {
                 const lvl = parseInt(match[1], 10);
                 if (lvl > maxLevel) {
                   maxLevel = lvl;
-                  nivelMasAlto = n.replace(/\s*\(.*\)/, ''); // Quitar (Variant ...)
+                  highestLevelName = n.replace(/\s*\(.*\)/, '');
                 }
               }
             });
-            // Buscar la skin base en weaponSkins (vinfo-api.com)
+            // Match the base skin against pricing metadata
             const skinBaseWeapon = weaponSkins.find(s => s.name === baseName);
-            
-            // Debug temporal para VCT skin
+
+            // Temporary VCT pricing diagnostic
             if (baseName === 'VCT LOCK//IN Misericórdia') {
-              console.log('🔍 [Inventory] skinBaseWeapon encontrado:', skinBaseWeapon);
+              console.log('🔍 [Inventory] skinBaseWeapon found:', skinBaseWeapon);
               console.log('🔍 [Inventory] skinBaseWeapon?.price:', skinBaseWeapon?.price);
             }
-            
-            // Renderizar todos los swatches de los chromas de la skin base
+
+            // Render all chroma swatches for the base skin
             return (
               <div key={skinBaseWeapon?.id || skins[0].uuid || idx} style={{ background: '#222b3a', borderRadius: 12, padding: 16, minWidth: 200, maxWidth: 220, minHeight: 260, maxHeight: 320, textAlign: 'center', boxShadow: '0 2px 12px #0007', display: 'inline-block', margin: 8, boxSizing: 'border-box', justifyContent: 'space-between', verticalAlign: 'top', position: 'relative' }}>
-                {/* Mostrar precio como etiqueta flotante solo si existe y hay valor */}
+                {/* Floating price label */}
                 {(() => {
-                  // Excepción especial para el skin "VCT LOCK//IN Misericórdia"
+                  // Custom price for the VCT LOCK//IN skin
                   if (baseName === 'VCT LOCK//IN Misericórdia') {
-                    console.log('🎯 [Inventory] FORZANDO visualización de precio para VCT LOCK//IN Misericórdia: 5440');
+                    console.log('🎯 [Inventory] Applying custom VCT LOCK//IN price: 5440');
                     return (
                       <div style={{ position: 'absolute', top: 10, right: 10, background: '#ff4655', color: '#fff', fontWeight: 'bold', fontSize: 18, borderRadius: 6, padding: '2px 14px', zIndex: 2 }}>
                         5440
                       </div>
                     );
                   }
-                  
-                  // Lógica normal para otras skins
+
+                  // Standard pricing for other skins
                   if (skinBaseWeapon?.price) {
-                    const precio = Object.values(skinBaseWeapon.price)[0];
-                    if (precio) {
+                    const price = Object.values(skinBaseWeapon.price)[0];
+                    if (price) {
                       return (
                         <div style={{ position: 'absolute', top: 10, right: 10, background: '#ff4655', color: '#fff', fontWeight: 'bold', fontSize: 18, borderRadius: 6, padding: '2px 14px', zIndex: 2 }}>
-                          {precio}
+                          {price}
                         </div>
                       );
                     }
                   }
-                  
+
                   return null;
                 })()}
                 <div style={{ display: 'flex', justifyContent: 'flex-start', gap: 2, marginBottom: 8, marginLeft: 8 }}>
@@ -245,19 +239,19 @@ export default function Inventory() {
                   <img src={imgSrc} alt={baseName} style={{ width: '100%', height: 80, objectFit: 'contain', marginBottom: 12 }} />
                 )}
                 <div style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>{baseName}</div>
-                {/* Debug temporal - mostrar si es el skin VCT */}
+                {/* Temporary VCT pricing diagnostic */}
                 {baseName === 'VCT LOCK//IN Misericórdia' && (
                   <div style={{ color: '#00ff00', fontSize: 10, marginTop: 4 }}>
-                    DEBUG: Precio detectado = 5440
+                    DEBUG: Detected price = 5440
                   </div>
                 )}
-                {/* Mostrar precio del skin base solo si existe */}
+                {/* Base skin price */}
                 {/* {skinBaseWeapon?.price && (
                   <div style={{ color: '#ffb347', fontWeight: 'bold', fontSize: 14, marginTop: 2 }}>
-                    Precio: {Object.values(skinBaseWeapon.price)[0]}
+                    Price: {Object.values(skinBaseWeapon.price)[0]}
                   </div>
                 )} */}
-                <div style={{ color: '#ffb347', fontWeight: 'bold', fontSize: 13, marginTop: 4 }}>Niveles desbloqueados: {skins.length}</div>
+                <div style={{ color: '#ffb347', fontWeight: 'bold', fontSize: 13, marginTop: 4 }}>Unlocked levels: {skins.length}</div>
               </div>
             );
           });
@@ -267,20 +261,20 @@ export default function Inventory() {
   );
 
 
-  // Calcular la cantidad real de tarjetas individuales de skins (nombres base únicos)
+  // Count unique base skins
   const skinlevels = catalog.skinlevels || [];
-  const skinsPorBase = {};
+  const skinsByBaseName = {};
   allSkins.forEach(skin => {
     const skinLevelObj = skinlevels.find(s => s.uuid === skin.ItemID);
     if (!skinLevelObj) return;
-    // Usar el mismo método robusto que en InventorySkins
+    // Use the same base-name strategy as InventorySkins
     const baseName = skinLevelObj.displayName.split(' Level ')[0].trim();
-    if (!skinsPorBase[baseName]) skinsPorBase[baseName] = [];
-    skinsPorBase[baseName].push(skinLevelObj);
+    if (!skinsByBaseName[baseName]) skinsByBaseName[baseName] = [];
+    skinsByBaseName[baseName].push(skinLevelObj);
   });
-  const totalTarjetasSkins = Object.keys(skinsPorBase).length;
+  const totalSkinCards = Object.keys(skinsByBaseName).length;
 
-  // Calcular el total de battle passes
+  // Count battle passes
   const totalBattlePasses = riotAccount?.battlePasses?.length || 0;
 
   // Navbar
@@ -300,12 +294,12 @@ export default function Inventory() {
       gap: 32
     }}>
       <button onClick={() => navigate('/')} style={{ background: 'none', color: '#fff', border: 'none', fontWeight: 'bold', fontSize: 20, letterSpacing: 2, cursor: 'pointer', padding: '8px 24px', borderRadius: 8, transition: 'background 0.2s' }}>Home</button>
-      <button onClick={() => navigate('/mis-skins')} style={{ background: 'none', color: '#fff', border: 'none', fontWeight: 'bold', fontSize: 20, letterSpacing: 2, cursor: 'pointer', padding: '8px 24px', borderRadius: 8, transition: 'background 0.2s' }}>Loadout</button>
+      <button onClick={() => navigate('/loadout')} style={{ background: 'none', color: '#fff', border: 'none', fontWeight: 'bold', fontSize: 20, letterSpacing: 2, cursor: 'pointer', padding: '8px 24px', borderRadius: 8, transition: 'background 0.2s' }}>Loadout</button>
       <button onClick={() => navigate('/inventory')} style={{ background: '#ff4655', color: '#fff', border: 'none', fontWeight: 'bold', fontSize: 20, letterSpacing: 2, cursor: 'pointer', padding: '8px 24px', borderRadius: 8, transition: 'background 0.2s' }}>Inventory</button>
     </div>
   );
 
-  if (loading) return <LoadingScreen fullscreen={false} text="Cargando inventario..." />;
+  if (loading) return <LoadingScreen fullscreen={false} text="Loading inventory..." />;
   if (error) return <div style={{ color: '#ff4655', textAlign: 'center', marginTop: 80 }}>{error}</div>;
   if (!riotAccount) return null;
 
@@ -315,25 +309,25 @@ export default function Inventory() {
       <div style={{ display: 'flex', gap: 32, justifyContent: 'center', marginBottom: 48 }}>
         <div style={{ background: '#1a2233', borderRadius: 18, padding: '24px 40px', minWidth: 180, minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 18px #000a' }}>
           <div style={{ color: '#ff4655', fontWeight: 'bold', fontSize: 28, letterSpacing: 2, marginBottom: 8, textAlign: 'center' }}>SKINS</div>
-          <div style={{ color: '#fff', fontWeight: 'bold', fontSize: 38, textAlign: 'center', textShadow: '1px 2px 6px #000a' }}>{totalTarjetasSkins}</div>
+          <div style={{ color: '#fff', fontWeight: 'bold', fontSize: 38, textAlign: 'center', textShadow: '1px 2px 6px #000a' }}>{totalSkinCards}</div>
         </div>
         <div style={{ background: '#1a2233', borderRadius: 18, padding: '24px 40px', minWidth: 180, minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 18px #000a' }}>
           <div style={{ color: '#ff4655', fontWeight: 'bold', fontSize: 28, letterSpacing: 2, marginBottom: 8, textAlign: 'center' }}>BATTLEPASSES</div>
           <div style={{ color: '#fff', fontWeight: 'bold', fontSize: 38, textAlign: 'center', textShadow: '1px 2px 6px #000a' }}>{totalBattlePasses}</div>
         </div>
-        {/* ... otras tarjetas de resumen ... */}
+        {/* Additional summary cards */}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-        <h1 style={{ color: '#ff4655', letterSpacing: '2px', fontWeight: 'bold', margin: 0 }}>Cuenta Riot: {riotAccount.name} ({riotAccount.nickname || riotAccount.puuid})</h1>
-        
-        {/* Wallet Information - Con iconos locales */}
+        <h1 style={{ color: '#ff4655', letterSpacing: '2px', fontWeight: 'bold', margin: 0 }}>Riot account: {riotAccount.name} ({riotAccount.nickname || riotAccount.puuid})</h1>
+
+        {/* Wallet information with local icons */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
           <div style={{ color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'right' }}>WALLET</div>
           <div style={{ display: 'flex', flexDirection: 'row', gap: 12, alignItems: 'center' }}>
             {/* VP - Valorant Points */}
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
               gap: 8,
               background: 'rgba(255, 255, 255, 0.1)',
               padding: '8px 12px',
@@ -341,8 +335,8 @@ export default function Inventory() {
               border: '1px solid rgba(255, 255, 255, 0.2)',
               backdropFilter: 'blur(10px)'
             }}>
-              <img 
-                src="/assets/icons/20px-White_Valorant_Points_VALORANT.png" 
+              <img
+                src="/assets/icons/20px-White_Valorant_Points_VALORANT.png"
                 alt="Valorant Points"
                 style={{ width: 24, height: 24, objectFit: 'contain' }}
               />
@@ -350,11 +344,11 @@ export default function Inventory() {
                 {riotAccount?.wallet?.Balances?.['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741'] || 0}
               </span>
             </div>
-            
+
             {/* KP - Kingdom Credits */}
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
               gap: 8,
               background: 'rgba(255, 255, 255, 0.1)',
               padding: '8px 12px',
@@ -362,8 +356,8 @@ export default function Inventory() {
               border: '1px solid rgba(255, 255, 255, 0.2)',
               backdropFilter: 'blur(10px)'
             }}>
-              <img 
-                src="/assets/icons/kingdompoints.png" 
+              <img
+                src="/assets/icons/kingdompoints.png"
                 alt="Kingdom Credits"
                 style={{ width: 24, height: 24, objectFit: 'contain' }}
               />
@@ -371,11 +365,11 @@ export default function Inventory() {
                 {(riotAccount?.wallet?.Balances?.['85ca954a-41f2-ce94-9b45-8ca3dd39a00d'] || 0).toLocaleString()}
               </span>
             </div>
-            
+
             {/* RP - Radianite Points */}
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
               gap: 8,
               background: 'rgba(255, 255, 255, 0.1)',
               padding: '8px 12px',
@@ -383,8 +377,8 @@ export default function Inventory() {
               border: '1px solid rgba(255, 255, 255, 0.2)',
               backdropFilter: 'blur(10px)'
             }}>
-              <img 
-                src="/assets/icons/radianitepoints.png" 
+              <img
+                src="/assets/icons/radianitepoints.png"
                 alt="Radianite Points"
                 style={{ width: 24, height: 24, objectFit: 'contain' }}
               />
@@ -398,4 +392,4 @@ export default function Inventory() {
       {renderLoadout()}
     </div>
   );
-} 
+}

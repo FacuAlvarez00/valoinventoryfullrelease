@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../../context/InventoryContext';
 import LoadingScreen from '../ui/LoadingScreen';
-import { BackButton } from '../ui/kit';
+import InventoryCategoryHeader from './InventoryCategoryHeader';
 import styles from './InventoryList.module.css';
 
 export default function InventoryFlex() {
-  const navigate = useNavigate();
   const { riotAccount, loading, error } = useInventory();
   const [flexDetails, setFlexDetails] = useState([]);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -15,38 +13,37 @@ export default function InventoryFlex() {
     const loadFlexDetails = async () => {
       setDetailsLoading(true);
       try {
-        // Obtener los ItemIDs de flex del riotAccount
+        // Read flex entitlement IDs from the Riot account
         const flexItems = riotAccount?.flex?.Entitlements || [];
 
-        // Flex por defecto que todas las cuentas tienen
+        // Every account includes this default flex item
         const defaultFlexUuid = 'af52b5a0-4a4c-03b2-c9d7-8187a08a2675';
         const defaultFlexItem = { ItemID: defaultFlexUuid, isDefault: true };
 
-        // Combinar flex por defecto + flex del usuario
+        // Combine the default item with the user's flex items
         const allFlexItems = [defaultFlexItem, ...flexItems];
 
-        console.log('🏆 [InventoryFlex] Flex items encontrados:', flexItems.length);
-        console.log('🏆 [InventoryFlex] Flex por defecto agregado:', defaultFlexUuid);
-        console.log('🏆 [InventoryFlex] Total items a procesar:', allFlexItems.length);
-        console.log('🏆 [InventoryFlex] Flex data completo:', riotAccount?.flex);
+        console.log('🏆 [InventoryFlex] Flex items found:', flexItems.length);
+        console.log('🏆 [InventoryFlex] Default flex added:', defaultFlexUuid);
+        console.log('🏆 [InventoryFlex] Total items to process:', allFlexItems.length);
 
-        // Fetch detalles de cada item de flex desde valorant-api.com usando el endpoint específico de flex
+        // Fetch each flex item from its dedicated Valorant API endpoint
         const flexPromises = allFlexItems.map(async (item) => {
           try {
-            const itemType = item.isDefault ? 'FLEX POR DEFECTO' : 'FLEX DEL USUARIO';
-            console.log(`🏆 [InventoryFlex] Obteniendo detalles para ${itemType}:`, item.ItemID);
+            const itemType = item.isDefault ? 'DEFAULT FLEX' : 'USER FLEX';
+            console.log(`🏆 [InventoryFlex] Loading details for ${itemType}:`, item.ItemID);
 
             const response = await fetch(`https://valorant-api.com/v1/flex/${item.ItemID}`);
 
             if (!response.ok) {
-              console.log('🏆 [InventoryFlex] Error en respuesta para', item.ItemID, 'status:', response.status);
+              console.log('🏆 [InventoryFlex] Request failed for', item.ItemID, 'status:', response.status);
               throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
 
             if (data.status === 200 && data.data) {
-              console.log('🏆 [InventoryFlex] Datos obtenidos para', item.ItemID, ':', {
+              console.log('🏆 [InventoryFlex] Details loaded for', item.ItemID, ':', {
                 displayNameAllCaps: data.data.displayNameAllCaps,
                 displayIcon: data.data.displayIcon,
                 displayName: data.data.displayName
@@ -61,11 +58,11 @@ export default function InventoryFlex() {
                 isDefault: item.isDefault || false
               };
             } else {
-              console.log('🏆 [InventoryFlex] No se encontraron datos para', item.ItemID);
+              console.log('🏆 [InventoryFlex] No data found for', item.ItemID);
               throw new Error('No data found');
             }
           } catch (error) {
-            console.error(`🏆 [InventoryFlex] Error obteniendo detalles de flex item ${item.ItemID}:`, error);
+            console.error(`🏆 [InventoryFlex] Failed to load flex item ${item.ItemID}:`, error);
             return {
               ...item,
               displayName: 'Flex Item',
@@ -81,13 +78,13 @@ export default function InventoryFlex() {
         const defaultItems = results.filter(r => r.isDefault).length;
         const userItems = results.filter(r => !r.isDefault).length;
 
-        console.log('🏆 [InventoryFlex] Resultados finales:', results.length, 'items procesados');
-        console.log('🏆 [InventoryFlex] - Flex por defecto:', defaultItems);
-        console.log('🏆 [InventoryFlex] - Flex del usuario:', userItems);
-        console.log('🏆 [InventoryFlex] Items con detalles:', results.filter(r => r.displayIcon).length);
+        console.log('🏆 [InventoryFlex] Final results:', results.length, 'items processed');
+        console.log('🏆 [InventoryFlex] Default flex items:', defaultItems);
+        console.log('🏆 [InventoryFlex] User flex items:', userItems);
+        console.log('🏆 [InventoryFlex] Items with details:', results.filter(r => r.displayIcon).length);
         setFlexDetails(results);
       } catch (e) {
-        console.error('Error cargando flex details:', e);
+        console.error('Failed to load flex details:', e);
       } finally {
         setDetailsLoading(false);
       }
@@ -101,15 +98,19 @@ export default function InventoryFlex() {
   return (
     <>
       <div className={styles.page}>
-        <BackButton onClick={() => navigate('/inventory')} style={{ marginBottom: 24 }}>Volver al Dashboard</BackButton>
-        <h2 className={styles.pageTitle}>FLEX</h2>
+        <InventoryCategoryHeader
+          title="Flex"
+          description="Browse the flex items unlocked for this account."
+          count={flexDetails.length}
+          countLabel="items"
+        />
 
-        {loading && <LoadingScreen fullscreen={false} text="Cargando flex..." />}
+        {loading && <LoadingScreen fullscreen={false} text="Loading flex items..." />}
 
         {error && <div className={styles.errorState}>Error: {error}</div>}
 
         {detailsLoading && (
-          <div className={styles.loadingNote}>Cargando detalles de flex items...</div>
+          <div className={styles.loadingNote}>Loading flex item details...</div>
         )}
 
         {flexDetails.length > 0 && (
@@ -145,7 +146,7 @@ export default function InventoryFlex() {
         )}
 
         {!detailsLoading && flexDetails.length === 0 && (
-          <div className={styles.emptyState} style={{ marginTop: 24 }}>No se encontraron items de flex.</div>
+          <div className={styles.emptyState} style={{ marginTop: 24 }}>No flex items were found.</div>
         )}
       </div>
     </>

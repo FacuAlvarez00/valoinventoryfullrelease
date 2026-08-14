@@ -38,7 +38,6 @@
 .titleButton:focus-visible,
 .settingsButton:focus-visible,
 .menuItem:focus-visible,
-.languageOption:focus-visible,
 .logoutButton:focus-visible {
   outline: 2px solid var(--vi-red);
   outline-offset: 3px;
@@ -200,37 +199,6 @@
   flex-shrink: 0;
   color: var(--vi-red);
   font-size: 18px;
-}
-
-.languageOptions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.languageOption {
-  border: 1px solid var(--vi-border);
-  border-radius: 2px;
-  background: transparent;
-  padding: 8px 10px;
-  color: rgba(236, 232, 225, 0.52);
-  font-family: var(--vi-font-heading);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.languageOption:hover {
-  border-color: rgba(236, 232, 225, 0.32);
-  color: var(--vi-white);
-}
-
-.languageOptionActive {
-  border-color: var(--vi-red);
-  background: rgba(255, 70, 84, 0.1);
-  color: var(--vi-red);
 }
 
 .logoutSection {

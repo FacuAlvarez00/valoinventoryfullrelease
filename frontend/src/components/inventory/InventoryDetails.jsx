@@ -18,13 +18,13 @@ export default function InventoryDetails() {
     setTimeout(() => setCopiedUuid(false), 2000);
   };
 
-  // Calcular total de VP gastados (usando el helper compartido)
-  const totalVPGastados = useMemo(() => {
+  // Calculate total VP spent with the shared pricing helper
+  const totalVPSpent = useMemo(() => {
     if (!riotAccount) return 0;
     return calcAccountStats(riotAccount, weaponSkins, catalog).totalVP;
   }, [riotAccount, catalog, weaponSkins]);
 
-  // Contar Radiant e Immortal Buddies
+  // Count Radiant and Immortal buddies
   const radiantBuddies = useMemo(() => {
     if (!riotAccount?.buddies || riotAccount.buddies.length === 0) return 0;
     return riotAccount.buddies.filter(buddy =>
@@ -41,7 +41,7 @@ export default function InventoryDetails() {
     ).length;
   }, [riotAccount?.buddies]);
 
-  // Identidad equipada (player card / título / nivel) según el loadout de Riot
+  // Resolve the equipped player card, title, and level from the Riot loadout
   const identity = riotAccount?.loadout?.Identity;
 
   const equippedCard = useMemo(() => {
@@ -66,7 +66,7 @@ export default function InventoryDetails() {
     ? `${riotAccount.userInfo.acct.game_name}#${riotAccount.userInfo.acct.tag_line}`
     : riotAccount?.nickname || null;
 
-  // Función para formatear fechas
+  // Format timestamps for display
   const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
     return new Date(timestamp).toLocaleDateString('en-US', {
@@ -76,7 +76,7 @@ export default function InventoryDetails() {
     });
   };
 
-  // Función para obtener el nombre de la región
+  // Resolve the display name for a Riot region
   const getRegionName = (affinity) => {
     const regions = {
       'am': 'North America',
@@ -90,7 +90,7 @@ export default function InventoryDetails() {
     return regions[affinity] || affinity?.toUpperCase() || 'Unknown';
   };
 
-  // Función para obtener el nombre del país
+  // Resolve the display name for a country code
   const getCountryName = (countryCode) => {
     const countries = {
       'arg': 'Argentina',
@@ -120,7 +120,7 @@ export default function InventoryDetails() {
           </div>
         </div>
 
-        {loading && <LoadingScreen fullscreen={false} text="Cargando datos de la cuenta..." />}
+        {loading && <LoadingScreen fullscreen={false} text="Loading account data..." />}
 
         {error && (
           <div className={styles.alertBox}>
@@ -131,9 +131,9 @@ export default function InventoryDetails() {
 
         {!loading && !error && !riotAccount && (
           <div className={styles.alertBox}>
-            <h3 className={styles.alertTitle}>⚠️ Sin Cuenta Riot</h3>
+            <h3 className={styles.alertTitle}>⚠️ No Riot account</h3>
             <p className={styles.alertText}>
-              No se encontró una cuenta Riot vinculada. Agrega una cuenta en tu perfil para ver los detalles.
+              No linked Riot account was found. Add an account from your profile to view its details.
             </p>
           </div>
         )}
@@ -214,7 +214,7 @@ export default function InventoryDetails() {
                 <div className={styles.row} style={{ border: 'none', padding: 0, flex: 1 }}>
                   <span className={styles.rowLabel}>Total Spent:</span>
                   <span className={styles.vpValue}>
-                    {totalVPGastados.toLocaleString()}
+                    {totalVPSpent.toLocaleString()}
                     <img src="/assets/icons/20px-White_Valorant_Points_VALORANT.png" alt="VP" style={{ width: 12, height: 12 }} />
                   </span>
                 </div>
@@ -236,7 +236,7 @@ export default function InventoryDetails() {
                     onClick={handleCopyUuid}
                     className={`${styles.copyBtn} ${copiedUuid ? styles.copyBtnDone : ''}`}
                   >
-                    {copiedUuid ? '✓ Copiado' : 'Copiar'}
+                    {copiedUuid ? '✓ Copied' : 'Copy'}
                   </button>
                 </div>
               </div>
@@ -261,10 +261,10 @@ export default function InventoryDetails() {
 
         {riotAccount && (!riotAccount.userInfo || Object.keys(riotAccount.userInfo).length === 0) && (
           <div className={`${styles.alertBox} ${styles.alertBoxWarn}`}>
-            <h3 className={`${styles.alertTitle} ${styles.alertTitleWarn}`}>⚠️ Sin UserInfo</h3>
+            <h3 className={`${styles.alertTitle} ${styles.alertTitleWarn}`}>⚠️ Missing user information</h3>
             <p className={styles.alertText}>
-              La cuenta Riot está vinculada pero no se encontró información de UserInfo.
-              Intenta refrescar la cuenta para obtener los datos más recientes.
+              The Riot account is linked, but its user information is unavailable.
+              Refresh the account to retrieve the latest data.
             </p>
           </div>
         )}

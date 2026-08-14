@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useInventory } from '../../context/InventoryContext';
 import { useAuth } from '../../context/AuthContext';
-import { useLanguage } from '../../context/LanguageContext';
 import dayjs from 'dayjs';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SkeletonAccountCard } from './LoadingScreen';
@@ -38,7 +37,6 @@ export default function HomePage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showSharesPanel, setShowSharesPanel] = useState(false);
   const [copiedSharePuuid, setCopiedSharePuuid] = useState(null);
-  const { t } = useLanguage();
   const { refreshAccount, catalog, weaponSkins } = useInventory();
   const { makeAuthenticatedRequest } = useAuth();
 
@@ -58,7 +56,7 @@ export default function HomePage() {
 
   const handleClosePopup = () => setShowPopup(false);
 
-  // Extraer token de Riot de la URL para mostrar solo el token en el input
+  // Extract the Riot token from the URL so the input only displays the token
   const extractTokenFromUrl = (url) => {
     try {
       if (url.includes('playvalorant.com') && url.includes('access_token=')) {
@@ -78,18 +76,18 @@ export default function HomePage() {
     }
   };
 
-  // Estado para guardar la URL completa
+  // Keep the complete URL for the ID token and region metadata
   const [riotUrl, setRiotUrl] = useState('');
 
   const handleTokenChange = (e) => {
     const value = e.target.value;
-    // Si es una URL completa, guardarla y mostrar solo el token
+    // Store complete URLs while displaying only the access token
     if (value.includes('playvalorant.com')) {
       setRiotUrl(value);
       const extractedToken = extractTokenFromUrl(value);
       setRiotToken(extractedToken);
     } else {
-      // Si es solo un token, actualizar ambos
+      // If it is only a token, keep both values in sync
       setRiotToken(value);
       setRiotUrl(value);
     }
@@ -97,30 +95,30 @@ export default function HomePage() {
 
   const handleTokenPaste = (e) => {
     const pastedText = e.clipboardData.getData('text');
-    // Si es una URL completa, guardarla y mostrar solo el token
+    // Store complete URLs while displaying only the access token
     if (pastedText.includes('playvalorant.com')) {
       setRiotUrl(pastedText);
       const extractedToken = extractTokenFromUrl(pastedText);
       setRiotToken(extractedToken);
     } else {
-      // Si es solo un token, actualizar ambos
+      // If it is only a token, keep both values in sync
       setRiotToken(pastedText);
       setRiotUrl(pastedText);
     }
     e.preventDefault();
   };
 
-  // Guardar cuenta Riot
+  // Save a Riot account
   const handleSaveToken = async () => {
     if (addLoading) return;
     setAddStatus('');
     if (!riotToken) {
-      setAddStatus(t.completeAllFields || 'Completa todos los campos.');
+      setAddStatus('Enter a Riot token to continue.');
       return;
     }
 
     if (!riotUrl || !riotUrl.includes('playvalorant.com')) {
-      setAddStatus('Falta la URL con el ID Token');
+      setAddStatus('Paste the complete URL containing the ID token.');
       return;
     }
 
@@ -140,15 +138,15 @@ export default function HomePage() {
         setAddStatus('');
         fetchRiotAccounts();
       } else {
-        setAddStatus(data.message || t.errorAddingAccount || 'Error al agregar la cuenta.');
+        setAddStatus(data.message || 'Failed to add the account.');
       }
     } catch (e) {
-      setAddStatus(t.networkErrorAddingAccount || 'Error de red al agregar la cuenta.');
+      setAddStatus('A network error occurred while adding the account.');
     }
     setAddLoading(false);
   };
 
-  // Borrar cuenta Riot
+  // Delete a Riot account
   const handleDeleteAccount = async () => {
     if (!accountToDelete) return;
     setDeleteLoading(true);
@@ -165,31 +163,31 @@ export default function HomePage() {
         fetchRiotAccounts();
       } else {
         setDeleteLoading(false);
-        alert(data.message || 'Error al borrar la cuenta.');
+        alert(data.message || 'Failed to delete the account.');
       }
     } catch (e) {
       setDeleteLoading(false);
-      alert('Error de red al borrar la cuenta.');
+      alert('A network error occurred while deleting the account.');
     }
   };
 
-  // Actualizar cuenta Riot (borrar y volver a agregar con el mismo nombre)
+  // Update a Riot account by replacing its stored credentials
   const handleUpdateAccount = async () => {
     if (!accountToUpdate || !updateToken) return;
     setUpdateStatus('');
 
-    // Verificar si tenemos URL completa para obtener información de región
+    // A complete URL is required to obtain the region metadata
     if (!updateUrl || !updateUrl.includes('playvalorant.com')) {
-      setUpdateStatus('Falta la URL con el ID Token');
+      setUpdateStatus('Paste the complete URL containing the ID token.');
       return;
     }
 
     try {
-      // 1. Borrar la cuenta
+      // Remove the existing account
       await makeAuthenticatedRequest(`${API_BASE}/api/auth/riot/account/${accountToUpdate.puuid}`, {
         method: 'DELETE',
       });
-      // 2. Volver a agregar con el mismo nombre
+      // Add it again under the same name
       const res = await makeAuthenticatedRequest(`${API_BASE}/api/auth/riot/account`, {
         method: 'POST',
         headers: {
@@ -210,24 +208,24 @@ export default function HomePage() {
         setUpdateStatus('');
         fetchRiotAccounts();
       } else {
-        setUpdateStatus(data.message || 'Error al actualizar la cuenta.');
+        setUpdateStatus(data.message || 'Failed to update the account.');
       }
     } catch (e) {
-      setUpdateStatus('Error de red al actualizar la cuenta.');
+      setUpdateStatus('A network error occurred while updating the account.');
     }
   };
 
-  // Función para formatear la fecha de última actualización
+  // Format the last-updated timestamp
   const formatLastUpdated = (acc) => {
     if (!acc.lastUpdated) {
-      // Si no hay lastUpdated, usar la fecha actual como fallback
+      // Use the current timestamp as a fallback
       return dayjs().format('DD/MM/YYYY HH:mm');
     }
     const last = dayjs(acc.lastUpdated);
     return last.format('DD/MM/YYYY HH:mm');
   };
 
-  // Obtener las cuentas Riot del usuario
+  // Fetch the current user's Riot accounts
   const fetchRiotAccounts = async () => {
     setLoadingAccounts(true);
     try {
@@ -281,7 +279,7 @@ export default function HomePage() {
         const res = await makeAuthenticatedRequest(`${API_BASE}/api/auth/share/${puuid}`, { method: 'POST' });
         const data = await res.json();
         if (!data.success) { setSharingIdx(null); alert(data.message); return; }
-        // Actualización optimista: solo cambiamos este campo sin recargar todo
+        // Update only the affected account optimistically
         setRiotAccounts(prev => prev.map(a =>
           a.puuid === puuid ? { ...a, isShared: true, sharedAt: data.sharedAt || new Date().toISOString() } : a
         ));
@@ -299,12 +297,12 @@ export default function HomePage() {
       const res = await makeAuthenticatedRequest(`${API_BASE}/api/auth/share/${puuid}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
-        // Actualización optimista: sin recargar todo
+        // Revoke locally without reloading the entire list
         setRiotAccounts(prev => prev.map(a =>
           a.puuid === puuid ? { ...a, isShared: false, sharedAt: null } : a
         ));
       } else alert(data.message);
-    } catch { alert('Error de red'); }
+    } catch { alert('Network error'); }
   };
 
   const filteredAccounts = riotAccounts.filter(acc => {
@@ -329,7 +327,7 @@ export default function HomePage() {
   const displayedAccounts = (() => {
     let list = [...filteredAccounts];
 
-    // Default: más recientes primero (por fecha de última actualización)
+    // Default to most recently updated first
     if (!sortBy && !groupByUser) {
       list.sort((a, b) =>
         new Date(b.lastUpdated || 0).getTime() - new Date(a.lastUpdated || 0).getTime()
@@ -365,20 +363,20 @@ export default function HomePage() {
 
   return (
     <div className={styles.page}>
-      {/* Pop-up para ingresar el nombre y token */}
+      {/* Account name and token modal */}
       <Modal open={showPopup} onClose={handleClosePopup} maxWidth={480}>
-        <ModalHeader title={t.addRiotAccount} />
+        <ModalHeader title="Add Riot account" />
         <ModalBody>
           <div className={styles.fieldGap}>
             <TextField
-              label="Nombre de la cuenta"
+              label="Account name"
               type="text"
-              placeholder="Ej: main, smurf, haakuro..."
+              placeholder="For example: main, smurf, haakuro..."
               value={accountName}
               onChange={e => setAccountName(e.target.value)}
             />
             <div className={styles.helperText}>
-              Opcional — si lo dejás vacío se usa el nombre de la cuenta de Riot
+              Optional — leave it blank to use the Riot account name
             </div>
           </div>
 
@@ -386,7 +384,7 @@ export default function HomePage() {
             <TextField
               label="Riot Token"
               type="text"
-              placeholder={t.riotTokenPlaceholder}
+              placeholder="Paste the complete Riot authentication URL"
               value={riotToken}
               onChange={handleTokenChange}
               onPaste={handleTokenPaste}
@@ -401,43 +399,43 @@ export default function HomePage() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              🔐 {t.loginToRiotGames}
+              🔐 Sign in to Riot Games
             </TacticalButton>
             <div className={styles.helperText} style={{ maxWidth: 300, margin: '12px auto 0' }}>
-              {t.riotInstructions}
+              Sign in, then copy the complete URL from the browser and paste it above.
             </div>
           </div>
 
           {addStatus && (
-            <div className={`${styles.statusMessage} ${addStatus.includes('correcta') || addStatus.includes('successfully') ? styles.statusOk : styles.statusError}`}>
+            <div className={`${styles.statusMessage} ${addStatus.includes('successfully') ? styles.statusOk : styles.statusError}`}>
               {addStatus}
             </div>
           )}
 
           <div className={styles.modalActions}>
-            <TacticalButton variant="ghost" onClick={handleClosePopup}>{t.cancel}</TacticalButton>
+            <TacticalButton variant="ghost" onClick={handleClosePopup}>Cancel</TacticalButton>
             <TacticalButton onClick={handleSaveToken} disabled={addLoading}>
               {addLoading && <span className={styles.spinnerSm} />}
-              {addLoading ? 'Agregando cuenta...' : t.save}
+              {addLoading ? 'Adding account...' : 'Save'}
             </TacticalButton>
           </div>
         </ModalBody>
       </Modal>
 
-      {/* Lista de cuentas Riot agregadas */}
+      {/* Linked Riot accounts */}
       <div>
         <div className={styles.accountsHeader}>
-          <h1 className={styles.accountsTitle}>Tus cuentas</h1>
-          <TacticalButton onClick={handleOpenPopup}>+ {t.addAccount}</TacticalButton>
+          <h1 className={styles.accountsTitle}>Your accounts</h1>
+          <TacticalButton onClick={handleOpenPopup}>+ Add account</TacticalButton>
         </div>
 
-        {/* Filtros */}
+        {/* Filters */}
         {!loadingAccounts && riotAccounts.length > 0 && (
           <div style={{ marginBottom: 24 }}>
             <div className={styles.topBar}>
               <div className={styles.searchWrap}>
                 <SearchInput
-                  placeholder="Buscar por usuario..."
+                  placeholder="Search by username..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                 />
@@ -446,32 +444,32 @@ export default function HomePage() {
                 onClick={() => setFiltersOpen(o => !o)}
                 className={`${styles.filtersToggle} ${(filtersOpen || sortBy || groupByUser) ? styles.filtersToggleActive : ''}`}
               >
-                ⚙ Filtros
+                ⚙ Filters
                 <span className={`${styles.filtersToggleCaret} ${filtersOpen ? styles.filtersToggleCaretOpen : ''}`}>▼</span>
               </button>
             </div>
 
-            {/* Panel desplegable */}
+            {/* Expandable filter panel */}
             {filtersOpen && (
               <div className={styles.filtersPanel}>
                 <div className={styles.filterRow}>
-                  <span className={styles.filterRowLabel}>Agrupación</span>
+                  <span className={styles.filterRowLabel}>Grouping</span>
                   <button
                     onClick={() => setGroupByUser(g => !g)}
                     className={`${styles.chip} ${groupByUser ? styles.chipActive : ''}`}
                   >
-                    ⇅ Agrupar cuentas iguales
+                    ⇅ Group matching accounts
                   </button>
                 </div>
 
                 <div className={styles.filterDivider} />
 
                 <div className={styles.filterRow}>
-                  <span className={styles.filterRowLabel}>Ordenar por</span>
+                  <span className={styles.filterRowLabel}>Sort by</span>
                   {[
                     { key: 'radBuddies', label: 'Rad Buddies' },
-                    { key: 'vp',         label: 'VP Gastados' },
-                    { key: 'lastUpdate', label: 'Última actualización' },
+                    { key: 'vp',         label: 'VP spent' },
+                    { key: 'lastUpdate', label: 'Last updated' },
                   ].map(({ key, label }) => {
                     const active = sortBy === key;
                     return (
@@ -491,14 +489,14 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Panel de links compartidos */}
+        {/* Shared links panel */}
         {!loadingAccounts && riotAccounts.length > 0 && (() => {
           const sharedAccounts = riotAccounts.filter(a => a.isShared);
           const LIMIT = 30;
           return (
             <div className={styles.sharesSection}>
               <button className={styles.sharesToggle} onClick={() => setShowSharesPanel(o => !o)}>
-                <span className={styles.sharesToggleLabel}>🔗 Links compartidos</span>
+                <span className={styles.sharesToggleLabel}>🔗 Shared links</span>
                 <span className={`${styles.sharesCount} ${sharedAccounts.length >= LIMIT ? styles.sharesCountFull : ''}`}>
                   {sharedAccounts.length}/{LIMIT}
                 </span>
@@ -509,7 +507,7 @@ export default function HomePage() {
                 <div className={styles.sharesPanel}>
                   {sharedAccounts.length === 0 ? (
                     <div className={styles.sharesEmpty}>
-                      No tenés links activos. Tocá "Compartir" en una cuenta para generar uno.
+                      You do not have any active links. Select "Share" on an account to create one.
                     </div>
                   ) : (
                     sharedAccounts.map((acc) => {
@@ -518,7 +516,7 @@ export default function HomePage() {
                         : null;
                       const shareUrl = `${window.location.origin}/share/${acc.puuid}`;
                       const sharedDate = acc.sharedAt
-                        ? new Date(acc.sharedAt).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                        ? new Date(acc.sharedAt).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                         : '—';
                       const justCopied = copiedSharePuuid === acc.puuid;
                       return (
@@ -536,14 +534,14 @@ export default function HomePage() {
                           >
                             <span className={styles.shareLinkUrl}>{shareUrl}</span>
                             <span className={`${styles.shareLinkStatus} ${justCopied ? styles.shareLinkStatusCopied : ''}`}>
-                              {justCopied ? '✓ Copiado' : '⎘ Copiar'}
+                              {justCopied ? '✓ Copied' : '⎘ Copy'}
                             </span>
                           </button>
 
                           <div className={styles.shareDate}>{sharedDate}</div>
 
                           <button className={styles.shareRevoke} onClick={() => handleRevokeShare(acc.puuid)}>
-                            Dar de baja
+                            Revoke
                           </button>
                         </div>
                       );
@@ -563,10 +561,10 @@ export default function HomePage() {
           displayedAccounts.length === 0 ? (
             <div className={styles.emptyState}>
               <div className={styles.emptyStateText}>
-                {riotAccounts.length === 0 ? t.noAccounts : 'Sin resultados'}
+                {riotAccounts.length === 0 ? 'No Riot accounts linked yet.' : 'No results'}
               </div>
               {riotAccounts.length === 0 && (
-                <TacticalButton onClick={handleOpenPopup}>{t.addAccount}</TacticalButton>
+                <TacticalButton onClick={handleOpenPopup}>Add account</TacticalButton>
               )}
             </div>
           ) : (
@@ -597,7 +595,7 @@ export default function HomePage() {
                         className={styles.cardHitArea}
                         to={`/details?puuid=${encodeURIComponent(acc.puuid)}`}
                         onClick={() => refreshAccount(acc.puuid)}
-                        aria-label={`Abrir cuenta ${acc.name}`}
+                        aria-label={`Open account ${acc.name}`}
                       />
 
                       <div className={styles.cardBanner}>
@@ -617,12 +615,12 @@ export default function HomePage() {
                       <div className={styles.cardBody}>
                         <div className={styles.cardUpdated}>
                           <span style={{ color: 'var(--vi-red)', fontSize: 8, lineHeight: 1 }}>●</span>
-                          {t.lastUpdated}: {formatLastUpdated(acc)}
+                          Last updated: {formatLastUpdated(acc)}
                         </div>
 
                         <div className={styles.cardStats}>
                           <div className={styles.statBox}>
-                            <div className={styles.statLabel}>VP Gastados</div>
+                            <div className={styles.statLabel}>VP spent</div>
                             <div className={styles.statValue}>
                               {totalVP > 0 ? totalVP.toLocaleString() : '—'}
                             </div>
@@ -639,22 +637,22 @@ export default function HomePage() {
                             onClick={e => handleShare(e, acc.puuid, idx)}
                           >
                             {sharedIdx === idx
-                              ? '✓ Link copiado'
+                              ? '✓ Link copied'
                               : sharingIdx === idx
-                                ? '⏳ Generando...'
-                                : 'Compartir'}
+                                ? '⏳ Generating...'
+                                : 'Share'}
                           </button>
                           <button
                             className={styles.cardActionBtn}
                             onClick={e => { e.stopPropagation(); setAccountToUpdate(acc); setShowUpdateModal(true); setUpdateToken(''); setUpdateStatus(''); }}
                           >
-                            {t.updateAccount}
+                            Update
                           </button>
                           <button
                             className={`${styles.cardActionBtn} ${styles.cardActionDanger}`}
                             onClick={e => { e.stopPropagation(); setAccountToDelete(acc); setDeleteStep(1); setDeleteLoading(false); setShowDeleteModal(true); }}
                           >
-                            {t.deleteAccount}
+                            Delete
                           </button>
                         </div>
                       </div>
@@ -667,7 +665,7 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Modal de confirmación para borrar */}
+      {/* Delete confirmation modal */}
       <Modal open={showDeleteModal && !!accountToDelete} onClose={() => !deleteLoading && setShowDeleteModal(false)} maxWidth={420}>
         {deleteLoading ? (
           <div className={styles.deleteLoadingWrap}>
@@ -676,16 +674,16 @@ export default function HomePage() {
               <div className={styles.spinnerRingInner} />
             </div>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 16, fontWeight: 'bold', color: 'var(--vi-white)', marginBottom: 6 }}>Eliminando cuenta...</div>
-              <div style={{ fontSize: 13, color: 'rgba(236,232,225,0.5)' }}>Esto puede tardar unos segundos</div>
+              <div style={{ fontSize: 16, fontWeight: 'bold', color: 'var(--vi-white)', marginBottom: 6 }}>Deleting account...</div>
+              <div style={{ fontSize: 13, color: 'rgba(236,232,225,0.5)' }}>This may take a few seconds</div>
             </div>
           </div>
         ) : deleteStep === 1 ? (
           <>
-            <ModalHeader title="Eliminar cuenta" subtitle="Esta acción no se puede deshacer" danger />
+            <ModalHeader title="Delete account" subtitle="This action cannot be undone" danger />
             <ModalBody>
               <div className={styles.deleteAccountBox}>
-                <div className={styles.deleteAccountLabel}>Cuenta a eliminar</div>
+                <div className={styles.deleteAccountLabel}>Account to delete</div>
                 <div className={styles.deleteAccountName}>{accountToDelete?.name}</div>
                 {accountToDelete?.userInfo?.acct?.game_name && (
                   <div style={{ fontSize: 13, color: 'rgba(236,232,225,0.6)', marginTop: 2 }}>
@@ -694,21 +692,21 @@ export default function HomePage() {
                 )}
               </div>
               <div className={styles.modalActions}>
-                <TacticalButton variant="ghost" fullWidth onClick={() => setShowDeleteModal(false)}>Cancelar</TacticalButton>
-                <TacticalButton variant="danger" fullWidth onClick={() => setDeleteStep(2)}>Eliminar →</TacticalButton>
+                <TacticalButton variant="ghost" fullWidth onClick={() => setShowDeleteModal(false)}>Cancel</TacticalButton>
+                <TacticalButton variant="danger" fullWidth onClick={() => setDeleteStep(2)}>Delete →</TacticalButton>
               </div>
             </ModalBody>
           </>
         ) : (
           <>
-            <ModalHeader title="⚠️ ¿Estás seguro?" subtitle={<>Se eliminará permanentemente la cuenta <b>{accountToDelete?.name}</b> y todos sus datos. No hay vuelta atrás.</>} danger />
+            <ModalHeader title="⚠️ Are you sure?" subtitle={<>The account <b>{accountToDelete?.name}</b> and all of its data will be permanently deleted.</>} danger />
             <ModalBody>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <TacticalButton variant="danger" fullWidth onClick={handleDeleteAccount}>
-                  Sí, eliminar definitivamente
+                  Yes, delete permanently
                 </TacticalButton>
                 <TacticalButton variant="ghost" fullWidth onClick={() => setDeleteStep(1)}>
-                  ← Volver
+                  ← Back
                 </TacticalButton>
               </div>
             </ModalBody>
@@ -716,9 +714,9 @@ export default function HomePage() {
         )}
       </Modal>
 
-      {/* Modal para actualizar cuenta (solo pide token) */}
+      {/* Account update modal */}
       <Modal open={showUpdateModal && !!accountToUpdate} onClose={() => setShowUpdateModal(false)} maxWidth={480}>
-        <ModalHeader title={t.updateRiotAccount} />
+        <ModalHeader title="Update Riot account" />
         <ModalBody>
           <div className={styles.accountBadgeRow}>
             <div className={styles.accountBadgeAvatar}>{accountToUpdate?.name?.charAt(0).toUpperCase()}</div>
@@ -732,7 +730,7 @@ export default function HomePage() {
             <TextField
               label="Riot Token"
               type="text"
-              placeholder={t.newTokenPlaceholder}
+              placeholder="Paste the new complete Riot authentication URL"
               value={updateToken}
               onChange={e => {
                 const value = e.target.value;
@@ -766,18 +764,18 @@ export default function HomePage() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              🔐 {t.getRiotToken}
+              🔐 Get Riot token
             </TacticalButton>
             <div className={styles.helperText} style={{ maxWidth: 300, margin: '12px auto 0' }}>
-              {t.tokenInstructions}
+              Sign in, then copy the complete URL from the browser and paste it above.
             </div>
           </div>
 
           {updateStatus && <div className={`${styles.statusMessage} ${styles.statusError}`}>{updateStatus}</div>}
 
           <div className={styles.modalActions}>
-            <TacticalButton variant="ghost" onClick={() => setShowUpdateModal(false)}>{t.cancel}</TacticalButton>
-            <TacticalButton onClick={handleUpdateAccount}>{t.updateAccount}</TacticalButton>
+            <TacticalButton variant="ghost" onClick={() => setShowUpdateModal(false)}>Cancel</TacticalButton>
+            <TacticalButton onClick={handleUpdateAccount}>Update account</TacticalButton>
           </div>
         </ModalBody>
       </Modal>

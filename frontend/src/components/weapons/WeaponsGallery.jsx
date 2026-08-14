@@ -4,7 +4,7 @@ import WeaponGroup from "./WeaponGroup";
 function groupSkinsByWeapon(skins) {
   const groups = {};
   skins.forEach((skin) => {
-    // El nombre del arma es la primera palabra del displayName de la skin
+    // The weapon name is the first word in the skin display name
     const weaponName = skin.displayName.split(" ")[1] === "Knife" ? "Melee" : skin.displayName.split(" ")[1];
     if (!groups[weaponName]) groups[weaponName] = [];
     groups[weaponName].push(skin);
@@ -25,7 +25,7 @@ export default function WeaponsGallery() {
       });
   }, []);
 
-  if (loading) return <div style={{ color: "#fff" }}>Cargando skins...</div>;
+  if (loading) return <div style={{ color: "#fff" }}>Loading skins...</div>;
 
   const grouped = groupSkinsByWeapon(skins);
 
@@ -36,4 +36,4 @@ export default function WeaponsGallery() {
       ))}
     </div>
   );
-} 
+}

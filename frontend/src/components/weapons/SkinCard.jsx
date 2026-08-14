@@ -1,7 +1,7 @@
 import React from "react";
 
 export default function SkinCard({ skin }) {
-  if (!skin.displayIcon) return null; // Oculta skins sin imagen
+  if (!skin.displayIcon) return null; // Hide skins without an image
 
   return (
     <div style={{
@@ -22,4 +22,4 @@ export default function SkinCard({ skin }) {
       </div>
     </div>
   );
-} 
+}

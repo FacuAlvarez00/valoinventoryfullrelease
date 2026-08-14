@@ -1,19 +1,17 @@
-// Script puntual: crea una cuenta Riot "prueba" (prueba#test) con TODOS los
-// items de cada catálogo (skins, gunbuddies, cards, sprays, titles, agents,
-// battlepasses) para usar como cuenta de demo/QA visual.
+// One-time script that creates a "demo" Riot account (demo#test) containing
+// every catalog item for visual QA.
 //
-// No pasa por el login real de Riot (imposible fabricar eso) - construye el
-// mismo shape que guarda RiotController.addRiotAccount, pero marcando como
-// "owned" absolutamente todo lo que devuelve valorant-api.com.
+// It does not use Riot authentication. It builds the same shape persisted by
+// RiotController.addRiotAccount and marks every valorant-api.com item as owned.
 //
-// Uso: docker exec valoinventory-backend node seed-prueba-account.js
+// Usage: docker exec valoinventory-backend node seed-demo-account.js
 
 const mongoose = require('mongoose');
 const User = require('./models/User');
 const fetch = (...args) => import('node-fetch').then(mod => mod.default(...args));
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://mongo:27017/valoinventory';
-const TARGET_USERNAME = process.argv[2] || 'prueba';
+const TARGET_USERNAME = process.argv[2] || 'demo';
 
 async function fetchData(url) {
   const res = await fetch(url);
@@ -22,15 +20,15 @@ async function fetchData(url) {
 }
 
 async function main() {
-  console.log('Conectando a Mongo:', MONGODB_URI.replace(/(\/\/[^:]+:)[^@]+@/, '$1***@'));
+  console.log('Connecting to MongoDB:', MONGODB_URI.replace(/(\/\/[^:]+:)[^@]+@/, '$1***@'));
   await mongoose.connect(MONGODB_URI);
 
   const user = await User.findOne({ username: TARGET_USERNAME });
   if (!user) {
-    throw new Error(`No existe el usuario "${TARGET_USERNAME}". Registralo primero.`);
+    throw new Error(`User "${TARGET_USERNAME}" does not exist. Register it first.`);
   }
 
-  console.log('Descargando catálogos completos de valorant-api.com...');
+  console.log('Downloading complete valorant-api.com catalogs...');
   const [weaponSkins, buddies, cards, sprays, titles, agents, contracts, flexItems] = await Promise.all([
     fetchData('https://valorant-api.com/v1/weapons/skins'),
     fetchData('https://valorant-api.com/v1/buddies'),
@@ -42,15 +40,14 @@ async function main() {
     fetchData('https://valorant-api.com/v1/flex'),
   ]);
 
-  // ---- SKINS: una entitlement por skin (uuid del primer nivel = "lo poseés") ----
+  // ---- SKINS: one entitlement per skin using the first level UUID ----
   const skinsEntitlements = weaponSkins
     .map(skin => skin.levels?.[0]?.uuid)
     .filter(Boolean)
     .map(ItemID => ({ ItemID }));
 
-  // ---- GUNBUDDIES: shape enriquecido igual a RiotService.getBuddyDetails ----
-  // Riot entrega cada gunbuddy de a 2 (una entitlement por cada "mitad" del par),
-  // así que replicamos esa realidad en vez de guardar una sola copia por buddy.
+  // ---- GUN BUDDIES: enriched shape matching RiotService.getBuddyDetails ----
+  // Riot returns each gun buddy twice, so preserve both entitlements.
   const buddiesWithDetails = buddies
     .filter(b => b.levels?.[0]?.uuid)
     .flatMap(b => {
@@ -93,7 +90,7 @@ async function main() {
     category: t.category || null,
   }));
 
-  // ---- AGENTS (solo jugables) ----
+  // ---- PLAYABLE AGENTS ----
   const agentsWithDetails = agents.map(a => ({
     ItemID: a.uuid,
     displayName: a.displayName,
@@ -103,19 +100,18 @@ async function main() {
     description: a.description || null,
   }));
 
-  // ---- BATTLEPASSES: contratos reales de temporada (excluye "Gear"/"Event") ----
+  // ---- BATTLE PASSES: season contracts only ----
   const battlePassesEntitlements = contracts
     .filter(c => c.content?.relationType === 'Season')
     .map(c => ({ ItemID: c.uuid }));
 
-  // ---- FLEX: todos los flex, excluyendo el "default" (STAT-COM) que la app
-  // ya suma aparte como "+1" en totalFlex = 1 + Entitlements.length ----
+  // ---- FLEX: exclude the default STAT-COM item counted separately by the app ----
   const DEFAULT_FLEX_UUID = 'af52b5a0-4a4c-03b2-c9d7-8187a08a2675';
   const flexEntitlements = flexItems
     .filter(f => f.uuid !== DEFAULT_FLEX_UUID)
     .map(f => ({ ItemID: f.uuid }));
 
-  console.log('Totales a guardar:', {
+  console.log('Totals to save:', {
     skins: skinsEntitlements.length,
     buddies: buddiesWithDetails.length,
     cards: cardsWithDetails.length,
@@ -126,12 +122,12 @@ async function main() {
     flex: flexEntitlements.length + 1,
   });
 
-  const puuid = 'prueba-demo-' + Date.now();
+  const puuid = 'demo-account-' + Date.now();
 
   const newAccount = {
-    name: 'prueba',
+    name: 'demo',
     puuid,
-    nickname: 'prueba#test',
+    nickname: 'demo#test',
     loadout: {
       Guns: [],
       Melee: null,
@@ -158,27 +154,27 @@ async function main() {
     flex: { Entitlements: flexEntitlements },
     userInfo: {
       sub: puuid,
-      acct: { game_name: 'prueba', tag_line: 'test', created_at: Date.now() },
+      acct: { game_name: 'demo', tag_line: 'test', created_at: Date.now() },
       country: 'ar',
       age: 21,
       email_verified: true,
       phone_number_verified: true,
-      preferred_username: 'prueba',
+      preferred_username: 'demo',
     },
     regionInfo: { token: 'fake-demo-token', affinities: { live: 'na', pbe: 'na' } },
     lastUpdated: new Date(),
   };
 
-  // Idempotente: si ya existe una cuenta "prueba", la reemplaza
-  user.riotAccounts = user.riotAccounts.filter(acc => acc.name !== 'prueba');
+  // Replace an existing demo account to keep the seed idempotent
+  user.riotAccounts = user.riotAccounts.filter(acc => acc.name !== 'demo');
   user.riotAccounts.push(newAccount);
   await user.save();
 
-  console.log('✅ Cuenta "prueba" (prueba#test) creada con inventario completo.');
+  console.log('✅ Demo account (demo#test) created with a complete inventory.');
   await mongoose.disconnect();
 }
 
 main().catch(err => {
-  console.error('❌ Error en el seed:', err);
+  console.error('❌ Seed failed:', err);
   process.exit(1);
 });

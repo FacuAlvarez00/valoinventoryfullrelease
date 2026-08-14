@@ -43,7 +43,7 @@ const KEYFRAMES = `
   }
 `;
 
-export default function LoadingScreen({ fullscreen = true, text = 'Cargando' }) {
+export default function LoadingScreen({ fullscreen = true, text = 'Loading' }) {
   const label = text.replace(/\.+$/, '');
   return (
     <div style={{

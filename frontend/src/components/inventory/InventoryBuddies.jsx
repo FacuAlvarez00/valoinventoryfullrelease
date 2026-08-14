@@ -1,34 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../../context/InventoryContext';
-import { BackButton, SearchInput, SkeletonBlock } from '../ui/kit';
+import { SearchInput, SkeletonBlock } from '../ui/kit';
+import InventoryCategoryHeader from './InventoryCategoryHeader';
 import styles from './InventoryList.module.css';
 
 export default function InventoryBuddies() {
-  const navigate = useNavigate();
   const { riotAccount, loading, error } = useInventory();
   const [buddies, setBuddies] = useState([]);
   const [loadingBuddies, setLoadingBuddies] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // LOG GLOBAL DEL CONTEXTO
-  console.log('RIOT ACCOUNT COMPLETO:', riotAccount);
-
   useEffect(() => {
-    console.log('EJECUTANDO useEffect de buddies');
     const fetchBuddiesDetails = async () => {
       setLoadingBuddies(true);
       try {
         const buddiesFromAccount = riotAccount?.buddies || [];
-        console.log('BuddiesFromAccount:', buddiesFromAccount, 'Tipo:', typeof buddiesFromAccount, 'Largo:', buddiesFromAccount.length);
         if (!Array.isArray(buddiesFromAccount) || buddiesFromAccount.length === 0) {
           setBuddies([]);
           setLoadingBuddies(false);
           return;
         }
-        // Los gunbuddies ya vienen con detalles completos del backend
-        const buddyDetails = buddiesFromAccount.map((item, idx) => {
-          console.log(`[${idx}] Gunbuddy con detalles completos:`, item);
+        // Gun buddies already include their complete backend details
+        const buddyDetails = buddiesFromAccount.map((item) => {
           return {
             ...item,
             buddy: {
@@ -42,10 +35,9 @@ export default function InventoryBuddies() {
             }
           };
         });
-        console.log('BUDDY DETAILS FINAL:', buddyDetails);
         setBuddies(buddyDetails);
       } catch (e) {
-        console.error('Error general obteniendo detalles de buddies:', e);
+        console.error('Failed to load buddy details:', e);
         setBuddies([]);
       }
       setLoadingBuddies(false);
@@ -55,7 +47,7 @@ export default function InventoryBuddies() {
     }
   }, [riotAccount]);
 
-  // Filtrar buddies basado en el término de búsqueda
+  // Filter buddies by the search term
   const filteredBuddies = buddies.filter(buddy =>
     buddy.buddy?.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -65,25 +57,22 @@ export default function InventoryBuddies() {
   return (
     <>
       <div className={styles.page}>
-        <div className={styles.headerRow}>
-          <BackButton onClick={() => navigate('/inventory')}>Volver al Dashboard</BackButton>
-
-          <div className={styles.headerRight}>
-            <div className={styles.countGroup}>
-              <span className={styles.countText}>Total: {buddies.length}</span>
-              {searchTerm && <span className={styles.countMuted}>({filteredBuddies.length} encontrados)</span>}
-            </div>
+        <InventoryCategoryHeader
+          title="Gun Buddies"
+          description="Browse every weapon charm owned by this account."
+          count={buddies.length}
+          countLabel="buddies"
+          visibleCount={searchTerm ? filteredBuddies.length : undefined}
+          actions={(
             <div className={styles.searchWrap}>
               <SearchInput
-                placeholder="Buscar gunbuddies..."
+                placeholder="Search gun buddies..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-          </div>
-        </div>
-
-        <h2 className={styles.pageTitle}>GUNBUDDIES</h2>
+          )}
+        />
 
         {loading || loadingBuddies ? (
           <div className={styles.grid}>
@@ -97,9 +86,9 @@ export default function InventoryBuddies() {
         ) : error ? (
           <div className={styles.errorState}>{error}</div>
         ) : buddies.length === 0 ? (
-          <div className={styles.emptyState}>No hay Gunbuddies disponibles.</div>
+          <div className={styles.emptyState}>No gun buddies are available.</div>
         ) : filteredBuddies.length === 0 && searchTerm ? (
-          <div className={styles.emptyState}>No se encontraron gunbuddies que coincidan con "{searchTerm}"</div>
+          <div className={styles.emptyState}>No gun buddies match "{searchTerm}".</div>
         ) : (
           <div className={styles.grid}>
             {filteredBuddies.map((item, index) => (
@@ -112,7 +101,7 @@ export default function InventoryBuddies() {
                     decoding="async"
                     className={styles.cardImage}
                     onError={(e) => {
-                      console.log('🔫 [InventoryBuddies] Error cargando imagen:', item.buddy.displayIcon);
+                      console.log('🔫 [InventoryBuddies] Failed to load image:', item.buddy.displayIcon);
                       e.target.style.display = 'none';
                       e.target.nextSibling.style.display = 'flex';
                     }}
@@ -122,7 +111,7 @@ export default function InventoryBuddies() {
                   <div className={styles.cardImagePlaceholder}>🔫</div>
                 )}
                 <h3 className={styles.cardName} style={{ whiteSpace: 'normal' }}>
-                  {item.buddy?.displayName || 'Gunbuddy Desconocido'}
+                  {item.buddy?.displayName || 'Unknown gun buddy'}
                 </h3>
               </div>
             ))}

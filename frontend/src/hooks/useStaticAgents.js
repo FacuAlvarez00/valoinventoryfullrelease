@@ -8,7 +8,7 @@ const STATIC_AGENT_IDS = [
   'add6443a-41bd-e414-f6ad-e58d267f4e95', // jett
 ];
 
-let cache = null; // cache simple en módulo
+let cache = null; // Simple module-level cache
 
 export default function useStaticAgents() {
   const [agents, setAgents] = useState(cache || []);
@@ -24,7 +24,7 @@ export default function useStaticAgents() {
       try {
         setLoading(true);
         const reqs = STATIC_AGENT_IDS.map((id) =>
-          fetch(`${base}/${id}?language=es-ES`, { signal: controller.signal })
+          fetch(`${base}/${id}?language=en-US`, { signal: controller.signal })
             .then((r) => r.json())
             .then((j) => j?.data)
         );

@@ -25,7 +25,7 @@ async function fetchWithRetry(url, retries = 3) {
 }
 
 async function refresh() {
-  console.log('🔄 [CatalogCache] Actualizando catálogo...');
+  console.log('🔄 [CatalogCache] Updating catalog...');
   try {
     const [weaponsData, skinsData, chromasData, skinlevelsData, weaponSkinsData] = await Promise.all([
       fetchWithRetry('https://valorant-api.com/v1/weapons'),
@@ -99,7 +99,7 @@ async function refresh() {
 
     console.log(`✅ [CatalogCache] ${cache.skins.length} skins, ${cache.skinlevels.length} skinlevels, ${cache.weaponSkins.length} precios — ${cache.lastUpdated}`);
   } catch (e) {
-    console.error('❌ [CatalogCache] Error al actualizar:', e.message);
+    console.error('❌ [CatalogCache] Update failed:', e.message);
   }
 }
 

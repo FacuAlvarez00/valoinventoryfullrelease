@@ -3,24 +3,24 @@ const { RIOT_HEADERS, RIOT_ENDPOINTS, RIOT_ENTITLEMENT_IDS } = require('../confi
 
 class RiotService {
   static async getValorantVersion() {
-    console.log('🔄 [RiotService] ===== OBTENIENDO VERSIÓN DE VALORANT API =====');
+    console.log('🔄 [RiotService] ===== LOADING VALORANT API VERSION =====');
     try {
       const response = await fetch('https://valorant-api.com/v1/version');
       const data = await response.json();
-      console.log('🔄 [RiotService] Respuesta completa de valorant-api.com:', JSON.stringify(data, null, 2));
-      
+      console.log('🔄 [RiotService] Complete valorant-api.com response:', JSON.stringify(data, null, 2));
+
       if (data.status === 200 && data.data) {
         const version = data.data.riotClientVersion;
-        console.log('🔄 [RiotService] Versión extraída:', version);
-        console.log('🔄 [RiotService] ===== FIN OBTENIENDO VERSIÓN =====');
+        console.log('🔄 [RiotService] Version resolved:', version);
+        console.log('🔄 [RiotService] ===== END VALORANT API VERSION LOOKUP =====');
         return version;
       } else {
-        console.log('🔄 [RiotService] Error en respuesta de valorant-api.com');
-        return 'B312378013F36E38'; // Fallback al valor hardcodeado
+        console.log('🔄 [RiotService] Invalid valorant-api.com response');
+        return 'B312378013F36E38'; // Fall back to the known client version
       }
     } catch (error) {
-      console.error('🔄 [RiotService] Error obteniendo versión de Valorant:', error);
-      return 'B312378013F36E38'; // Fallback al valor hardcodeado
+      console.error('🔄 [RiotService] Failed to load Valorant version:', error);
+      return 'B312378013F36E38'; // Fall back to the known client version
     }
   }
 
@@ -32,35 +32,35 @@ class RiotService {
   }
 
   static async getUserInfoDetailed(riotToken) {
-    console.log('👤 [RiotService] ===== OBTENIENDO USERINFO DETALLADO =====');
-    console.log('👤 [RiotService] Token:', riotToken ? riotToken.substring(0, 20) + '...' : 'No disponible');
+    console.log('👤 [RiotService] ===== LOADING DETAILED USER INFORMATION =====');
+    console.log('👤 [RiotService] Token:', riotToken ? riotToken.substring(0, 20) + '...' : 'Unavailable');
     console.log('👤 [RiotService] URL:', RIOT_ENDPOINTS.USER_INFO);
-    
+
     try {
       const response = await fetch(RIOT_ENDPOINTS.USER_INFO, {
         method: 'GET',
-        headers: { 
+        headers: {
           Authorization: `Bearer ${riotToken}`,
           'Content-Type': 'application/json'
         }
       });
-      
-      console.log('👤 [RiotService] Status de respuesta:', response.status);
-      console.log('👤 [RiotService] Headers de respuesta:', Object.fromEntries(response.headers.entries()));
-      
+
+      console.log('👤 [RiotService] Response status:', response.status);
+      console.log('👤 [RiotService] Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
         const errorText = await response.text();
         console.log('👤 [RiotService] Error response body:', errorText);
         throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
       }
-      
+
       const data = await response.json();
-      console.log('👤 [RiotService] Respuesta completa de userinfo:', JSON.stringify(data, null, 2));
-      console.log('👤 [RiotService] ===== FIN OBTENIENDO USERINFO DETALLADO =====');
-      
+      console.log('👤 [RiotService] Complete user information response:', JSON.stringify(data, null, 2));
+      console.log('👤 [RiotService] ===== END DETAILED USER INFORMATION LOOKUP =====');
+
       return data;
     } catch (error) {
-      console.error('👤 [RiotService] Error obteniendo userinfo detallado:', error);
+      console.error('👤 [RiotService] Failed to load detailed user information:', error);
       throw error;
     }
   }
@@ -110,18 +110,18 @@ class RiotService {
   }
 
   static async getBuddyDetails(itemIDs) {
-    // Primero obtenemos todos los gunbuddies disponibles de la API pública
+    // Load all available gun buddies from the public API first
     const allBuddiesResponse = await fetch('https://valorant-api.com/v1/buddies');
     const allBuddiesData = await allBuddiesResponse.json();
     const allBuddies = allBuddiesData.data || [];
-    
+
     const promises = itemIDs.map(async (itemID) => {
       try {
-        // Buscar el gunbuddy padre que contiene este nivel
-        const parentBuddy = allBuddies.find(buddy => 
+        // Find the parent buddy containing this level
+        const parentBuddy = allBuddies.find(buddy =>
           buddy.levels && buddy.levels.some(level => level.uuid === itemID)
         );
-        
+
         if (parentBuddy) {
           return {
             ItemID: itemID,
@@ -131,38 +131,38 @@ class RiotService {
             themeUuid: parentBuddy.themeUuid,
             isHiddenIfNotOwned: parentBuddy.isHiddenIfNotOwned,
             levels: parentBuddy.levels,
-            // Información del nivel específico que posee el usuario
+            // Information for the specific level owned by the user
             ownedLevel: parentBuddy.levels.find(level => level.uuid === itemID)
           };
         } else {
-          // Si no encontramos el padre, intentamos obtener el nivel directamente
+          // Fetch the level directly when its parent cannot be resolved
           const response = await fetch(`https://valorant-api.com/v1/buddylevels/${itemID}`);
           const data = await response.json();
-          
+
           if (data.data) {
             return {
               ItemID: itemID,
-              displayName: data.data.displayName || 'Gunbuddy Desconocido',
+              displayName: data.data.displayName || 'Unknown gun buddy',
               displayIcon: data.data.displayIcon || null,
               uuid: data.data.uuid,
               charmLevel: data.data.charmLevel,
               hideIfNotOwned: data.data.hideIfNotOwned
             };
           } else {
-            return { ItemID: itemID, displayName: 'Gunbuddy Desconocido' };
+            return { ItemID: itemID, displayName: 'Unknown gun buddy' };
           }
         }
       } catch (error) {
-        console.error(`Error obteniendo detalles de gunbuddy ${itemID}:`, error);
-        return { ItemID: itemID, displayName: 'Gunbuddy Desconocido' };
+        console.error(`Failed to load gun buddy details for ${itemID}:`, error);
+        return { ItemID: itemID, displayName: 'Unknown gun buddy' };
       }
     });
-    
+
     const results = await Promise.all(promises);
     return results;
   }
 
-  
+
 
   static async getBattlePasses(puuid, entitlementToken, riotToken) {
     const response = await fetch(`${RIOT_ENDPOINTS.BATTLE_PASSES}/${puuid}/${RIOT_ENTITLEMENT_IDS.BATTLE_PASSES}`, {
@@ -195,11 +195,11 @@ class RiotService {
           Authorization: `Bearer ${riotToken}`
         }
       });
-      
+
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('Error obteniendo sprays:', error);
+      console.error('Failed to load sprays:', error);
       throw error;
     }
   }
@@ -212,7 +212,7 @@ class RiotService {
         Authorization: `Bearer ${riotToken}`
       }
     });
-    
+
     const data = await response.json();
     return data;
   }
@@ -225,16 +225,16 @@ class RiotService {
         Authorization: `Bearer ${riotToken}`
       }
     });
-    
+
     const data = await response.json();
     return data;
   }
 
   static async getFlex(puuid, entitlementToken, riotToken) {
-    console.log('🏆 [RiotService] ===== OBTENIENDO FLEX DEL USUARIO =====');
+    console.log('🏆 [RiotService] ===== LOADING USER FLEX ITEMS =====');
     console.log('🏆 [RiotService] PUUID:', puuid);
-    console.log('🏆 [RiotService] URL completa:', `${RIOT_ENDPOINTS.FLEX}/${puuid}/${RIOT_ENTITLEMENT_IDS.FLEX}`);
-    
+    console.log('🏆 [RiotService] Complete URL:', `${RIOT_ENDPOINTS.FLEX}/${puuid}/${RIOT_ENTITLEMENT_IDS.FLEX}`);
+
     try {
       const response = await fetch(`${RIOT_ENDPOINTS.FLEX}/${puuid}/${RIOT_ENTITLEMENT_IDS.FLEX}`, {
         headers: {
@@ -243,23 +243,23 @@ class RiotService {
           Authorization: `Bearer ${riotToken}`
         }
       });
-      
-      console.log('🏆 [RiotService] Status de respuesta:', response.status);
-      console.log('🏆 [RiotService] Headers de respuesta:', Object.fromEntries(response.headers.entries()));
-      
+
+      console.log('🏆 [RiotService] Response status:', response.status);
+      console.log('🏆 [RiotService] Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
         const errorText = await response.text();
         console.log('🏆 [RiotService] Error response body:', errorText);
         throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
       }
-      
+
       const data = await response.json();
-      console.log('🏆 [RiotService] Respuesta completa de flex:', JSON.stringify(data, null, 2));
-      console.log('🏆 [RiotService] ===== FIN OBTENIENDO FLEX DEL USUARIO =====');
-      
+      console.log('🏆 [RiotService] Complete flex response:', JSON.stringify(data, null, 2));
+      console.log('🏆 [RiotService] ===== END USER FLEX LOOKUP =====');
+
       return data;
     } catch (error) {
-      console.error('🏆 [RiotService] Error obteniendo flex:', error);
+      console.error('🏆 [RiotService] Failed to load flex items:', error);
       throw error;
     }
   }
@@ -271,13 +271,13 @@ class RiotService {
         const data = await response.json();
         return {
           ItemID: id,
-          displayName: data.data?.displayName || 'Card Desconocida',
+          displayName: data.data?.displayName || 'Unknown card',
           largeArt: data.data?.largeArt || null,
           smallArt: data.data?.smallArt || null,
           wideArt: data.data?.wideArt || null
         };
       } catch (error) {
-        console.error(`Error obteniendo detalles de card ${id}:`, error);
+        console.error(`Failed to load card details for ${id}:`, error);
         return { ItemID: id };
       }
     });
@@ -289,22 +289,22 @@ class RiotService {
       try {
         const response = await fetch(`https://valorant-api.com/v1/weapons/skinlevels/${id}`);
         const data = await response.json();
-        
+
         if (data.data) {
-          console.log(`🔍 [RiotService] Procesando skin: ${data.data.displayName}`);
-          // Excepción especial para el skin "VCT LOCK//IN Misericórdia"
+          console.log(`🔍 [RiotService] Processing skin: ${data.data.displayName}`);
+          // Custom price for the VCT LOCK//IN skin
           if (data.data.displayName === 'VCT LOCK//IN Misericórdia') {
-            console.log('🎯 [RiotService] ¡ENCONTRADO! Aplicando excepción de precio para VCT LOCK//IN Misericórdia: 5440');
-            // Asignar precio personalizado de 5440
+            console.log('🎯 [RiotService] Applying custom VCT LOCK//IN price: 5440');
+            // Assign the custom 5,440 VP price
             data.data.customPrice = 5440;
             data.data.priceDisplayName = '5440 VP';
-            console.log('✅ [RiotService] Precio asignado:', data.data.customPrice, data.data.priceDisplayName);
+            console.log('✅ [RiotService] Price assigned:', data.data.customPrice, data.data.priceDisplayName);
           }
         }
-        
+
         return data.data;
       } catch (error) {
-        console.error(`Error obteniendo detalles de skin ${id}:`, error);
+        console.error(`Failed to load skin details for ${id}:`, error);
         return null;
       }
     });
@@ -317,20 +317,20 @@ class RiotService {
         const url = `https://valorant-api.com/v1/sprays/${itemID}`;
         const response = await fetch(url);
         const data = await response.json();
-        
+
         return {
           ItemID: itemID,
-          displayName: data.data?.displayName || 'Spray Desconocido',
+          displayName: data.data?.displayName || 'Unknown spray',
           displayIcon: data.data?.displayIcon || null,
           fullTransparentIcon: data.data?.fullTransparentIcon || null,
           category: data.data?.category || null
         };
       } catch (error) {
-        console.error(`Error obteniendo detalles de spray ${itemID}:`, error);
+        console.error(`Failed to load spray details for ${itemID}:`, error);
         return { ItemID: itemID };
       }
     });
-    
+
     return Promise.all(promises);
   }
 
@@ -340,19 +340,19 @@ class RiotService {
         const url = `https://valorant-api.com/v1/playertitles/${itemID}`;
         const response = await fetch(url);
         const data = await response.json();
-        
+
         return {
           ItemID: itemID,
-          displayName: data.data?.displayName || 'Título Desconocido',
+          displayName: data.data?.displayName || 'Unknown title',
           titleText: data.data?.titleText || null,
           category: data.data?.category || null
         };
       } catch (error) {
-        console.error(`Error obteniendo detalles de título ${itemID}:`, error);
+        console.error(`Failed to load title details for ${itemID}:`, error);
         return { ItemID: itemID };
       }
     });
-    
+
     return Promise.all(promises);
   }
 
@@ -362,31 +362,31 @@ class RiotService {
         const url = `https://valorant-api.com/v1/agents/${itemID}`;
         const response = await fetch(url);
         const data = await response.json();
-        
+
         const result = {
           ItemID: itemID,
-          displayName: data.data?.displayName || 'Agente Desconocido',
+          displayName: data.data?.displayName || 'Unknown agent',
           displayIcon: data.data?.displayIcon || null,
           fullPortrait: data.data?.fullPortraitV2 || null,
           role: data.data?.role?.displayName || null,
           description: data.data?.description || null
         };
-        
+
         return result;
       } catch (error) {
-        console.error(`Error obteniendo detalles de agente ${itemID}:`, error);
+        console.error(`Failed to load agent details for ${itemID}:`, error);
         return { ItemID: itemID };
       }
     });
-    
+
     const results = await Promise.all(promises);
     return results;
   }
 
   static async getNameService(puuids, entitlementToken, riotToken) {
-    console.log('📝 [RiotService] ===== OBTENIENDO NOMBRES DE JUGADORES =====');
-    console.log('📝 [RiotService] PUUIDs recibidos:', puuids);
-    
+    console.log('📝 [RiotService] ===== LOADING PLAYER NAMES =====');
+    console.log('📝 [RiotService] PUUIDs received:', puuids);
+
     try {
       const response = await fetch(RIOT_ENDPOINTS.NAME_SERVICE, {
         method: 'PUT',
@@ -398,94 +398,94 @@ class RiotService {
         },
         body: JSON.stringify(puuids)
       });
-      
-      console.log('📝 [RiotService] Status de respuesta:', response.status);
-      console.log('📝 [RiotService] Headers de respuesta:', Object.fromEntries(response.headers.entries()));
-      
+
+      console.log('📝 [RiotService] Response status:', response.status);
+      console.log('📝 [RiotService] Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      console.log('📝 [RiotService] Respuesta completa:', JSON.stringify(data, null, 2));
-      console.log('📝 [RiotService] ===== FIN OBTENIENDO NOMBRES DE JUGADORES =====');
-      
+      console.log('📝 [RiotService] Complete response:', JSON.stringify(data, null, 2));
+      console.log('📝 [RiotService] ===== END PLAYER NAME LOOKUP =====');
+
       return data;
     } catch (error) {
-      console.error('📝 [RiotService] Error obteniendo nombres de jugadores:', error);
+      console.error('📝 [RiotService] Failed to load player names:', error);
       throw error;
     }
   }
 
   static async getWallet(puuid, entitlementToken, riotToken) {
-    console.log('💰 [RiotService] ===== OBTENIENDO WALLET DEL USUARIO =====');
+    console.log('💰 [RiotService] ===== LOADING USER WALLET =====');
     console.log('💰 [RiotService] PUUID:', puuid);
-    console.log('💰 [RiotService] URL completa:', `${RIOT_ENDPOINTS.WALLET}/${puuid}`);
-    
-    // Obtener versión dinámica de Valorant API
+    console.log('💰 [RiotService] Complete URL:', `${RIOT_ENDPOINTS.WALLET}/${puuid}`);
+
+    // Resolve the current Valorant client version
     const dynamicVersion = await this.getValorantVersion();
-    console.log('💰 [RiotService] Usando versión dinámica:', dynamicVersion);
-    
-    // Crear headers con versión dinámica
+    console.log('💰 [RiotService] Using current client version:', dynamicVersion);
+
+    // Build headers with the current client version
     const dynamicHeaders = {
       ...RIOT_HEADERS,
       'X-Riot-ClientVersion': dynamicVersion,
       'X-Riot-Entitlements-JWT': entitlementToken,
       'Authorization': `Bearer ${riotToken}`
     };
-    
-    console.log('💰 [RiotService] Headers enviados:', {
+
+    console.log('💰 [RiotService] Request headers:', {
       'X-Riot-ClientPlatform': dynamicHeaders['X-Riot-ClientPlatform'] ? 'PRESENT' : 'MISSING',
       'X-Riot-ClientVersion': dynamicHeaders['X-Riot-ClientVersion'],
       'X-Riot-Entitlements-JWT': entitlementToken ? 'PRESENT' : 'MISSING',
       'Authorization': riotToken ? 'PRESENT' : 'MISSING'
     });
-    
+
     try {
-      console.log('💰 [RiotService] Haciendo petición GET a:', `${RIOT_ENDPOINTS.WALLET}/${puuid}`);
-      console.log('💰 [RiotService] Headers completos:', JSON.stringify(dynamicHeaders, null, 2));
-      
+      console.log('💰 [RiotService] Sending GET request to:', `${RIOT_ENDPOINTS.WALLET}/${puuid}`);
+      console.log('💰 [RiotService] Complete headers:', JSON.stringify(dynamicHeaders, null, 2));
+
       const response = await fetch(`${RIOT_ENDPOINTS.WALLET}/${puuid}`, {
         method: 'GET',
         headers: dynamicHeaders
       });
-      
-      console.log('💰 [RiotService] Status de respuesta:', response.status);
-      console.log('💰 [RiotService] Headers de respuesta:', Object.fromEntries(response.headers.entries()));
-      
+
+      console.log('💰 [RiotService] Response status:', response.status);
+      console.log('💰 [RiotService] Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
         const errorText = await response.text();
         console.log('💰 [RiotService] Error response body:', errorText);
         throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
       }
-      
+
       const data = await response.json();
-      console.log('💰 [RiotService] Respuesta completa de wallet:', JSON.stringify(data, null, 2));
-      console.log('💰 [RiotService] Datos que vamos a traer:', {
-        Balances: data.Balances ? `${data.Balances.length} balances encontrados` : 'No hay balances',
+      console.log('💰 [RiotService] Complete wallet response:', JSON.stringify(data, null, 2));
+      console.log('💰 [RiotService] Parsed wallet data:', {
+        Balances: data.Balances ? `${data.Balances.length} balances found` : 'No balances',
         WalletData: data
       });
-      console.log('💰 [RiotService] ===== FIN OBTENIENDO WALLET DEL USUARIO =====');
-      
+      console.log('💰 [RiotService] ===== END USER WALLET LOOKUP =====');
+
       return data;
     } catch (error) {
-      console.error('💰 [RiotService] Error obteniendo wallet:', error);
+      console.error('💰 [RiotService] Failed to load wallet:', error);
       throw error;
     }
   }
 
   static async getCurrencyDetails(currencyIds) {
     try {
-      console.log('💰 [RiotService] ===== OBTENIENDO DETALLES DE MONEDAS =====');
+      console.log('💰 [RiotService] ===== LOADING CURRENCY DETAILS =====');
       console.log('💰 [RiotService] Currency IDs:', currencyIds);
 
       const currencyPromises = currencyIds.map(async (currencyId) => {
         try {
           const response = await fetch(`https://valorant-api.com/v1/currencies/${currencyId}`);
           const data = await response.json();
-          
+
           if (data && data.status === 200 && data.data) {
-            console.log(`💰 [RiotService] Moneda obtenida:`, {
+            console.log(`💰 [RiotService] Currency loaded:`, {
               uuid: data.data.uuid,
               displayName: data.data.displayName,
               displayIcon: data.data.displayIcon
@@ -498,33 +498,33 @@ class RiotService {
               largeIcon: data.data.largeIcon
             };
           } else {
-            console.log(`⚠️ [RiotService] Error obteniendo moneda ${currencyId}:`, data);
+            console.log(`⚠️ [RiotService] Failed to load currency ${currencyId}:`, data);
             return null;
           }
         } catch (error) {
-          console.log(`❌ [RiotService] Error obteniendo moneda ${currencyId}:`, error.message);
+          console.log(`❌ [RiotService] Failed to load currency ${currencyId}:`, error.message);
           return null;
         }
       });
 
       const currencyDetails = await Promise.all(currencyPromises);
       const validCurrencies = currencyDetails.filter(currency => currency !== null);
-      
-      console.log('💰 [RiotService] Monedas obtenidas exitosamente:', validCurrencies.length);
-      console.log('💰 [RiotService] ===== FIN OBTENIENDO DETALLES DE MONEDAS =====');
-      
+
+      console.log('💰 [RiotService] Currencies loaded successfully:', validCurrencies.length);
+      console.log('💰 [RiotService] ===== END CURRENCY DETAIL LOOKUP =====');
+
       return validCurrencies;
     } catch (error) {
-      console.error('❌ [RiotService] Error obteniendo detalles de monedas:', error);
+      console.error('❌ [RiotService] Failed to load currency details:', error);
       throw error;
     }
   }
 
   static extractIdTokenFromUrl(url) {
     try {
-      // Buscar el patrón id_token= hasta &token_type=
+      // Match id_token through the token_type delimiter
       const idTokenMatch = url.match(/id_token=([^&]+)&token_type=/);
-      
+
       if (idTokenMatch && idTokenMatch[1]) {
         const idToken = idTokenMatch[1];
         return idToken;
@@ -532,7 +532,7 @@ class RiotService {
         return null;
       }
     } catch (error) {
-      console.error('❌ Error extrayendo ID Token de URL:', error);
+      console.error('❌ Failed to extract the ID token from the URL:', error);
       return null;
     }
   }
@@ -549,28 +549,28 @@ class RiotService {
           id_token: idToken
         })
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
       }
-      
+
       const data = await response.json();
-      
-      // Console.log destacado para mostrar claramente la respuesta
+
+      // Highlight the Riot GEO response in diagnostic output
       console.log('\n' + '='.repeat(80));
-      console.log('🌍🌍🌍 RESPUESTA DEL ENDPOINT RIOT GEO 🌍🌍🌍');
+      console.log('🌍🌍🌍 RIOT GEO ENDPOINT RESPONSE 🌍🌍🌍');
       console.log('='.repeat(80));
-      console.log('📊 RESPUESTA COMPLETA:', JSON.stringify(data, null, 2));
-      console.log('📋 TOKEN:', data.token || 'NO DISPONIBLE');
-      console.log('🌎 REGIÓN PBE:', data.affinities?.pbe || 'NO DISPONIBLE');
-      console.log('🌎 REGIÓN LIVE:', data.affinities?.live || 'NO DISPONIBLE');
+      console.log('📊 COMPLETE RESPONSE:', JSON.stringify(data, null, 2));
+      console.log('📋 TOKEN:', data.token || 'UNAVAILABLE');
+      console.log('🌎 PBE REGION:', data.affinities?.pbe || 'UNAVAILABLE');
+      console.log('🌎 LIVE REGION:', data.affinities?.live || 'UNAVAILABLE');
       console.log('='.repeat(80) + '\n');
-      
+
       return data;
     } catch (error) {
       console.log('\n' + '='.repeat(80));
-      console.log('❌❌❌ ERROR EN ENDPOINT RIOT GEO ❌❌❌');
+      console.log('❌❌❌ RIOT GEO ENDPOINT ERROR ❌❌❌');
       console.log('='.repeat(80));
       console.log('ERROR:', error.message);
       console.log('='.repeat(80) + '\n');
@@ -579,4 +579,4 @@ class RiotService {
   }
 }
 
-module.exports = RiotService; 
+module.exports = RiotService;

@@ -13,10 +13,10 @@ export function InventoryProvider({ children }) {
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [weaponSkins, setWeaponSkins] = useState([]);
 
-  // Obtener el JWT del localStorage
+  // Read the JWT from local storage
   const getJWT = () => localStorage.getItem('authToken');
 
-  // --- FUNCIONES DE CARGA ---
+  // Data loading
   const fetchAccount = async (requestedPuuid) => {
     const queryPuuid = new URLSearchParams(window.location.search).get('puuid');
     const puuid = requestedPuuid || queryPuuid || localStorage.getItem('selected_riot_puuid');
@@ -24,7 +24,7 @@ export function InventoryProvider({ children }) {
     setError('');
     if (!puuid) {
       setRiotAccount(null);
-      setError('No hay cuenta Riot seleccionada.');
+      setError('No Riot account is selected.');
       setLoading(false);
       return;
     }
@@ -39,33 +39,18 @@ export function InventoryProvider({ children }) {
       if (data.success && data.user && data.user.riotAccounts) {
         const acc = data.user.riotAccounts.find(a => a.puuid === puuid);
         if (acc) {
-          console.log('🃏 [InventoryContext] Cuenta Riot encontrada:', acc);
-          console.log('🃏 [InventoryContext] Propiedades de la cuenta:', Object.keys(acc));
-          console.log('🃏 [InventoryContext] ¿Tiene cards?', 'cards' in acc);
-          console.log('🃏 [InventoryContext] Valor de cards:', acc.cards);
-          console.log('🃏 [InventoryContext] Tipo de cards:', typeof acc.cards);
-          console.log('🃏 [InventoryContext] ¿Es array?', Array.isArray(acc.cards));
-          console.log('🃏 [InventoryContext] ¿Tiene sprays?', 'sprays' in acc);
-          console.log('🃏 [InventoryContext] Valor de sprays:', acc.sprays);
-          console.log('🃏 [InventoryContext] Tipo de sprays:', typeof acc.sprays);
-          console.log('🃏 [InventoryContext] ¿Es array?', Array.isArray(acc.sprays));
-          console.log('🃏 [InventoryContext] ¿Tiene titles?', 'titles' in acc);
-          console.log('🃏 [InventoryContext] Valor de titles:', acc.titles);
-          console.log('🃏 [InventoryContext] Tipo de titles:', typeof acc.titles);
-          console.log('🃏 [InventoryContext] ¿Es array?', Array.isArray(acc.titles));
-          
           setRiotAccount({
             ...acc,
             identity: acc.loadout?.Identity || acc.identity || null
           });
         } else {
-          setError('No se encontró la cuenta Riot seleccionada.');
+          setError('The selected Riot account was not found.');
         }
       } else {
-        setError('No se pudo obtener el perfil del usuario.');
+        setError('The user profile could not be loaded.');
       }
     } catch (e) {
-      setError('Error de red al obtener la cuenta Riot.');
+      setError('A network error occurred while loading the Riot account.');
     }
     setLoading(false);
   };
@@ -94,7 +79,7 @@ export function InventoryProvider({ children }) {
     setCatalogLoading(false);
   };
 
-  // --- EFECTOS DE CARGA INICIAL ---
+  // Initial loading effects
   useEffect(() => {
     fetchAccount();
   }, []);
@@ -103,7 +88,7 @@ export function InventoryProvider({ children }) {
     fetchCatalog();
   }, []);
 
-  // --- RECARGA AUTOMÁTICA SI LOS DATOS ESTÁN VACÍOS ---
+  // Automatically retry when account data is empty
   useEffect(() => {
     if (!loading && !riotAccount && !error) {
       fetchAccount();
@@ -123,23 +108,23 @@ export function InventoryProvider({ children }) {
         !catalog.chromas.length
       )
     ) {
-      setCatalog(EMPTY_CATALOG); // Siempre shape correcto
+      setCatalog(EMPTY_CATALOG); // Preserve a stable catalog shape
       fetchCatalog();
     }
   }, [catalog, catalogLoading]);
 
-  // Funciones de mapeo
+  // Catalog lookup helpers
   const getWeaponById = (id) => catalog.weapons.find(w => w.uuid === id);
   const getSkinById = (id) => catalog.skins.find(s => s.uuid === id);
   const getChromaById = (id) => catalog.chromas.find(c => c.uuid === id);
 
-  // Función para obtener el precio de una skin base (delegada al helper compartido)
+  // Delegate base skin pricing to the shared helper
   const getSkinPrice = (baseName) => getSkinPriceUtil(baseName, weaponSkins);
 
-  // Función para ordenar skins por precio ascendente (las que no tienen precio al final)
-  const sortSkinsByPriceAsc = (skinsPorBase) => sortSkinsByPriceAscUtil(skinsPorBase, weaponSkins);
+  // Sort skins by ascending price and place unpriced skins at the end
+  const sortSkinsByPriceAsc = (skinsByBaseName) => sortSkinsByPriceAscUtil(skinsByBaseName, weaponSkins);
 
-  // Función para refrescar la cuenta seleccionada manualmente
+  // Refresh the selected account manually
   const refreshAccount = async (puuid) => {
     await fetchAccount(puuid);
   };
@@ -152,7 +137,7 @@ export function InventoryProvider({ children }) {
       getWeaponById, getSkinById, getChromaById,
       getSkinPrice, sortSkinsByPriceAsc,
       refreshAccount,
-      // Agregar acceso directo a sprays, titles y agents
+      // Expose commonly used entitlement groups directly
       sprays: riotAccount?.sprays || [],
       titles: riotAccount?.titles || [],
       agents: riotAccount?.agents || []
