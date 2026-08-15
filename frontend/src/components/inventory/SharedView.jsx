@@ -31,10 +31,17 @@ function SharedViewSkeleton() {
           </div>
           <div className={styles.skeletonValue} />
         </div>
-        <div className={styles.categoryGrid}>
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className={styles.skeletonCategory} />
-          ))}
+        <div className={styles.skeletonExplorer}>
+          <div className={styles.skeletonCategories}>
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={index} className={styles.skeletonCategory} />
+            ))}
+          </div>
+          <div className={styles.skeletonItems}>
+            {Array.from({ length: 10 }).map((_, index) => (
+              <div key={index} className={styles.skeletonItem} />
+            ))}
+          </div>
         </div>
       </main>
     </div>
@@ -212,140 +219,143 @@ export default function SharedView() {
         </section>
 
         <section className={styles.collection} aria-labelledby="collection-title">
-          <div className={styles.sectionHeading}>
-            <div>
-              <span className={styles.headerEyebrow}>Collection</span>
-              <h2 id="collection-title">Inventory</h2>
+          <aside className={styles.collectionSidebar} aria-label="Inventory categories">
+            <div className={styles.sectionHeading}>
+              <div>
+                <span className={styles.headerEyebrow}>Collection</span>
+                <h2 id="collection-title">Inventory</h2>
+              </div>
+              <span className={styles.sectionHint}>Choose a category</span>
             </div>
-            <span className={styles.sectionHint}>Select a category to explore</span>
-          </div>
 
-          <div className={styles.categoryGrid}>
-            {sections.map(section => (
-              <button
-                key={section.key}
-                type="button"
-                className={`${styles.categoryCard} ${activeSection === section.key ? styles.categoryCardActive : ''}`}
-                onClick={() => setActiveSection(section.key)}
-                aria-pressed={activeSection === section.key}
-              >
-                {section.img && <img src={section.img} alt="" className={styles.categoryArt} />}
-                <span className={styles.categoryOverlay} />
-                {section.vpSpent !== undefined && (
-                  <span className={styles.categoryValue}>
-                    {section.vpSpent.toLocaleString()}
-                    <img src="/assets/icons/20px-White_Valorant_Points_VALORANT.png" alt="VP" />
+            <div className={styles.categoryGrid} role="tablist" aria-label="Inventory categories">
+              {sections.map(section => (
+                <button
+                  key={section.key}
+                  id={`shared-category-${section.key}`}
+                  type="button"
+                  role="tab"
+                  className={`${styles.categoryCard} ${activeSection === section.key ? styles.categoryCardActive : ''}`}
+                  onClick={() => setActiveSection(section.key)}
+                  aria-selected={activeSection === section.key}
+                  aria-controls="shared-inventory-items"
+                >
+                  {section.img && <img src={section.img} alt="" className={styles.categoryArt} />}
+                  <span className={styles.categoryOverlay} />
+                  <span className={styles.categoryContent}>
+                    <strong>{section.label}</strong>
+                    <span><b>{section.count.toLocaleString()}</b> items</span>
                   </span>
-                )}
-                <span className={styles.categoryContent}>
-                  <strong>{section.label}</strong>
-                  <span><b>{section.count.toLocaleString()}</b> items</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className={styles.detailSection} aria-live="polite">
-          <div className={styles.detailHeader}>
-            <div>
-              <span className={styles.detailEyebrow}>Showing</span>
-              <h2>{activeCategory.label}</h2>
+                </button>
+              ))}
             </div>
-            <span className={styles.detailCount}>{activeCategory.count.toLocaleString()} items</span>
-          </div>
+          </aside>
 
-          {activeSection === 'skins' && (
-            <div className={`${styles.detailGrid} ${styles.skinGrid}`}>
-              {sortedSkins.map(([baseName, ownedLevels]) => {
-                let skinBase = catalog.skins.find(skin => skin.displayName === baseName);
-                if (!skinBase) skinBase = catalog.skins.find(skin => skin.displayName.toLowerCase().includes(baseName.toLowerCase()));
-                const image = skinBase?.chromas?.[0]?.fullRender || ownedLevels.find(level => level.displayIcon)?.displayIcon || '';
-                const price = getSkinPrice(baseName, weaponSkins);
-                return (
-                  <article key={baseName} className={`${styles.skinCard} ${isGoldenSkin(baseName) ? styles.skinCardGolden : ''}`}>
-                    {price > 0 && <span className={styles.skinPrice}>{price.toLocaleString()} VP</span>}
-                    <div className={styles.skinImageWrap}>
-                      {image && <img src={image} alt="" className={styles.skinImage} loading="lazy" />}
-                    </div>
-                    <h3>{baseName}</h3>
+          <div
+            id="shared-inventory-items"
+            className={styles.detailSection}
+            aria-live="polite"
+          >
+            <div className={styles.detailHeader}>
+              <div>
+                <span className={styles.detailEyebrow}>Showing</span>
+                <h2>{activeCategory.label}</h2>
+              </div>
+              <span className={styles.detailCount}>{activeCategory.count.toLocaleString()} items</span>
+            </div>
+
+            {activeSection === 'skins' && (
+              <div className={`${styles.detailGrid} ${styles.skinGrid}`}>
+                {sortedSkins.map(([baseName, ownedLevels]) => {
+                  let skinBase = catalog.skins.find(skin => skin.displayName === baseName);
+                  if (!skinBase) skinBase = catalog.skins.find(skin => skin.displayName.toLowerCase().includes(baseName.toLowerCase()));
+                  const image = skinBase?.chromas?.[0]?.fullRender || ownedLevels.find(level => level.displayIcon)?.displayIcon || '';
+                  const price = getSkinPrice(baseName, weaponSkins);
+                  return (
+                    <article key={baseName} className={`${styles.skinCard} ${isGoldenSkin(baseName) ? styles.skinCardGolden : ''}`}>
+                      {price > 0 && <span className={styles.skinPrice}>{price.toLocaleString()} VP</span>}
+                      <div className={styles.skinImageWrap}>
+                        {image && <img src={image} alt="" className={styles.skinImage} loading="lazy" />}
+                      </div>
+                      <h3>{baseName}</h3>
+                    </article>
+                  );
+                })}
+                {!sortedSkins.length && <div className={styles.emptyState}>No skins in this collection.</div>}
+              </div>
+            )}
+
+            {activeSection === 'battlepass' && (
+              <div className={styles.textItems}>
+                {(account.battlePasses || []).map((item, index) => <span key={item.ItemID || index}>{item.displayName || item.ItemID || `Battle Pass ${index + 1}`}</span>)}
+                {!account.battlePasses?.length && <div className={styles.emptyState}>No battlepasses in this collection.</div>}
+              </div>
+            )}
+
+            {activeSection === 'buddies' && (
+              <div className={styles.detailGrid}>
+                {(account.buddies || []).map((item, index) => (
+                  <article key={item.ItemID || index} className={styles.itemCard}>
+                    {item.displayIcon && <img src={item.displayIcon} alt="" loading="lazy" />}
+                    <h3>{item.displayName || 'Gunbuddy'}</h3>
                   </article>
-                );
-              })}
-              {!sortedSkins.length && <div className={styles.emptyState}>No skins in this collection.</div>}
-            </div>
-          )}
+                ))}
+                {!account.buddies?.length && <div className={styles.emptyState}>No gunbuddies in this collection.</div>}
+              </div>
+            )}
 
-          {activeSection === 'battlepass' && (
-            <div className={styles.textItems}>
-              {(account.battlePasses || []).map((item, index) => <span key={item.ItemID || index}>{item.displayName || item.ItemID || `Battle Pass ${index + 1}`}</span>)}
-              {!account.battlePasses?.length && <div className={styles.emptyState}>No battlepasses in this collection.</div>}
-            </div>
-          )}
+            {activeSection === 'cards' && (
+              <div className={styles.detailGrid}>
+                {(account.cards || []).map((item, index) => (
+                  <article key={item.ItemID || index} className={`${styles.itemCard} ${styles.playerCard}`}>
+                    {(item.smallArt || item.displayIcon) && <img src={item.smallArt || item.displayIcon} alt="" loading="lazy" />}
+                    <h3>{item.displayName || 'Player card'}</h3>
+                  </article>
+                ))}
+                {!account.cards?.length && <div className={styles.emptyState}>No player cards in this collection.</div>}
+              </div>
+            )}
 
-          {activeSection === 'buddies' && (
-            <div className={styles.detailGrid}>
-              {(account.buddies || []).map((item, index) => (
-                <article key={item.ItemID || index} className={styles.itemCard}>
-                  {item.displayIcon && <img src={item.displayIcon} alt="" loading="lazy" />}
-                  <h3>{item.displayName || 'Gunbuddy'}</h3>
-                </article>
-              ))}
-              {!account.buddies?.length && <div className={styles.emptyState}>No gunbuddies in this collection.</div>}
-            </div>
-          )}
+            {activeSection === 'sprays' && (
+              <div className={styles.detailGrid}>
+                {(account.sprays || []).map((item, index) => (
+                  <article key={item.ItemID || index} className={styles.itemCard}>
+                    {item.displayIcon && <img src={item.displayIcon} alt="" loading="lazy" />}
+                    <h3>{item.displayName || 'Spray'}</h3>
+                  </article>
+                ))}
+                {!account.sprays?.length && <div className={styles.emptyState}>No sprays in this collection.</div>}
+              </div>
+            )}
 
-          {activeSection === 'cards' && (
-            <div className={styles.detailGrid}>
-              {(account.cards || []).map((item, index) => (
-                <article key={item.ItemID || index} className={`${styles.itemCard} ${styles.playerCard}`}>
-                  {(item.smallArt || item.displayIcon) && <img src={item.smallArt || item.displayIcon} alt="" loading="lazy" />}
-                  <h3>{item.displayName || 'Player card'}</h3>
-                </article>
-              ))}
-              {!account.cards?.length && <div className={styles.emptyState}>No player cards in this collection.</div>}
-            </div>
-          )}
+            {activeSection === 'flex' && (
+              <div className={styles.textItems}>
+                <span>Standard flex</span>
+                {(account.flex?.Entitlements || []).map((item, index) => <span key={item.ItemID || index}>{item.displayName || `Flex ${index + 1}`}</span>)}
+              </div>
+            )}
 
-          {activeSection === 'sprays' && (
-            <div className={styles.detailGrid}>
-              {(account.sprays || []).map((item, index) => (
-                <article key={item.ItemID || index} className={styles.itemCard}>
-                  {item.displayIcon && <img src={item.displayIcon} alt="" loading="lazy" />}
-                  <h3>{item.displayName || 'Spray'}</h3>
-                </article>
-              ))}
-              {!account.sprays?.length && <div className={styles.emptyState}>No sprays in this collection.</div>}
-            </div>
-          )}
+            {activeSection === 'titles' && (
+              <div className={styles.textItems}>
+                {(account.titles || []).map((item, index) => <span key={item.ItemID || index}>{item.titleText || item.displayName || 'Title'}</span>)}
+                {!account.titles?.length && <div className={styles.emptyState}>No titles in this collection.</div>}
+              </div>
+            )}
 
-          {activeSection === 'flex' && (
-            <div className={styles.textItems}>
-              <span>Standard flex</span>
-              {(account.flex?.Entitlements || []).map((item, index) => <span key={item.ItemID || index}>{item.displayName || `Flex ${index + 1}`}</span>)}
-            </div>
-          )}
-
-          {activeSection === 'titles' && (
-            <div className={styles.textItems}>
-              {(account.titles || []).map((item, index) => <span key={item.ItemID || index}>{item.titleText || item.displayName || 'Title'}</span>)}
-              {!account.titles?.length && <div className={styles.emptyState}>No titles in this collection.</div>}
-            </div>
-          )}
-
-          {activeSection === 'agents' && (
-            <div className={styles.detailGrid}>
-              {(account.agents || []).map((item, index) => (
-                <article key={item.ItemID || item.uuid || index} className={styles.itemCard}>
-                  {(item.displayIconSmall || item.displayIcon || item.fullPortrait) && (
-                    <img src={item.displayIconSmall || item.displayIcon || item.fullPortrait} alt="" loading="lazy" />
-                  )}
-                  <h3>{item.displayName || 'Agent'}</h3>
-                </article>
-              ))}
-              {!account.agents?.length && <div className={styles.emptyState}>No agents in this collection.</div>}
-            </div>
-          )}
+            {activeSection === 'agents' && (
+              <div className={styles.detailGrid}>
+                {(account.agents || []).map((item, index) => (
+                  <article key={item.ItemID || item.uuid || index} className={styles.itemCard}>
+                    {(item.displayIconSmall || item.displayIcon || item.fullPortrait) && (
+                      <img src={item.displayIconSmall || item.displayIcon || item.fullPortrait} alt="" loading="lazy" />
+                    )}
+                    <h3>{item.displayName || 'Agent'}</h3>
+                  </article>
+                ))}
+                {!account.agents?.length && <div className={styles.emptyState}>No agents in this collection.</div>}
+              </div>
+            )}
+          </div>
         </section>
       </main>
 
