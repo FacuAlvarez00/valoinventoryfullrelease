@@ -5,8 +5,10 @@ import { useAuth } from '../../context/AuthContext';
 import dayjs from 'dayjs';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SkeletonAccountCard } from './LoadingScreen';
-import { TacticalButton, TextField, SearchInput, Modal, ModalHeader, ModalBody } from './kit';
+import { TacticalButton, TextField, SearchInput, Modal, ModalHeader, ModalBody, Pagination } from './kit';
 import { calcAccountStats } from '../../utils/pricing';
+import usePagination from '../../hooks/usePagination';
+import { PAGE_SIZES } from '../../config/pagination';
 import styles from './HomePage.module.css';
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "https://valoinventory-1.onrender.com";
@@ -361,6 +363,15 @@ export default function HomePage() {
     return list;
   })();
 
+  const sharedAccounts = riotAccounts.filter(account => account.isShared);
+  const accountsPagination = usePagination(displayedAccounts, {
+    pageSize: PAGE_SIZES.accounts,
+    resetKey: `${searchQuery}|${sortBy}|${sortDir}|${groupByUser}`,
+  });
+  const sharedLinksPagination = usePagination(sharedAccounts, {
+    pageSize: PAGE_SIZES.sharedLinks,
+  });
+
   return (
     <div className={styles.page}>
       {/* Account name and token modal */}
@@ -491,7 +502,6 @@ export default function HomePage() {
 
         {/* Shared links panel */}
         {!loadingAccounts && riotAccounts.length > 0 && (() => {
-          const sharedAccounts = riotAccounts.filter(a => a.isShared);
           const LIMIT = 30;
           return (
             <div className={styles.sharesSection}>
@@ -504,23 +514,24 @@ export default function HomePage() {
               </button>
 
               {showSharesPanel && (
-                <div className={styles.sharesPanel}>
+                <div id="shared-links-panel" className={styles.sharesPanel}>
                   {sharedAccounts.length === 0 ? (
                     <div className={styles.sharesEmpty}>
                       You do not have any active links. Select "Share" on an account to create one.
                     </div>
                   ) : (
-                    sharedAccounts.map((acc) => {
-                      const riotId = acc.userInfo?.acct?.game_name
-                        ? `${acc.userInfo.acct.game_name}#${acc.userInfo.acct.tag_line}`
-                        : null;
-                      const shareUrl = `${window.location.origin}/share/${acc.puuid}`;
-                      const sharedDate = acc.sharedAt
-                        ? new Date(acc.sharedAt).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-                        : '—';
-                      const justCopied = copiedSharePuuid === acc.puuid;
-                      return (
-                        <div key={acc.puuid} className={styles.shareRow}>
+                    <>
+                      {sharedLinksPagination.items.map((acc) => {
+                        const riotId = acc.userInfo?.acct?.game_name
+                          ? `${acc.userInfo.acct.game_name}#${acc.userInfo.acct.tag_line}`
+                          : null;
+                        const shareUrl = `${window.location.origin}/share/${acc.puuid}`;
+                        const sharedDate = acc.sharedAt
+                          ? new Date(acc.sharedAt).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                          : '—';
+                        const justCopied = copiedSharePuuid === acc.puuid;
+                        return (
+                          <div key={acc.puuid} className={styles.shareRow}>
                           <div className={styles.shareAvatar}>{acc.name.charAt(0).toUpperCase()}</div>
 
                           <div className={styles.shareIdentity}>
@@ -543,9 +554,16 @@ export default function HomePage() {
                           <button className={styles.shareRevoke} onClick={() => handleRevokeShare(acc.puuid)}>
                             Revoke
                           </button>
-                        </div>
-                      );
-                    })
+                          </div>
+                        );
+                      })}
+                      <Pagination
+                        {...sharedLinksPagination}
+                        onPageChange={sharedLinksPagination.setPage}
+                        itemLabel="shared links"
+                        scrollTargetId="shared-links-panel"
+                      />
+                    </>
                   )}
                 </div>
               )}
@@ -569,8 +587,8 @@ export default function HomePage() {
             </div>
           ) : (
             <div className={styles.accountsContainer}>
-              <div className={styles.grid}>
-                {displayedAccounts.map((acc, idx) => {
+              <div id="accounts-grid" className={styles.grid}>
+                {accountsPagination.items.map((acc, idx) => {
                   const equippedCardId = acc.loadout?.Identity?.PlayerCardID;
                   const equippedCard = equippedCardId && acc.cards?.length
                     ? acc.cards.find(c => c.ItemID === equippedCardId)
@@ -660,6 +678,12 @@ export default function HomePage() {
                   );
                 })}
               </div>
+              <Pagination
+                {...accountsPagination}
+                onPageChange={accountsPagination.setPage}
+                itemLabel="accounts"
+                scrollTargetId="accounts-grid"
+              />
             </div>
           )
         )}

@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getSkinPrice, isGoldenSkin } from '../../utils/pricing';
 import { getDefaultBattlePassImage } from '../../data/battlePassImages';
+import { Pagination } from '../ui/kit';
+import usePagination from '../../hooks/usePagination';
+import { PAGE_SIZES } from '../../config/pagination';
 import styles from './SharedView.module.css';
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://valoinventory-1.onrender.com';
@@ -145,6 +148,27 @@ export default function SharedView() {
   const totalItems = sections.reduce((sum, section) => sum + section.count, 0);
   const riotId = account?.nickname || account?.name || 'Shared account';
   const accountLabel = account?.name && account.name !== riotId ? account.name : null;
+  const activeItems = useMemo(() => {
+    if (!account) return [];
+    if (activeSection === 'skins') return sortedSkins;
+    if (activeSection === 'battlepass') return account.battlePasses || [];
+    if (activeSection === 'buddies') return account.buddies || [];
+    if (activeSection === 'cards') return account.cards || [];
+    if (activeSection === 'sprays') return account.sprays || [];
+    if (activeSection === 'flex') {
+      return [
+        { ItemID: 'standard-flex', displayName: 'Standard flex' },
+        ...(account.flex?.Entitlements || []),
+      ];
+    }
+    if (activeSection === 'titles') return account.titles || [];
+    if (activeSection === 'agents') return account.agents || [];
+    return [];
+  }, [account, activeSection, sortedSkins]);
+  const collectionPagination = usePagination(activeItems, {
+    pageSize: PAGE_SIZES[activeSection] || PAGE_SIZES.skins,
+    resetKey: activeSection,
+  });
 
   const copyShareLink = async () => {
     const url = window.location.href;
@@ -266,7 +290,7 @@ export default function SharedView() {
 
             {activeSection === 'skins' && (
               <div className={`${styles.detailGrid} ${styles.skinGrid}`}>
-                {sortedSkins.map(([baseName, ownedLevels]) => {
+                {collectionPagination.items.map(([baseName, ownedLevels]) => {
                   let skinBase = catalog.skins.find(skin => skin.displayName === baseName);
                   if (!skinBase) skinBase = catalog.skins.find(skin => skin.displayName.toLowerCase().includes(baseName.toLowerCase()));
                   const image = skinBase?.chromas?.[0]?.fullRender || ownedLevels.find(level => level.displayIcon)?.displayIcon || '';
@@ -287,14 +311,14 @@ export default function SharedView() {
 
             {activeSection === 'battlepass' && (
               <div className={styles.textItems}>
-                {(account.battlePasses || []).map((item, index) => <span key={item.ItemID || index}>{item.displayName || item.ItemID || `Battle Pass ${index + 1}`}</span>)}
+                {collectionPagination.items.map((item, index) => <span key={item.ItemID || index}>{item.displayName || item.ItemID || `Battle Pass ${index + 1}`}</span>)}
                 {!account.battlePasses?.length && <div className={styles.emptyState}>No battlepasses in this collection.</div>}
               </div>
             )}
 
             {activeSection === 'buddies' && (
               <div className={styles.detailGrid}>
-                {(account.buddies || []).map((item, index) => (
+                {collectionPagination.items.map((item, index) => (
                   <article key={item.ItemID || index} className={styles.itemCard}>
                     {item.displayIcon && <img src={item.displayIcon} alt="" loading="lazy" />}
                     <h3>{item.displayName || 'Gunbuddy'}</h3>
@@ -306,7 +330,7 @@ export default function SharedView() {
 
             {activeSection === 'cards' && (
               <div className={styles.detailGrid}>
-                {(account.cards || []).map((item, index) => (
+                {collectionPagination.items.map((item, index) => (
                   <article key={item.ItemID || index} className={`${styles.itemCard} ${styles.playerCard}`}>
                     {(item.smallArt || item.displayIcon) && <img src={item.smallArt || item.displayIcon} alt="" loading="lazy" />}
                     <h3>{item.displayName || 'Player card'}</h3>
@@ -318,7 +342,7 @@ export default function SharedView() {
 
             {activeSection === 'sprays' && (
               <div className={styles.detailGrid}>
-                {(account.sprays || []).map((item, index) => (
+                {collectionPagination.items.map((item, index) => (
                   <article key={item.ItemID || index} className={styles.itemCard}>
                     {item.displayIcon && <img src={item.displayIcon} alt="" loading="lazy" />}
                     <h3>{item.displayName || 'Spray'}</h3>
@@ -330,21 +354,22 @@ export default function SharedView() {
 
             {activeSection === 'flex' && (
               <div className={styles.textItems}>
-                <span>Standard flex</span>
-                {(account.flex?.Entitlements || []).map((item, index) => <span key={item.ItemID || index}>{item.displayName || `Flex ${index + 1}`}</span>)}
+                {collectionPagination.items.map((item, index) => (
+                  <span key={item.ItemID || index}>{item.displayName || `Flex ${index + 1}`}</span>
+                ))}
               </div>
             )}
 
             {activeSection === 'titles' && (
               <div className={styles.textItems}>
-                {(account.titles || []).map((item, index) => <span key={item.ItemID || index}>{item.titleText || item.displayName || 'Title'}</span>)}
+                {collectionPagination.items.map((item, index) => <span key={item.ItemID || index}>{item.titleText || item.displayName || 'Title'}</span>)}
                 {!account.titles?.length && <div className={styles.emptyState}>No titles in this collection.</div>}
               </div>
             )}
 
             {activeSection === 'agents' && (
               <div className={styles.detailGrid}>
-                {(account.agents || []).map((item, index) => (
+                {collectionPagination.items.map((item, index) => (
                   <article key={item.ItemID || item.uuid || index} className={styles.itemCard}>
                     {(item.displayIconSmall || item.displayIcon || item.fullPortrait) && (
                       <img src={item.displayIconSmall || item.displayIcon || item.fullPortrait} alt="" loading="lazy" />
@@ -355,6 +380,13 @@ export default function SharedView() {
                 {!account.agents?.length && <div className={styles.emptyState}>No agents in this collection.</div>}
               </div>
             )}
+
+            <Pagination
+              {...collectionPagination}
+              onPageChange={collectionPagination.setPage}
+              itemLabel={activeCategory.label.toLowerCase()}
+              scrollTargetId="shared-inventory-items"
+            />
           </div>
         </section>
       </main>

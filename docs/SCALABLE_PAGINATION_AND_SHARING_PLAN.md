@@ -6,7 +6,7 @@
 
 | Campo | Valor |
 |---|---|
-| Estado general | `PLANIFICADO — implementación no iniciada` |
+| Estado general | `EN PROGRESO — infraestructura y cobertura UI iniciadas` |
 | Rama donde se creó el plan | `feat/optimization` |
 | Fecha de creación | `2026-08-14` |
 | Alcance | Backend, MongoDB, frontend privado, publicaciones públicas y testing |
@@ -352,7 +352,7 @@ Los valores deben poder cambiarse desde constantes del backend, no quedar repeti
 | P04 | Catálogo indexado y enriquecimiento | ⬜ Pendiente | `codex/perf-04-catalog-indexes` | — | — | — |
 | P05 | API privada paginada | ⬜ Pendiente | `codex/perf-05-private-api` | — | — | — |
 | P06 | API pública y tokens seguros | ⬜ Pendiente | `codex/perf-06-public-api` | — | — | — |
-| P07 | Infraestructura frontend de paginación | ⬜ Pendiente | `codex/perf-07-frontend-pagination` | — | — | — |
+| P07 | Infraestructura frontend de paginación | 🟡 En progreso | `codex/perf-07-frontend-pagination` | `codex/perf-07-frontend-pagination` | Pendiente | Hook, control compartido, 10 superficies integradas, tests y build |
 | P08 | Vista compartida progresiva | ⬜ Pendiente | `codex/perf-08-shared-view` | — | — | — |
 | P09 | Inventarios privados progresivos | ⬜ Pendiente | `codex/perf-09-private-inventory` | — | — | — |
 | P10 | Catálogo público del vendedor | ⬜ Pendiente | `codex/perf-10-seller-storefront` | — | — | — |
@@ -593,13 +593,27 @@ Resolver nombres, imágenes y precios en backend sin enviar catálogos completos
 
 **Rama propuesta:** `codex/perf-07-frontend-pagination`
 
+### Corte de compatibilidad iniciado el 2026-08-15
+
+Se incorporó una primera capa de paginación local para estandarizar inmediatamente toda la UI mientras se construyen los endpoints por cursor de P05 y P06. Este corte no se considera una optimización completa de red: limita tarjetas, imágenes y trabajo de renderizado en el navegador, pero las respuestas antiguas todavía entregan arrays completos.
+
+Decisión temporal: no agregar TanStack Query hasta disponer de los contratos paginados. `usePagination` y el control `Pagination` aíslan el estado y la presentación para poder sustituir el origen local por `pageInfo.nextCursor` sin rediseñar las vistas.
+
+Superficies cubiertas en este corte:
+
+- Lista privada de cuentas.
+- Panel de links compartidos.
+- Skins, cards, buddies, sprays, agents, titles, battlepasses y flex.
+- Categorías de la vista pública compartida.
+- Loadout, resumen, dashboard y navegación permanecen sin paginar por diseño.
+
 ### Implementación
 
 - [ ] Incorporar TanStack Query o documentar alternativa equivalente.
 - [ ] Crear cliente API tipado/documentado.
-- [ ] Crear `usePaginatedCollection`.
+- [-] Crear `usePaginatedCollection` (compatibilidad local implementada como `usePagination`; conexión a cursores pendiente).
 - [ ] Crear `PaginatedGrid`.
-- [ ] Crear `LoadMoreButton`.
+- [-] Crear control compartido de avance (paginación numerada implementada; variante por cursor pendiente).
 - [ ] Crear skeleton, empty state y error state comunes.
 - [ ] Cancelar requests al cambiar filtros/categoría.
 - [ ] Debounce de búsqueda de 300 ms.
@@ -620,7 +634,7 @@ Resolver nombres, imágenes y precios en backend sin enviar catálogos completos
 - [ ] Búsqueda con debounce.
 - [ ] No se duplican tarjetas.
 - [ ] Navegación con teclado y lector de pantalla.
-- [ ] Reduced motion.
+- [x] Reduced motion.
 
 ## P08 — Vista compartida progresiva
 
@@ -863,7 +877,7 @@ Agregar filas cuando una fase se divida:
 
 | Fase | Subrama | Objetivo | Estado | PR | Evidencia |
 |---|---|---|---|---|---|
-| — | — | — | — | — | — |
+| P07/P08/P09 | `codex/perf-07-frontend-pagination` | Infraestructura compartida y paginación local compatible para todas las colecciones visibles | 🟡 En progreso | — | Tests unitarios/integración de superficies + build frontend |
 
 # Riesgos y mitigaciones
 

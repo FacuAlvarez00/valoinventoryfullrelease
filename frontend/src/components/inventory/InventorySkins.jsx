@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { motion } from 'framer-motion';
-import { SkeletonBlock, Modal, SearchInput } from '../ui/kit';
+import { SkeletonBlock, Modal, SearchInput, Pagination } from '../ui/kit';
 import { getSkinPrice, isGoldenSkin } from '../../utils/pricing';
+import usePagination from '../../hooks/usePagination';
+import { PAGE_SIZES } from '../../config/pagination';
 import InventoryCategoryHeader from './InventoryCategoryHeader';
 import styles from './InventorySkins.module.css';
 import categoryStyles from './InventoryList.module.css';
@@ -107,6 +109,11 @@ export default function InventorySkins() {
       return true;
     });
   }, [sortedSkins, search, weaponType, exclusiveOnly, catalog?.weapons]);
+
+  const skinsPagination = usePagination(filteredSkins, {
+    pageSize: PAGE_SIZES.skins,
+    resetKey: `${search}|${weaponType}|${exclusiveOnly}`,
+  });
 
   const skeletons = Array.from({ length: 18 }); // Three rows of six
 
@@ -234,8 +241,8 @@ export default function InventorySkins() {
         </div>
 
         {/* Six-column grid with consistently sized cards */}
-        <div className={styles.grid}>
-          {filteredSkins.map(([baseName, skins], idx) => {
+        <div id="inventory-skins-grid" className={styles.grid}>
+          {skinsPagination.items.map(([baseName, skins], idx) => {
             let skinBaseObj = catalog.skins.find(s => s.displayName === baseName);
             if (!skinBaseObj) {
               skinBaseObj = catalog.skins.find(s => s.displayName.toLowerCase().includes(baseName.toLowerCase()));
@@ -322,6 +329,13 @@ export default function InventorySkins() {
             );
           })}
         </div>
+
+        <Pagination
+          {...skinsPagination}
+          onPageChange={skinsPagination.setPage}
+          itemLabel="skins"
+          scrollTargetId="inventory-skins-grid"
+        />
       </div>
     </>
   );

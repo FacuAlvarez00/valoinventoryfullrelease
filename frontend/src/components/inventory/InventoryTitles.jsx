@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import LoadingScreen from '../ui/LoadingScreen';
-import { SearchInput } from '../ui/kit';
+import { SearchInput, Pagination } from '../ui/kit';
+import usePagination from '../../hooks/usePagination';
+import { PAGE_SIZES } from '../../config/pagination';
 import InventoryCategoryHeader from './InventoryCategoryHeader';
 import styles from './InventoryList.module.css';
 
@@ -74,6 +76,10 @@ export default function InventoryTitles() {
   const filteredTitles = titlesDetails.filter(title =>
     title.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const titlesPagination = usePagination(filteredTitles, {
+    pageSize: PAGE_SIZES.titles,
+    resetKey: searchTerm,
+  });
 
   return (
     <>
@@ -120,8 +126,9 @@ export default function InventoryTitles() {
         )}
 
         {filteredTitles.length > 0 && (
-          <div className={styles.grid}>
-            {filteredTitles.map((title, index) => (
+          <>
+          <div id="inventory-titles-grid" className={styles.grid}>
+            {titlesPagination.items.map((title, index) => (
               <div key={title.ItemID || index} className={styles.card}>
                 <h3 className={styles.cardName}>
                   {title.displayName || 'Unknown title'}
@@ -129,6 +136,13 @@ export default function InventoryTitles() {
               </div>
             ))}
           </div>
+          <Pagination
+            {...titlesPagination}
+            onPageChange={titlesPagination.setPage}
+            itemLabel="titles"
+            scrollTargetId="inventory-titles-grid"
+          />
+          </>
         )}
       </div>
     </>

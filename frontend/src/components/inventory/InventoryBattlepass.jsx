@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { getBattlePassImage, getDefaultBattlePassImage } from '../../data/battlePassImages';
 import LoadingScreen from '../ui/LoadingScreen';
+import { Pagination } from '../ui/kit';
+import usePagination from '../../hooks/usePagination';
+import { PAGE_SIZES } from '../../config/pagination';
 import InventoryCategoryHeader from './InventoryCategoryHeader';
 import styles from './InventoryList.module.css';
 
@@ -194,7 +197,9 @@ export default function InventoryBattlepass() {
     }
   };
 
-
+  const battlePassPagination = usePagination(battlePassesDetails, {
+    pageSize: PAGE_SIZES.battlepass,
+  });
 
   return (
     <>
@@ -227,8 +232,9 @@ export default function InventoryBattlepass() {
         )}
 
         {battlePassesDetails.length > 0 && (
-          <div className={`${styles.grid} ${styles.gridBP}`}>
-            {battlePassesDetails.map((bp, index) => (
+          <>
+          <div id="inventory-battlepasses-grid" className={`${styles.grid} ${styles.gridBP}`}>
+            {battlePassPagination.items.map((bp, index) => (
               <div key={bp.ItemID || index} className={styles.bpCard}>
                 <div className={styles.bpImageWrap}>
                   {(() => {
@@ -253,6 +259,13 @@ export default function InventoryBattlepass() {
               </div>
             ))}
           </div>
+          <Pagination
+            {...battlePassPagination}
+            onPageChange={battlePassPagination.setPage}
+            itemLabel="battle passes"
+            scrollTargetId="inventory-battlepasses-grid"
+          />
+          </>
         )}
       </div>
     </>

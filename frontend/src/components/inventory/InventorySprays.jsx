@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import LoadingScreen from '../ui/LoadingScreen';
-import { SearchInput } from '../ui/kit';
+import { SearchInput, Pagination } from '../ui/kit';
+import usePagination from '../../hooks/usePagination';
+import { PAGE_SIZES } from '../../config/pagination';
 import InventoryCategoryHeader from './InventoryCategoryHeader';
 import styles from './InventoryList.module.css';
 
@@ -93,6 +95,10 @@ export default function InventorySprays() {
   const filteredSprays = spraysDetails.filter(spray =>
     spray.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const spraysPagination = usePagination(filteredSprays, {
+    pageSize: PAGE_SIZES.sprays,
+    resetKey: searchTerm,
+  });
 
   return (
     <>
@@ -137,8 +143,9 @@ export default function InventorySprays() {
         {spraysDetails.length > 0 && filteredSprays.length === 0 && searchTerm ? (
           <div className={styles.emptyState}>No sprays match "{searchTerm}".</div>
         ) : spraysDetails.length > 0 && (
-          <div className={styles.grid}>
-            {filteredSprays.map((spray, index) => (
+          <>
+          <div id="inventory-sprays-grid" className={styles.grid}>
+            {spraysPagination.items.map((spray, index) => (
               <div key={spray.ItemID || index} className={styles.card}>
                 {spray.fullTransparentIcon ? (
                   <img
@@ -163,6 +170,13 @@ export default function InventorySprays() {
               </div>
             ))}
           </div>
+          <Pagination
+            {...spraysPagination}
+            onPageChange={spraysPagination.setPage}
+            itemLabel="sprays"
+            scrollTargetId="inventory-sprays-grid"
+          />
+          </>
         )}
       </div>
     </>

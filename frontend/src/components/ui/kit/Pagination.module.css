@@ -1,0 +1,128 @@
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--vi-border);
+}
+
+.summary {
+  margin: 0;
+  color: rgba(236, 232, 225, 0.46);
+  font-size: 11px;
+  letter-spacing: 0.35px;
+}
+
+.summary strong {
+  color: var(--vi-offwhite);
+  font-weight: 700;
+}
+
+.controls,
+.pages {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.directionButton,
+.pageButton {
+  display: inline-flex;
+  min-width: 36px;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--vi-border);
+  border-radius: 2px;
+  background: rgba(15, 25, 35, 0.58);
+  color: rgba(236, 232, 225, 0.72);
+  font-family: var(--vi-font-heading);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.directionButton {
+  gap: 8px;
+  padding: 0 12px;
+  text-transform: uppercase;
+}
+
+.directionButton:hover:not(:disabled),
+.pageButton:hover,
+.pageButtonActive {
+  border-color: var(--vi-red);
+  background: rgba(255, 70, 84, 0.1);
+  color: var(--vi-white);
+}
+
+.pageButtonActive {
+  box-shadow: inset 0 -2px 0 var(--vi-red);
+}
+
+.directionButton:focus-visible,
+.pageButton:focus-visible {
+  outline: 2px solid var(--vi-red);
+  outline-offset: 2px;
+}
+
+.directionButton:disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+}
+
+.ellipsis {
+  display: inline-flex;
+  width: 24px;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  color: rgba(236, 232, 225, 0.32);
+}
+
+@media (max-width: 700px) {
+  .pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .pages {
+    gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .directionLabel {
+    display: none;
+  }
+
+  .directionButton {
+    min-width: 36px;
+    padding: 0;
+  }
+
+  .pages .pageButton:not(.pageButtonActive) {
+    display: none;
+  }
+
+  .pages .ellipsis {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .directionButton,
+  .pageButton {
+    transition: none;
+  }
+}

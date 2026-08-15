@@ -7,4 +7,5 @@ export { default as BackButton } from './BackButton';
 export { default as SearchInput } from './SearchInput';
 export { default as FilterTabs } from './FilterTabs';
 export { default as SkeletonBlock } from './SkeletonBlock';
+export { default as Pagination } from './Pagination';
 export { Modal, ModalHeader, ModalBody } from './Modal';

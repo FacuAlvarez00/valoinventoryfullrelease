@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import LoadingScreen from '../ui/LoadingScreen';
+import { Pagination } from '../ui/kit';
+import usePagination from '../../hooks/usePagination';
+import { PAGE_SIZES } from '../../config/pagination';
 import InventoryCategoryHeader from './InventoryCategoryHeader';
 import styles from './InventoryList.module.css';
 
@@ -95,6 +98,10 @@ export default function InventoryFlex() {
     }
   }, [riotAccount]);
 
+  const flexPagination = usePagination(flexDetails, {
+    pageSize: PAGE_SIZES.flex,
+  });
+
   return (
     <>
       <div className={styles.page}>
@@ -114,8 +121,9 @@ export default function InventoryFlex() {
         )}
 
         {flexDetails.length > 0 && (
-          <div className={styles.grid}>
-            {flexDetails.map((flexItem, index) => (
+          <>
+          <div id="inventory-flex-grid" className={styles.grid}>
+            {flexPagination.items.map((flexItem, index) => (
               <div
                 key={flexItem.ItemID || index}
                 className={styles.card}
@@ -143,6 +151,13 @@ export default function InventoryFlex() {
               </div>
             ))}
           </div>
+          <Pagination
+            {...flexPagination}
+            onPageChange={flexPagination.setPage}
+            itemLabel="flex items"
+            scrollTargetId="inventory-flex-grid"
+          />
+          </>
         )}
 
         {!detailsLoading && flexDetails.length === 0 && (

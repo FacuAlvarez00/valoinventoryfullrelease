@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import LoadingScreen from '../ui/LoadingScreen';
+import { Pagination } from '../ui/kit';
+import usePagination from '../../hooks/usePagination';
+import { PAGE_SIZES } from '../../config/pagination';
 import InventoryCategoryHeader from './InventoryCategoryHeader';
 import styles from './InventoryList.module.css';
 
@@ -101,6 +104,10 @@ export default function InventoryAgents() {
     return () => controller.abort();
   }, [riotAccount]);
 
+  const agentsPagination = usePagination(agentsDetails, {
+    pageSize: PAGE_SIZES.agents,
+  });
+
   return (
     <>
       <div className={styles.page}>
@@ -120,8 +127,9 @@ export default function InventoryAgents() {
         )}
 
         {agentsDetails.length > 0 && (
-          <div className={`${styles.grid} ${styles.gridWide}`}>
-            {agentsDetails.map((agent, index) => (
+          <>
+          <div id="inventory-agents-grid" className={`${styles.grid} ${styles.gridWide}`}>
+            {agentsPagination.items.map((agent, index) => (
               <div key={agent.uuid || agent.ItemID || index} className={styles.card} style={{ padding: 20, contentVisibility: 'auto', containIntrinsicSize: '280px 372px' }}>
                 {agent.fullPortrait ? (
                   <img
@@ -143,6 +151,13 @@ export default function InventoryAgents() {
               </div>
             ))}
           </div>
+          <Pagination
+            {...agentsPagination}
+            onPageChange={agentsPagination.setPage}
+            itemLabel="agents"
+            scrollTargetId="inventory-agents-grid"
+          />
+          </>
         )}
 
         {!detailsLoading && agentsDetails.length === 0 && (

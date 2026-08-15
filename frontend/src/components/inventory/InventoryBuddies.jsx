@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
-import { SearchInput, SkeletonBlock } from '../ui/kit';
+import { SearchInput, SkeletonBlock, Pagination } from '../ui/kit';
+import usePagination from '../../hooks/usePagination';
+import { PAGE_SIZES } from '../../config/pagination';
 import InventoryCategoryHeader from './InventoryCategoryHeader';
 import styles from './InventoryList.module.css';
 
@@ -51,6 +53,10 @@ export default function InventoryBuddies() {
   const filteredBuddies = buddies.filter(buddy =>
     buddy.buddy?.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const buddiesPagination = usePagination(filteredBuddies, {
+    pageSize: PAGE_SIZES.buddies,
+    resetKey: searchTerm,
+  });
 
   const skeletons = Array.from({ length: 12 });
 
@@ -90,9 +96,10 @@ export default function InventoryBuddies() {
         ) : filteredBuddies.length === 0 && searchTerm ? (
           <div className={styles.emptyState}>No gun buddies match "{searchTerm}".</div>
         ) : (
-          <div className={styles.grid}>
-            {filteredBuddies.map((item, index) => (
-              <div key={item.InstanceID || index} className={styles.card}>
+          <>
+          <div id="inventory-buddies-grid" className={styles.grid}>
+            {buddiesPagination.items.map((item, index) => (
+              <div key={item.InstanceID || item.ItemID || index} className={styles.card}>
                 {item.buddy?.displayIcon ? (
                   <img
                     src={item.buddy.displayIcon}
@@ -116,6 +123,13 @@ export default function InventoryBuddies() {
               </div>
             ))}
           </div>
+          <Pagination
+            {...buddiesPagination}
+            onPageChange={buddiesPagination.setPage}
+            itemLabel="buddies"
+            scrollTargetId="inventory-buddies-grid"
+          />
+          </>
         )}
       </div>
     </>

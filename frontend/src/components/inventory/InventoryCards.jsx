@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import LoadingScreen from '../ui/LoadingScreen';
-import { SearchInput, Modal } from '../ui/kit';
+import { SearchInput, Modal, Pagination } from '../ui/kit';
+import usePagination from '../../hooks/usePagination';
+import { PAGE_SIZES } from '../../config/pagination';
 import InventoryCategoryHeader from './InventoryCategoryHeader';
 import styles from './InventoryList.module.css';
 
@@ -86,6 +88,10 @@ export default function InventoryCards() {
   const filteredCards = cardsDetails.filter(card =>
     card.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const cardsPagination = usePagination(filteredCards, {
+    pageSize: PAGE_SIZES.cards,
+    resetKey: searchTerm,
+  });
 
   return (
     <>
@@ -130,8 +136,9 @@ export default function InventoryCards() {
         {cardsDetails.length > 0 && filteredCards.length === 0 && searchTerm ? (
           <div className={styles.emptyState}>No cards match "{searchTerm}".</div>
         ) : cardsDetails.length > 0 && (
-          <div className={`${styles.grid} ${styles.gridWide}`}>
-            {filteredCards.map((card, index) => (
+          <>
+          <div id="inventory-cards-grid" className={`${styles.grid} ${styles.gridWide}`}>
+            {cardsPagination.items.map((card, index) => (
               <div
                 key={card.ItemID || index}
                 className={`${styles.card} ${styles.cardClickable} ${styles.pcard}`}
@@ -168,6 +175,13 @@ export default function InventoryCards() {
               </div>
             ))}
           </div>
+          <Pagination
+            {...cardsPagination}
+            onPageChange={cardsPagination.setPage}
+            itemLabel="cards"
+            scrollTargetId="inventory-cards-grid"
+          />
+          </>
         )}
 
         {/* Modal with the three player card variants */}
