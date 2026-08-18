@@ -26,7 +26,15 @@ const RIOT_ENDPOINTS = {
   AGENTS: 'https://pd.na.a.pvp.net/store/v1/entitlements',
   FLEX: 'https://pd.na.a.pvp.net/store/v1/entitlements',
   NAME_SERVICE: 'https://pd.na.a.pvp.net/name-service/v2/players',
-  WALLET: 'https://pd.na.a.pvp.net/store/v1/wallet'
+  WALLET: 'https://pd.na.a.pvp.net/store/v1/wallet',
+  // Account level (XP), straight from Riot — replaces the old HenrikDev proxy.
+  // https://valapidocs.techchrism.me/endpoint/account-xp/
+  ACCOUNT_XP: 'https://pd.na.a.pvp.net/account-xp/v1/players',
+  // Competitive rank/MMR history. Unlike the other endpoints this one is
+  // genuinely region-sensitive, so {shard} gets substituted per account
+  // (see RiotAccount.regionInfo.affinities.live) instead of hardcoding 'na'.
+  // https://valapidocs.techchrism.me/endpoint/player-mmr
+  MMR: 'https://pd.{shard}.a.pvp.net/mmr/v1/players'
 };
 
 const RIOT_ENTITLEMENT_IDS = {

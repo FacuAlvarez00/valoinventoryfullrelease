@@ -148,7 +148,7 @@ class RiotController {
       }
 
       // Load initial account data, including region information
-      const [skinsData, loadoutData, buddiesData, battlePassesData, cardsData, spraysData, titlesData, agentsData, walletData, flexData, userInfoData, regionInfo] = await Promise.all([
+      const [skinsData, loadoutData, buddiesData, battlePassesData, cardsData, spraysData, titlesData, agentsData, walletData, flexData, userInfoData, regionInfo, accountXPData] = await Promise.all([
         RiotService.getSkins(puuid, entitlementToken, riotToken),
         RiotService.getLoadout(puuid, entitlementToken, riotToken),
         RiotService.getBuddies(puuid, entitlementToken, riotToken),
@@ -160,8 +160,24 @@ class RiotController {
         RiotService.getWallet(puuid, entitlementToken, riotToken),
         RiotService.getFlex(puuid, entitlementToken, riotToken),
         RiotService.getUserInfoDetailed(riotToken),
-        RiotService.getRegionInfo(idToken, riotToken)
+        RiotService.getRegionInfo(idToken, riotToken),
+        RiotService.getAccountXP(puuid, entitlementToken, riotToken)
       ]);
+      const accountLevel = accountXPData?.Progress?.Level ?? null;
+
+      // Rank/MMR needs the account's real shard (region-sensitive, unlike the
+      // other endpoints), so it has to wait for regionInfo above to resolve.
+      // getRankHistory tries the richer aggregate endpoint first and falls
+      // back to the match-update feed if Riot's side 500s on it — see
+      // riotService.js for why that fallback exists. The per-match scoreboard
+      // (getRecentMatchSummaries) is straight Riot too — no third party.
+      const shard = regionInfo?.affinities?.live || 'na';
+      const [rank, recentMatches, penalties] = await Promise.all([
+        RiotService.getRankHistory(puuid, entitlementToken, riotToken, shard),
+        RiotService.getRecentMatchSummaries(puuid, entitlementToken, riotToken, shard),
+        RiotService.getPenalties(entitlementToken, riotToken, shard)
+      ]);
+      rank.matches = recentMatches;
 
       // Log the region endpoint response for diagnostics
       console.log('\n' + '='.repeat(80));
@@ -260,6 +276,9 @@ class RiotController {
         puuid,
         nickname,
         loadout: loadoutData,
+        accountLevel,
+        rank,
+        penalties,
         skins: skinsData.Entitlements || [],
         buddies: buddiesWithDetails,
         battlePasses: battlePassesData.Entitlements || [],
@@ -355,7 +374,7 @@ class RiotController {
       }
 
       // Load refreshed account data, including region information
-      const [skinsData, loadoutData, buddiesData, battlePassesData, cardsData, spraysData, titlesData, agentsData, walletData, flexData, userInfoData, regionInfo] = await Promise.all([
+      const [skinsData, loadoutData, buddiesData, battlePassesData, cardsData, spraysData, titlesData, agentsData, walletData, flexData, userInfoData, regionInfo, accountXPData] = await Promise.all([
         RiotService.getSkins(tokenPuuid, entitlementToken, riotToken),
         RiotService.getLoadout(tokenPuuid, entitlementToken, riotToken),
         RiotService.getBuddies(tokenPuuid, entitlementToken, riotToken),
@@ -367,8 +386,24 @@ class RiotController {
         RiotService.getWallet(tokenPuuid, entitlementToken, riotToken),
         RiotService.getFlex(tokenPuuid, entitlementToken, riotToken),
         RiotService.getUserInfoDetailed(riotToken),
-        RiotService.getRegionInfo(idToken, riotToken)
+        RiotService.getRegionInfo(idToken, riotToken),
+        RiotService.getAccountXP(tokenPuuid, entitlementToken, riotToken)
       ]);
+      const accountLevel = accountXPData?.Progress?.Level ?? null;
+
+      // Rank/MMR needs the account's real shard (region-sensitive, unlike the
+      // other endpoints), so it has to wait for regionInfo above to resolve.
+      // getRankHistory tries the richer aggregate endpoint first and falls
+      // back to the match-update feed if Riot's side 500s on it — see
+      // riotService.js for why that fallback exists. The per-match scoreboard
+      // (getRecentMatchSummaries) is straight Riot too — no third party.
+      const shard = regionInfo?.affinities?.live || 'na';
+      const [rank, recentMatches, penalties] = await Promise.all([
+        RiotService.getRankHistory(tokenPuuid, entitlementToken, riotToken, shard),
+        RiotService.getRecentMatchSummaries(tokenPuuid, entitlementToken, riotToken, shard),
+        RiotService.getPenalties(entitlementToken, riotToken, shard)
+      ]);
+      rank.matches = recentMatches;
 
       // Log the region endpoint response for diagnostics
       console.log('\n' + '='.repeat(80));
@@ -455,6 +490,9 @@ class RiotController {
       account.name = userinfo.preferred_username || userinfo.acct?.game_name || nickname;
       account.nickname = nickname;
       account.loadout = loadoutData;
+      account.accountLevel = accountLevel;
+      account.rank = rank;
+      account.penalties = penalties;
       account.skins = skinsData.Entitlements || [];
       account.buddies = buddiesWithDetails;
       account.battlePasses = battlePassesData.Entitlements || [];

@@ -4,7 +4,6 @@ const cors = require('cors');
 const { connectDB } = require('./database');
 const authRoutes = require('./routes/auth');
 const catalogCache = require('./services/catalogCache');
-const fetch = (...args) => import('node-fetch').then(mod => mod.default(...args));
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,38 +20,18 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 
-// Cached catalog: skins, weapons, chromas, skin levels, and prices
+// Cached catalog: skins, weapons, chromas, skin levels, prices, ranked
+// seasons, competitive tiers, maps, and agents
 app.get('/api/catalog', (req, res) => {
   if (!catalogCache.isReady()) {
     return res.status(503).json({ success: false, message: 'The catalog is loading. Try again in a few seconds.' });
   }
-  const { weapons, skins, chromas, skinlevels, weaponSkins, lastUpdated } = catalogCache.get();
-  res.json({ success: true, weapons, skins, chromas, skinlevels, weaponSkins, lastUpdated });
+  const { weapons, skins, chromas, skinlevels, weaponSkins, seasons, competitiveTiers, maps, agents, lastUpdated } = catalogCache.get();
+  res.json({ success: true, weapons, skins, chromas, skinlevels, weaponSkins, seasons, competitiveTiers, maps, agents, lastUpdated });
 });
 
 // Health check
 app.get('/health', (req, res) => res.status(200).json({ ok: true }));
-
-// HenrikDev proxy
-app.get('/api/account-level/:nickname', async (req, res) => {
-  try {
-    const { nickname } = req.params;
-    if (!nickname || !nickname.includes('#')) {
-      return res.status(400).json({ error: 'Invalid nickname format' });
-    }
-    const [name, tag] = nickname.split('#');
-    const response = await fetch(`https://api.henrikdev.xyz/valorant/v1/account/${name}/${tag}`, {
-      headers: { authorization: process.env.HENRIKDEV_API_KEY || '' }
-    });
-    if (!response.ok) {
-      return res.status(response.status).json({ error: 'The account level could not be loaded' });
-    }
-    const data = await response.json();
-    return res.json({ account_level: data.data?.account_level || null });
-  } catch (err) {
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 // --- Info
 app.get('/', (req, res) => {

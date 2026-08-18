@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SkeletonAccountCard } from './LoadingScreen';
 import { TacticalButton, TextField, SearchInput, Modal, ModalHeader, ModalBody, Pagination } from './kit';
 import { calcAccountStats } from '../../utils/pricing';
+import { parseRiotAuthInput } from '../../utils/riotAuth';
 import usePagination from '../../hooks/usePagination';
 import { PAGE_SIZES } from '../../config/pagination';
 import styles from './HomePage.module.css';
@@ -59,54 +60,19 @@ export default function HomePage() {
   const handleClosePopup = () => setShowPopup(false);
 
   // Extract the Riot token from the URL so the input only displays the token
-  const extractTokenFromUrl = (url) => {
-    try {
-      if (url.includes('playvalorant.com') && url.includes('access_token=')) {
-        const urlObj = new URL(url);
-        const hash = urlObj.hash;
-        if (hash) {
-          const params = new URLSearchParams(hash.substring(1));
-          const accessToken = params.get('access_token');
-          if (accessToken) {
-            return accessToken;
-          }
-        }
-      }
-      return url;
-    } catch (error) {
-      return url;
-    }
-  };
-
   // Keep the complete URL for the ID token and region metadata
   const [riotUrl, setRiotUrl] = useState('');
 
   const handleTokenChange = (e) => {
-    const value = e.target.value;
-    // Store complete URLs while displaying only the access token
-    if (value.includes('playvalorant.com')) {
-      setRiotUrl(value);
-      const extractedToken = extractTokenFromUrl(value);
-      setRiotToken(extractedToken);
-    } else {
-      // If it is only a token, keep both values in sync
-      setRiotToken(value);
-      setRiotUrl(value);
-    }
+    const { riotToken: token, riotUrl: url } = parseRiotAuthInput(e.target.value);
+    setRiotToken(token);
+    setRiotUrl(url);
   };
 
   const handleTokenPaste = (e) => {
-    const pastedText = e.clipboardData.getData('text');
-    // Store complete URLs while displaying only the access token
-    if (pastedText.includes('playvalorant.com')) {
-      setRiotUrl(pastedText);
-      const extractedToken = extractTokenFromUrl(pastedText);
-      setRiotToken(extractedToken);
-    } else {
-      // If it is only a token, keep both values in sync
-      setRiotToken(pastedText);
-      setRiotUrl(pastedText);
-    }
+    const { riotToken: token, riotUrl: url } = parseRiotAuthInput(e.clipboardData.getData('text'));
+    setRiotToken(token);
+    setRiotUrl(url);
     e.preventDefault();
   };
 
@@ -757,24 +723,14 @@ export default function HomePage() {
               placeholder="Paste the new complete Riot authentication URL"
               value={updateToken}
               onChange={e => {
-                const value = e.target.value;
-                if (value.includes('playvalorant.com')) {
-                  setUpdateUrl(value);
-                  setUpdateToken(extractTokenFromUrl(value));
-                } else {
-                  setUpdateToken(value);
-                  setUpdateUrl(value);
-                }
+                const { riotToken: token, riotUrl: url } = parseRiotAuthInput(e.target.value);
+                setUpdateToken(token);
+                setUpdateUrl(url);
               }}
               onPaste={e => {
-                const pastedText = e.clipboardData.getData('text');
-                if (pastedText.includes('playvalorant.com')) {
-                  setUpdateUrl(pastedText);
-                  setUpdateToken(extractTokenFromUrl(pastedText));
-                } else {
-                  setUpdateToken(pastedText);
-                  setUpdateUrl(pastedText);
-                }
+                const { riotToken: token, riotUrl: url } = parseRiotAuthInput(e.clipboardData.getData('text'));
+                setUpdateToken(token);
+                setUpdateUrl(url);
                 e.preventDefault();
               }}
             />

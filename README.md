@@ -43,10 +43,7 @@ Para parar todo: `Ctrl+C` o `docker compose down`. Para borrar también los dato
 
 Ya viene con un `.env.example` con defaults razonables para desarrollo local (Mongo apunta
 al contenedor `mongo` del docker-compose, JWT secret de dev, etc). No hace falta tocarlo para
-levantar el proyecto. Las únicas que podrías querer completar:
-
-- `HENRIKDEV_API_KEY`: key de [HenrikDev API](https://docs.henrikdev.xyz) para el lookup de
-  nivel de cuenta. Sin ella, ese endpoint puntual no funciona, pero el resto de la app sí.
+levantar el proyecto.
 
 ### `frontend/.env`
 

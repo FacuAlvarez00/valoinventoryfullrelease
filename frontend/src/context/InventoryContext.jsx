@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getSkinPrice as getSkinPriceUtil, sortSkinsByPriceAsc as sortSkinsByPriceAscUtil } from '../utils/pricing';
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "https://valoinventory-1.onrender.com";
 
-const EMPTY_CATALOG = { weapons: [], skins: [], chromas: [], skinlevels: [] };
+const EMPTY_CATALOG = { weapons: [], skins: [], chromas: [], skinlevels: [], seasons: [], competitiveTiers: [], maps: [], agents: [] };
 const InventoryContext = createContext();
 
 export function InventoryProvider({ children }) {
@@ -62,10 +62,14 @@ export function InventoryProvider({ children }) {
       const data = await res.json();
       if (data.success) {
         setCatalog({
-          weapons:    data.weapons    || [],
-          skins:      data.skins      || [],
-          chromas:    data.chromas    || [],
+          weapons: data.weapons || [],
+          skins: data.skins || [],
+          chromas: data.chromas || [],
           skinlevels: data.skinlevels || [],
+          seasons: data.seasons || [],
+          competitiveTiers: data.competitiveTiers || [],
+          maps: data.maps || [],
+          agents: data.agents || [],
         });
         if (Array.isArray(data.weaponSkins) && data.weaponSkins.length > 0) {
           setWeaponSkins(data.weaponSkins);

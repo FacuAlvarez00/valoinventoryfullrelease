@@ -2,7 +2,7 @@
    Titles, Flex, Agents, Battlepass. */
 
 .page {
-  padding: 32px clamp(20px, 3vw, 40px) 48px;
+  padding: 18px clamp(20px, 3vw, 40px) 48px;
   min-height: 100vh;
   background: var(--vi-black);
   color: var(--vi-offwhite);
@@ -11,8 +11,8 @@
 .categoryHeader {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  margin-bottom: 32px;
+  gap: 16px;
+  margin-bottom: 18px;
 }
 
 .categoryHeaderMain {
@@ -30,7 +30,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   color: var(--vi-red);
   font-family: var(--vi-font-heading);
   font-size: 11px;
@@ -59,7 +59,7 @@
 
 .categoryDescription {
   max-width: 620px;
-  margin: 10px 0 0;
+  margin: 6px 0 0;
   color: rgba(236, 232, 225, 0.52);
   font-size: 14px;
   line-height: 1.5;

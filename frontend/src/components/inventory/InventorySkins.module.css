@@ -86,40 +86,28 @@
   border-color: var(--vi-red);
 }
 
-.chipsRow {
+/* Search (left, wider) and the two downloads (right) in one row — no more
+   weapon-type filter chips, that filtering is search-only now. */
+.toolbar {
   display: flex;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
   flex-wrap: wrap;
-  margin-bottom: 28px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.chip {
-  padding: 6px 18px;
-  border-radius: 2px;
-  border: 1px solid var(--vi-border);
-  background: transparent;
-  color: rgba(236, 232, 225, 0.55);
-  font-family: var(--vi-font-heading);
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s ease-out;
+.toolbarSearch {
+  flex: 1;
+  min-width: 240px;
+  max-width: 560px;
 }
 
-.chipActive {
-  border-color: var(--vi-red);
-  background: rgba(255, 70, 84, 0.12);
-  color: var(--vi-red);
-}
-
-.chipGold {
-  border-color: rgba(255, 215, 0, 0.4);
-}
-
-.chipGoldActive {
-  border-color: #a07820;
-  background: linear-gradient(135deg, #2a1e00 0%, #4a3200 100%);
-  color: #ffd700;
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 /* ---- Grid + cards ---- */
@@ -332,4 +320,80 @@
   background: #000;
   max-height: 80vh;
   display: block;
+}
+
+/* ---- Download modals: filter-mode radio options ---- */
+
+.filterOptionList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.filterOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 2px;
+  border: 1px solid var(--vi-border);
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+}
+
+.filterOptionActive {
+  border-color: var(--vi-red);
+  background: rgba(255, 70, 84, 0.08);
+}
+
+.filterOptionText {
+  flex: 1;
+  min-width: 0;
+}
+
+.filterOptionLabel {
+  color: var(--vi-white);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.filterOptionDesc {
+  color: rgba(236, 232, 225, 0.5);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.filterOptionCount {
+  color: var(--vi-red);
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.filterSubmitBtn {
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 2px;
+  border: 1px solid var(--vi-red);
+  background: var(--vi-red);
+  color: var(--vi-white);
+  font-family: var(--vi-font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: opacity 0.2s ease-out;
+}
+
+.filterSubmitBtn:disabled {
+  background: var(--vi-black-soft);
+  border-color: var(--vi-border);
+  color: rgba(236, 232, 225, 0.4);
+  cursor: default;
+}
+
+.filterSubmitBtn:not(:disabled):hover {
+  opacity: 0.88;
 }

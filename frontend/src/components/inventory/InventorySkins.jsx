@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
+import JSZip from 'jszip';
 import { useInventory } from '../../context/InventoryContext';
 import { motion } from 'framer-motion';
-import { SkeletonBlock, Modal, SearchInput, Pagination } from '../ui/kit';
+import { SkeletonBlock, Modal, ModalHeader, ModalBody, SearchInput, Pagination } from '../ui/kit';
 import { getSkinPrice, isGoldenSkin } from '../../utils/pricing';
+import { addCatalogPagesToZip, triggerZipDownload, buildSkinsCatalogItems } from '../../utils/catalogImage';
 import usePagination from '../../hooks/usePagination';
 import { PAGE_SIZES } from '../../config/pagination';
 import InventoryCategoryHeader from './InventoryCategoryHeader';
@@ -14,10 +16,15 @@ export default function InventorySkins() {
 
   // Search and filter state
   const [search, setSearch] = useState('');
-  const [weaponType, setWeaponType] = useState('');
-  const [exclusiveOnly, setExclusiveOnly] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalVideo, setModalVideo] = useState(null);
+
+  // Download state — image catalog (.zip of photos) and plain text list
+  const [generatingCatalog, setGeneratingCatalog] = useState(false);
+  const [catalogModalOpen, setCatalogModalOpen] = useState(false);
+  const [catalogFilterMode, setCatalogFilterMode] = useState('all'); // 'all' | 'priceOnly' | 'exclusive'
+  const [txtModalOpen, setTxtModalOpen] = useState(false);
+  const [txtFilterMode, setTxtFilterMode] = useState('all'); // 'all' | 'priceOnly' | 'battlepass'
 
   // Ensure all required data has loaded
   const catalogReady = catalog && catalog.skins && catalog.skinlevels && catalog.chromas && catalog.weapons && catalog.skins.length > 0 && catalog.skinlevels.length > 0;
@@ -55,70 +62,64 @@ export default function InventorySkins() {
     }, 0);
   }, [skinsByBaseName, weaponSkins]);
 
-  // Weapon types found in the user's skins, with a keyword fallback
-  const availableWeapons = useMemo(() => {
-    if (!catalog?.weapons || !Object.keys(skinsByBaseName).length) return [];
-    const meleeKeywords = ['knife', 'karambit', 'axe', 'sword', 'dagger', 'blade', 'melee'];
-    const seen = new Map();
-    Object.keys(skinsByBaseName).forEach(baseName => {
-      // Prefer the skin catalog because it also covers knives without keywords
-      const skinCatalog = catalog.skins?.find(s => s.displayName === baseName);
-      if (skinCatalog?.weapon?.uuid) {
-        const w = catalog.weapons.find(ww => ww.uuid === skinCatalog.weapon.uuid);
-        if (w && !seen.has(w.uuid)) seen.set(w.uuid, w.displayName);
-        return;
-      }
-      // Fall back to keywords for melee and names for other weapons
-      const lowerBase = baseName.toLowerCase();
-      if (meleeKeywords.some(k => lowerBase.includes(k))) {
-        const melee = catalog.weapons.find(w => w.displayName.toLowerCase() === 'melee');
-        if (melee && !seen.has(melee.uuid)) seen.set(melee.uuid, melee.displayName);
-        return;
-      }
-      const matched = catalog.weapons.find(w =>
-        w.displayName.toLowerCase() !== 'melee' &&
-        lowerBase.includes(w.displayName.toLowerCase())
-      );
-      if (matched && !seen.has(matched.uuid)) seen.set(matched.uuid, matched.displayName);
-    });
-    return Array.from(seen.entries())
-      .map(([uuid, label]) => ({ uuid, label }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [skinsByBaseName, catalog?.weapons, catalog?.skins]);
-
-  // Apply search and filters
+  // Apply search
   const filteredSkins = useMemo(() => {
-    return sortedSkins.filter(([baseName]) => {
-      if (search && !baseName.toLowerCase().includes(search.toLowerCase())) return false;
-      if (exclusiveOnly && !isGoldenSkin(baseName)) return false;
-      if (weaponType) {
-        const selectedWeapon = catalog?.weapons?.find(w => w.uuid === weaponType);
-        if (!selectedWeapon) return false;
-        // Prefer an exact catalog match
-        const skinCatalog = catalog?.skins?.find(s => s.displayName === baseName);
-        if (skinCatalog?.weapon?.uuid) return skinCatalog.weapon.uuid === weaponType;
-        // Fall back to keywords for melee and names for other weapons
-        const weaponName = selectedWeapon.displayName.toLowerCase();
-        const skinName = baseName.toLowerCase();
-        const meleeKeywords = ['knife', 'karambit', 'axe', 'sword', 'dagger', 'blade', 'melee'];
-        if (weaponName === 'melee' || meleeKeywords.some(k => weaponName.includes(k))) {
-          return meleeKeywords.some(k => skinName.includes(k));
-        }
-        return skinName.includes(weaponName);
-      }
-      return true;
-    });
-  }, [sortedSkins, search, weaponType, exclusiveOnly, catalog?.weapons]);
+    if (!search) return sortedSkins;
+    return sortedSkins.filter(([baseName]) => baseName.toLowerCase().includes(search.toLowerCase()));
+  }, [sortedSkins, search]);
 
   const skinsPagination = usePagination(filteredSkins, {
     pageSize: PAGE_SIZES.skins,
-    resetKey: `${search}|${weaponType}|${exclusiveOnly}`,
+    resetKey: search,
   });
 
   const skeletons = Array.from({ length: 18 }); // Three rows of six
 
-  const downloadSkinList = () => {
-    const text = sortedSkins.map(([baseName]) => baseName).join(', ');
+  // Items exportable to either download, already in the same price-desc,
+  // unpriced-last order shown on screen — same builder used by the sibling
+  // ValoInventory project, so both downloads stay consistent with that.
+  const allCatalogItems = useMemo(
+    () => buildSkinsCatalogItems(riotAccount, catalog, weaponSkins),
+    [riotAccount, catalog, weaponSkins]
+  );
+
+  const catalogCounts = useMemo(() => ({
+    all: allCatalogItems.length,
+    priceOnly: allCatalogItems.filter(i => i.price).length,
+    exclusive: allCatalogItems.filter(i => i.golden).length,
+    // Battlepass skins: no VP price, unlocked through the pass instead.
+    battlepass: allCatalogItems.filter(i => !i.price).length,
+  }), [allCatalogItems]);
+
+  const handleDownloadCatalog = async (mode) => {
+    const items = mode === 'priceOnly'
+      ? allCatalogItems.filter(i => i.price)
+      : mode === 'exclusive'
+        ? allCatalogItems.filter(i => i.golden)
+        : allCatalogItems;
+    if (generatingCatalog || items.length === 0) return;
+    setGeneratingCatalog(true);
+    try {
+      const zip = new JSZip();
+      await addCatalogPagesToZip(zip, items, 'skins_catalog');
+      const accountSlug = (riotAccount?.name || 'account').replace(/[^a-z0-9]+/gi, '_');
+      await triggerZipDownload(zip, `skins_catalog_${accountSlug}.zip`);
+      setCatalogModalOpen(false);
+    } catch (e) {
+      console.error('Error generating the skin catalog:', e);
+    } finally {
+      setGeneratingCatalog(false);
+    }
+  };
+
+  const handleDownloadTxt = (mode) => {
+    const items = mode === 'priceOnly'
+      ? allCatalogItems.filter(i => i.price)
+      : mode === 'battlepass'
+        ? allCatalogItems.filter(i => !i.price)
+        : allCatalogItems;
+    if (items.length === 0) return;
+    const text = items.map(i => i.baseName).join(', ');
     const blob = new Blob([text], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -126,6 +127,7 @@ export default function InventorySkins() {
     anchor.download = 'skins.txt';
     anchor.click();
     URL.revokeObjectURL(url);
+    setTxtModalOpen(false);
   };
 
   const categoryHeader = (
@@ -134,7 +136,7 @@ export default function InventorySkins() {
       description="Browse owned weapon skins, variants, upgrades, and estimated VP value."
       count={totalSkins}
       countLabel="skins"
-      visibleCount={(search || weaponType || exclusiveOnly) ? filteredSkins.length : undefined}
+      visibleCount={search ? filteredSkins.length : undefined}
       metric={(
         <div className={categoryStyles.categoryMetric}>
           <span className={categoryStyles.categoryMetricLabel}>Estimated value</span>
@@ -143,25 +145,6 @@ export default function InventorySkins() {
             <img src="/assets/icons/20px-White_Valorant_Points_VALORANT.png" alt="VP" />
           </strong>
         </div>
-      )}
-      actions={(
-        <>
-          <div className={categoryStyles.searchWrap}>
-            <SearchInput
-              placeholder="Search weapon skins..."
-              value={search}
-              onChange={event => setSearch(event.target.value)}
-            />
-          </div>
-          <button
-            type="button"
-            onClick={downloadSkinList}
-            title="Download skin list"
-            className={styles.downloadBtn}
-          >
-            ↓ Download list
-          </button>
-        </>
       )}
     />
   );
@@ -210,33 +193,117 @@ export default function InventorySkins() {
         </div>
       </Modal>
 
+      {/* Image catalog download — pick which skins go into the .zip */}
+      <Modal open={catalogModalOpen} onClose={() => setCatalogModalOpen(false)}>
+        <ModalHeader title="🖼 Download image catalog" subtitle="6 skins per row, 5 rows per photo" />
+        <ModalBody>
+          <div className={styles.filterOptionList}>
+            {[
+              { mode: 'all', label: 'All', desc: 'Every owned skin', count: catalogCounts.all },
+              { mode: 'priceOnly', label: 'Priced only', desc: 'Excludes battlepass skins (no VP price)', count: catalogCounts.priceOnly },
+              { mode: 'exclusive', label: 'Exclusive only', desc: 'Only golden-background skins', count: catalogCounts.exclusive },
+            ].map(opt => (
+              <label
+                key={opt.mode}
+                className={`${styles.filterOption} ${catalogFilterMode === opt.mode ? styles.filterOptionActive : ''}`}
+              >
+                <input
+                  type="radio"
+                  name="catalogFilterMode"
+                  checked={catalogFilterMode === opt.mode}
+                  onChange={() => setCatalogFilterMode(opt.mode)}
+                />
+                <div className={styles.filterOptionText}>
+                  <div className={styles.filterOptionLabel}>{opt.label}</div>
+                  <div className={styles.filterOptionDesc}>{opt.desc}</div>
+                </div>
+                <div className={styles.filterOptionCount}>{opt.count}</div>
+              </label>
+            ))}
+          </div>
+          <button
+            type="button"
+            className={styles.filterSubmitBtn}
+            onClick={() => handleDownloadCatalog(catalogFilterMode)}
+            disabled={generatingCatalog || catalogCounts[catalogFilterMode] === 0}
+          >
+            {catalogCounts[catalogFilterMode] === 0
+              ? 'No skins in this category'
+              : generatingCatalog ? 'Generating…' : `Download (${catalogCounts[catalogFilterMode]})`}
+          </button>
+        </ModalBody>
+      </Modal>
+
+      {/* Text list download — pick which skins go into the .txt */}
+      <Modal open={txtModalOpen} onClose={() => setTxtModalOpen(false)}>
+        <ModalHeader title="↓ Download skin list (.txt)" subtitle="Names only, always sorted highest to lowest price" />
+        <ModalBody>
+          <div className={styles.filterOptionList}>
+            {[
+              { mode: 'all', label: 'All', desc: 'Every owned skin', count: catalogCounts.all },
+              { mode: 'priceOnly', label: 'Priced only', desc: 'Excludes battlepass skins (no VP price)', count: catalogCounts.priceOnly },
+              { mode: 'battlepass', label: 'Battlepass skins', desc: 'Only skins with no VP price', count: catalogCounts.battlepass },
+            ].map(opt => (
+              <label
+                key={opt.mode}
+                className={`${styles.filterOption} ${txtFilterMode === opt.mode ? styles.filterOptionActive : ''}`}
+              >
+                <input
+                  type="radio"
+                  name="txtFilterMode"
+                  checked={txtFilterMode === opt.mode}
+                  onChange={() => setTxtFilterMode(opt.mode)}
+                />
+                <div className={styles.filterOptionText}>
+                  <div className={styles.filterOptionLabel}>{opt.label}</div>
+                  <div className={styles.filterOptionDesc}>{opt.desc}</div>
+                </div>
+                <div className={styles.filterOptionCount}>{opt.count}</div>
+              </label>
+            ))}
+          </div>
+          <button
+            type="button"
+            className={styles.filterSubmitBtn}
+            onClick={() => handleDownloadTxt(txtFilterMode)}
+            disabled={catalogCounts[txtFilterMode] === 0}
+          >
+            {catalogCounts[txtFilterMode] === 0 ? 'No skins in this category' : `Download (${catalogCounts[txtFilterMode]})`}
+          </button>
+        </ModalBody>
+      </Modal>
+
       <div className={categoryStyles.page}>
         {categoryHeader}
 
-        <div>
-          {/* Filter chips */}
-          <div className={styles.chipsRow}>
+        <div className={styles.toolbar}>
+          <div className={styles.toolbarSearch}>
+            <SearchInput
+              placeholder="Search weapon skins..."
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              wrapStyle={{ display: 'flex', width: '100%' }}
+            />
+          </div>
+
+          <div className={styles.toolbarActions}>
             <button
-              onClick={() => { setWeaponType(''); setExclusiveOnly(false); }}
-              className={`${styles.chip} ${!weaponType && !exclusiveOnly ? styles.chipActive : ''}`}
+              type="button"
+              onClick={() => setTxtModalOpen(true)}
+              title={`Download the skin list as a .txt (${allCatalogItems.length})`}
+              className={styles.downloadBtn}
             >
-              All
+              Skins (txt)
             </button>
             <button
-              onClick={() => setExclusiveOnly(v => !v)}
-              className={`${styles.chip} ${styles.chipGold} ${exclusiveOnly ? styles.chipGoldActive : ''}`}
+              type="button"
+              onClick={() => setCatalogModalOpen(true)}
+              disabled={generatingCatalog || allCatalogItems.length === 0}
+              title={`Download an image catalog to share (${allCatalogItems.length})`}
+              className={styles.downloadBtn}
             >
-              ⭐ Exclusive
+              {generatingCatalog ? 'Generating…' : 'Skins (jpg)'}
             </button>
-            {availableWeapons.map(w => (
-              <button
-                key={w.uuid}
-                onClick={() => setWeaponType(prev => prev === w.uuid ? '' : w.uuid)}
-                className={`${styles.chip} ${weaponType === w.uuid ? styles.chipActive : ''}`}
-              >
-                {w.label}
-              </button>
-            ))}
           </div>
         </div>
 

@@ -113,7 +113,7 @@ Archivos clave:
 
 Variables de entorno vistas:
 
-- Backend: `PORT`, `FRONTEND_ORIGIN`, `MONGODB_URI`, `MONGO_URI`, `JWT_SECRET`, `HENRIKDEV_API_KEY`.
+- Backend: `PORT`, `FRONTEND_ORIGIN`, `MONGODB_URI`, `MONGO_URI`, `JWT_SECRET`.
 - Frontend: `REACT_APP_API_BASE_URL`.
 
 ## Guia para futuras IAs

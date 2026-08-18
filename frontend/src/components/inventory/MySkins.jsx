@@ -595,9 +595,10 @@ export default function MySkins() {
       <div className={styles.sidePanel}>
         <div className={styles.sidePanelLabel}>PLAYER CARDS</div>
         <PlayerCard
-          identity={riotAccount?.identity || {}}
+          identity={riotAccount?.loadout?.Identity || {}}
           name={riotAccount?.name || ''}
           nickname={riotAccount?.nickname || ''}
+          accountLevel={riotAccount?.accountLevel ?? null}
         />
       </div>
       {/* Weapon skin modal */}

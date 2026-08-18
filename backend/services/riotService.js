@@ -98,6 +98,296 @@ class RiotService {
     return response.json();
   }
 
+  // Account level (XP), straight from Riot — replaces the old HenrikDev proxy
+  // the app used before (see https://valapidocs.techchrism.me/endpoint/account-xp/).
+  static async getAccountXP(puuid, entitlementToken, riotToken) {
+    try {
+      const response = await fetch(`${RIOT_ENDPOINTS.ACCOUNT_XP}/${puuid}`, {
+        headers: {
+          ...RIOT_HEADERS,
+          'X-Riot-Entitlements-JWT': entitlementToken,
+          Authorization: `Bearer ${riotToken}`
+        }
+      });
+
+      if (!response.ok) {
+        console.error(`⭐ [RiotService] Error fetching account-xp: HTTP ${response.status}`);
+        return null;
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('⭐ [RiotService] Error fetching account-xp:', error);
+      return null;
+    }
+  }
+
+  // Aggregate rank/MMR (all seasons in one call — the richer source: wins,
+  // games and leaderboard placement per season). `shard` must match the
+  // account's own region (na/eu/ap/kr/...) — unlike most other endpoints
+  // this one actually cares. NOTE: confirmed live (2026-08-17) that Riot's
+  // own server 500s (INTERNAL_UNHANDLED_SERVER_ERROR) on this endpoint for
+  // at least some accounts — headers/auth/shard all check out, its sibling
+  // /competitiveupdates works fine, so this is Riot-side, not us. Callers
+  // should treat a null return as "fall back to getCompetitiveUpdates", see
+  // getRankHistory below.
+  static async getPlayerMMR(puuid, entitlementToken, riotToken, shard = 'na') {
+    try {
+      const url = `${RIOT_ENDPOINTS.MMR.replace('{shard}', shard)}/${puuid}`;
+      const response = await fetch(url, {
+        headers: {
+          ...RIOT_HEADERS,
+          'X-Riot-Entitlements-JWT': entitlementToken,
+          Authorization: `Bearer ${riotToken}`
+        }
+      });
+
+      if (!response.ok) {
+        console.error(`🏆 [RiotService] Error fetching player MMR: HTTP ${response.status}`);
+        return null;
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('🏆 [RiotService] Error fetching player MMR:', error);
+      return null;
+    }
+  }
+
+  // Match-by-match rank updates (competitive + deathmatch mixed). Riot caps
+  // the page window at 20 (endIndex - startIndex <= 20) and 400s past the
+  // account's true total, confirmed live — getRankHistory below pages this
+  // and stops on either signal.
+  static async getCompetitiveUpdates(puuid, entitlementToken, riotToken, shard, startIndex, endIndex) {
+    try {
+      const url = `${RIOT_ENDPOINTS.MMR.replace('{shard}', shard)}/${puuid}/competitiveupdates?startIndex=${startIndex}&endIndex=${endIndex}`;
+      const response = await fetch(url, {
+        headers: {
+          ...RIOT_HEADERS,
+          'X-Riot-Entitlements-JWT': entitlementToken,
+          Authorization: `Bearer ${riotToken}`
+        }
+      });
+
+      if (!response.ok) return null;
+      return response.json();
+    } catch (error) {
+      console.error('🏆 [RiotService] Error fetching competitive updates:', error);
+      return null;
+    }
+  }
+
+  // Normalizes the aggregate endpoint's per-season map into a flat list.
+  // Returns null (not []) when the endpoint gave nothing usable, so callers
+  // can tell "no ranked history" apart from "this source didn't work".
+  static summarizeRankFromAggregate(mmrData) {
+    const bySeasonId = mmrData?.QueueSkills?.competitive?.SeasonalInfoBySeasonID;
+    if (!bySeasonId) return null;
+    return Object.values(bySeasonId)
+      .filter(s => s.NumberOfGames > 0)
+      .map(s => ({
+        seasonId: s.SeasonID,
+        tier: s.CompetitiveTier,
+        rr: s.RankedRating,
+        wins: s.NumberOfWins,
+        games: s.NumberOfGames,
+        leaderboardRank: s.LeaderboardRank || 0,
+      }));
+  }
+
+  // Reduces a raw competitiveupdates match list to one entry per season —
+  // whichever match has the latest MatchStartTime for that season, i.e. the
+  // account's final standing that act. No wins/games/leaderboard: that match
+  // feed doesn't carry them, only per-match tier/RR after the update.
+  static summarizeRankFromUpdates(matches) {
+    const bySeason = new Map();
+    for (const m of matches) {
+      if (m.QueueID !== 'competitive') continue;
+      const prev = bySeason.get(m.SeasonID);
+      if (!prev || m.MatchStartTime > prev.matchStartTime) {
+        bySeason.set(m.SeasonID, {
+          seasonId: m.SeasonID,
+          tier: m.TierAfterUpdate,
+          rr: m.RankedRatingAfterUpdate,
+          matchStartTime: m.MatchStartTime,
+        });
+      }
+    }
+    return Array.from(bySeason.values());
+  }
+
+  // Rank history for one account, most-complete-source-first: tries the
+  // aggregate endpoint (richer, but known to fail for some accounts — see
+  // getPlayerMMR above); on failure, derives the same per-season shape from
+  // up to MAX_PAGES pages of the match-update feed instead (tier/RR only).
+  // The per-match scoreboard shown alongside this is a separate set of
+  // calls — see getRecentMatchSummaries below.
+  static async getRankHistory(puuid, entitlementToken, riotToken, shard) {
+    const aggregate = await this.getPlayerMMR(puuid, entitlementToken, riotToken, shard);
+    const fromAggregate = this.summarizeRankFromAggregate(aggregate);
+    if (fromAggregate) return { source: 'aggregate', seasons: fromAggregate };
+
+    const PAGE_SIZE = 20;
+    const MAX_PAGES = 10; // ~200 matches back — plenty of acts for most accounts
+    let allUpdates = [];
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const start = page * PAGE_SIZE;
+      const data = await this.getCompetitiveUpdates(puuid, entitlementToken, riotToken, shard, start, start + PAGE_SIZE);
+      const updates = data?.Matches || [];
+      if (updates.length === 0) break;
+      allUpdates = allUpdates.concat(updates);
+      if (updates.length < PAGE_SIZE) break; // short page = reached the account's true history start
+    }
+    return { source: 'match-history', seasons: this.summarizeRankFromUpdates(allUpdates) };
+  }
+
+  // Match id list (no result/score — that's a separate match-details call
+  // per id, see getMatchDetails below). Same sliding-window pagination cap
+  // as competitiveupdates. https://valapidocs.techchrism.me/endpoint/match-history
+  static async getMatchHistory(puuid, entitlementToken, riotToken, shard, startIndex, endIndex, queue = 'competitive') {
+    try {
+      const url = `https://pd.${shard}.a.pvp.net/match-history/v1/history/${puuid}?startIndex=${startIndex}&endIndex=${endIndex}&queue=${queue}`;
+      const response = await fetch(url, {
+        headers: {
+          ...RIOT_HEADERS,
+          'X-Riot-Entitlements-JWT': entitlementToken,
+          Authorization: `Bearer ${riotToken}`
+        }
+      });
+      if (!response.ok) return null;
+      return response.json();
+    } catch (error) {
+      console.error('🏆 [RiotService] Error fetching match history:', error);
+      return null;
+    }
+  }
+
+  // The N most recent competitive match ids, newest first (Riot already
+  // returns it in that order).
+  static async getRecentMatchIds(puuid, entitlementToken, riotToken, shard, limit = 10) {
+    const data = await this.getMatchHistory(puuid, entitlementToken, riotToken, shard, 0, limit, 'competitive');
+    return (data?.History || []).map(h => h.MatchID);
+  }
+
+  // Full match detail blob for one match — raw, unprocessed. Straight from
+  // Riot, no third party. https://valapidocs.techchrism.me/endpoint/match-details
+  static async getMatchDetails(matchId, entitlementToken, riotToken, shard) {
+    try {
+      const url = `https://pd.${shard}.a.pvp.net/match-details/v1/matches/${matchId}`;
+      const response = await fetch(url, {
+        headers: {
+          ...RIOT_HEADERS,
+          'X-Riot-Entitlements-JWT': entitlementToken,
+          Authorization: `Bearer ${riotToken}`
+        }
+      });
+      if (!response.ok) return null;
+      return response.json();
+    } catch (error) {
+      console.error('🏆 [RiotService] Error fetching match details:', error);
+      return null;
+    }
+  }
+
+  // Riot's raw match-details doesn't hand back ACS/ADR/HS% — those get
+  // reduced from per-round data ourselves:
+  //  - ACS  = player.stats.score / roundsPlayed
+  //  - ADR  = sum(player.roundDamage[].damage) / roundsPlayed (damage this
+  //           player dealt, not received — roundDamage is nested under the
+  //           player, so every entry in it is outgoing)
+  //  - HS%  = headshots / (headshots+bodyshots+legshots), summed from
+  //           roundResults[*].playerStats[*].damage[*] for this player's
+  //           subject across every round (roundDamage has no shot-location
+  //           breakdown, only roundResults does)
+  static summarizeMatchForPlayer(matchDetails, puuid) {
+    if (!matchDetails?.matchInfo || !Array.isArray(matchDetails.players)) return null;
+
+    const me = matchDetails.players.find(p => p.subject === puuid);
+    if (!me) return null;
+
+    const rounds = me.stats?.roundsPlayed || 0;
+    const acs = rounds > 0 ? Math.round((me.stats?.score || 0) / rounds) : 0;
+
+    const totalDamage = (me.roundDamage || []).reduce((sum, d) => sum + (d.damage || 0), 0);
+    const adr = rounds > 0 ? Math.round(totalDamage / rounds) : 0;
+
+    let headshots = 0, bodyshots = 0, legshots = 0;
+    for (const round of matchDetails.roundResults || []) {
+      const myRoundStats = (round.playerStats || []).find(s => s.subject === puuid);
+      for (const d of myRoundStats?.damage || []) {
+        headshots += d.headshots || 0;
+        bodyshots += d.bodyshots || 0;
+        legshots += d.legshots || 0;
+      }
+    }
+    const totalShots = headshots + bodyshots + legshots;
+    const hsPercent = totalShots > 0 ? Math.round((headshots / totalShots) * 100) : 0;
+
+    const teams = matchDetails.teams || [];
+    const teamRed = teams.find(t => t.teamId === 'Red');
+    const teamBlue = teams.find(t => t.teamId === 'Blue');
+
+    return {
+      matchId: matchDetails.matchInfo.matchId,
+      date: new Date(matchDetails.matchInfo.gameStartMillis).toISOString(),
+      mapUrl: matchDetails.matchInfo.mapId,
+      durationSecs: matchDetails.matchInfo.gameLengthMillis
+        ? Math.round(matchDetails.matchInfo.gameLengthMillis / 1000)
+        : null,
+      teamRed: teamRed ? { won: teamRed.won, roundsWon: teamRed.roundsWon } : null,
+      teamBlue: teamBlue ? { won: teamBlue.won, roundsWon: teamBlue.roundsWon } : null,
+      player: {
+        team: me.teamId,
+        characterId: me.characterId,
+        kills: me.stats?.kills || 0,
+        deaths: me.stats?.deaths || 0,
+        assists: me.stats?.assists || 0,
+        acs,
+        adr,
+        hsPercent
+      }
+    };
+  }
+
+  // Recent competitive matches, fully summarized for this account — id list
+  // first, then match-details in parallel for each (capped at `limit`, kept
+  // small since it's an N+1: one Riot call per match on top of the id list).
+  static async getRecentMatchSummaries(puuid, entitlementToken, riotToken, shard, limit = 10) {
+    const matchIds = await this.getRecentMatchIds(puuid, entitlementToken, riotToken, shard, limit);
+    const details = await Promise.all(
+      matchIds.map(id => this.getMatchDetails(id, entitlementToken, riotToken, shard))
+    );
+    return details
+      .map(d => d ? this.summarizeMatchForPlayer(d, puuid) : null)
+      .filter(Boolean);
+  }
+
+  // Active penalties/restrictions (queue bans, comms restrictions, etc.) for
+  // whichever account the token belongs to — the URL doesn't take a puuid,
+  // Riot resolves it from the bearer token. Riot's own docs type the array
+  // itself as `unknown[]` — no documented per-entry schema — so this hands
+  // back whatever's in it as-is instead of guessing field names; the
+  // frontend renders it defensively too.
+  // https://valapidocs.techchrism.me/endpoint/penalties
+  static async getPenalties(entitlementToken, riotToken, shard) {
+    try {
+      const url = `https://pd.${shard}.a.pvp.net/restrictions/v3/penalties`;
+      const response = await fetch(url, {
+        headers: {
+          ...RIOT_HEADERS,
+          'X-Riot-Entitlements-JWT': entitlementToken,
+          Authorization: `Bearer ${riotToken}`
+        }
+      });
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data?.Penalties || [];
+    } catch (error) {
+      console.error('🚫 [RiotService] Error fetching penalties:', error);
+      return [];
+    }
+  }
+
   static async getBuddies(puuid, entitlementToken, riotToken) {
     const response = await fetch(`${RIOT_ENDPOINTS.BUDDIES}/${puuid}/${RIOT_ENTITLEMENT_IDS.BUDDIES}`, {
       headers: {

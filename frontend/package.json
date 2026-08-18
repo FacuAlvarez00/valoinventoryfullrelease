@@ -5,6 +5,7 @@
   "dependencies": {
     "dayjs": "^1.11.13",
     "framer-motion": "^12.23.18",
+    "jszip": "^3.10.1",
     "node-fetch": "^3.3.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

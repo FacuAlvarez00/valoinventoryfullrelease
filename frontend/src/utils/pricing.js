@@ -38,7 +38,9 @@ export function isGoldenSkin(baseName) {
     baseName.startsWith('VCT ') ||
     /vct\d*\s+x\b/i.test(baseName) ||
     baseName === 'Arcane Vandal' ||
-    baseName === 'Arcane Gauntlets'
+    baseName === 'Arcane Gauntlets' ||
+    baseName === 'Arcane Sheriff' ||
+    baseName === '5 Years // Beta Remastered Knife'
   );
 }
 

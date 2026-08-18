@@ -47,13 +47,34 @@
 
 .detailsGrid {
   display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr;
+  /* leftCol keeps the same relative width it had when the right side was
+     two separate 1fr columns (1.6 : 1+1) — now that they're one merged
+     column it needs 2fr, not 1fr, to occupy the same share of the row. */
+  grid-template-columns: 1.6fr 2fr;
   gap: 20px;
 }
 
 .leftCol {
   display: flex;
   flex-direction: column;
+}
+
+/* Competitive History (3/4) stacked above Penalties (1/4) instead of the
+   two living side by side. This needs an explicit height, not just capped
+   children: grid sizes an auto row to whichever column's content is
+   tallest, so once real match cards made this column taller than leftCol,
+   the whole row grew to fit it and Penalties — sharing that inflated
+   height 1/4 — ballooned into a mostly-empty box. A fixed height makes the
+   3fr/1fr split divide a real number instead of "however tall content
+   happens to be", with each panel scrolling internally past that.
+   Kept in rough sync with leftCol's own height (.banner + .card) by hand —
+   CSS can't measure a sibling column's rendered height. */
+.rightCol {
+  display: grid;
+  grid-template-rows: 3fr 1fr;
+  gap: 20px;
+  height: 700px;
+  min-height: 0;
 }
 
 .sidePanel {
@@ -63,6 +84,11 @@
   padding: 24px;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+}
+
+.sidePanelHistory {
+  overflow: hidden;
 }
 
 .panelHeader {
@@ -88,6 +114,238 @@
   margin: 0;
 }
 
+.rankRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.rankRowCurrent {
+  border-color: var(--vi-red);
+  background: rgba(255, 70, 84, 0.08);
+}
+
+.rankIcon,
+.rankIconPlaceholder {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.rankIconPlaceholder {
+  background: var(--vi-black-soft);
+  border-radius: 2px;
+}
+
+.rankInfo {
+  min-width: 0;
+  flex: 1;
+}
+
+.rankSeason {
+  color: rgba(236, 232, 225, 0.5);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rankTier {
+  color: var(--vi-white);
+  font-family: var(--vi-font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.rankStats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  gap: 2px;
+  color: rgba(236, 232, 225, 0.55);
+  font-size: 12px;
+  text-align: right;
+}
+
+.rankLeaderboard {
+  color: #ffd700;
+  font-weight: 700;
+}
+
+.matchListHeader {
+  margin-top: 20px;
+  margin-bottom: 8px;
+  color: rgba(236, 232, 225, 0.42);
+  font-family: var(--vi-font-heading);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+.matchList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Fills whatever's left in the panel's now-fixed height (see .rightCol)
+     after the header + current-rank row + this list's own label. */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.matchList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.matchList::-webkit-scrollbar-thumb {
+  background: var(--vi-border);
+  border-radius: 3px;
+}
+
+.matchCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--vi-border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  flex-shrink: 0;
+}
+
+.matchCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.matchResultWin,
+.matchResultLoss {
+  font-family: var(--vi-font-heading);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.matchResultWin {
+  color: var(--vi-green);
+}
+
+.matchResultLoss {
+  color: var(--vi-red);
+}
+
+.matchMap {
+  color: var(--vi-white);
+  font-size: 13px;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.matchScore {
+  color: rgba(236, 232, 225, 0.7);
+  font-family: var(--vi-font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.matchScoreSep {
+  color: rgba(236, 232, 225, 0.35);
+  margin: 0 2px;
+}
+
+.matchCardMeta {
+  display: flex;
+  gap: 10px;
+  margin-top: 3px;
+  color: rgba(236, 232, 225, 0.42);
+  font-size: 11px;
+}
+
+.matchCardStats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--vi-border);
+  font-size: 12px;
+  color: rgba(236, 232, 225, 0.55);
+  flex-wrap: wrap;
+}
+
+.matchAgentIcon,
+.matchAgentPlaceholder {
+  width: 22px;
+  height: 22px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.matchAgentPlaceholder {
+  background: var(--vi-black-soft);
+}
+
+.matchKda {
+  color: var(--vi-white);
+  font-weight: 700;
+}
+
+.matchStat b {
+  color: rgba(236, 232, 225, 0.85);
+  font-weight: 700;
+}
+
+.penaltyList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.penaltyCard {
+  background: rgba(255, 70, 84, 0.06);
+  border: 1px solid var(--vi-red);
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+
+.penaltyRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+  font-size: 12px;
+}
+
+.penaltyKey {
+  color: rgba(236, 232, 225, 0.5);
+  text-transform: capitalize;
+  flex-shrink: 0;
+}
+
+.penaltyValue {
+  color: var(--vi-white);
+  text-align: right;
+  word-break: break-word;
+}
+
 @media (max-width: 1100px) {
   .detailsGrid {
     grid-template-columns: 1fr;
@@ -96,7 +354,7 @@
 
 .banner {
   position: relative;
-  height: 320px;
+  height: 260px;
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid var(--vi-red);
@@ -212,6 +470,35 @@
 .cardHeaderMeta {
   color: rgba(236, 232, 225, 0.5);
   font-size: 13px;
+}
+
+.cardHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.refreshBtn {
+  background: rgba(255, 70, 84, 0.1);
+  border: 1px solid var(--vi-red);
+  border-radius: 2px;
+  color: var(--vi-red);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--vi-font-heading);
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.refreshBtn:hover {
+  background: rgba(255, 70, 84, 0.18);
+}
+
+.refreshStatus {
+  margin: 8px 0 0;
+  color: var(--vi-red);
+  font-size: 12px;
 }
 
 .grid {
