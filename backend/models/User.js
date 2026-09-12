@@ -1,9 +1,19 @@
 const mongoose = require('mongoose');
 
+// Subscription tiers, lowest to highest. Kept as an ordered array (not just
+// the enum) so tier comparisons ("does this user have at least X") can use
+// the index instead of hardcoding an order elsewhere.
+const SUBSCRIPTION_TIERS = ['free', 'immortal', 'radiant'];
+
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  // Subscription tier — gates features once those are defined per tier.
+  // Separate from isAdmin: admin is a role/permission, tier is what they're
+  // paying for; today's admin account happens to carry both.
+  subscriptionTier: { type: String, enum: SUBSCRIPTION_TIERS, default: 'free' },
+  isAdmin: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   riotAccounts: [
     {
@@ -34,4 +44,5 @@ const userSchema = new mongoose.Schema({
   ]
 });
 
-module.exports = mongoose.model('User', userSchema); 
+module.exports = mongoose.model('User', userSchema);
+module.exports.SUBSCRIPTION_TIERS = SUBSCRIPTION_TIERS;

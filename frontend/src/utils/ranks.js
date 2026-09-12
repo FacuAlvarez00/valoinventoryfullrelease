@@ -46,6 +46,29 @@ export function buildRankHistory(rank, catalog) {
 // to ACS/ADR/HS% and picks out just this account's own line). Already
 // newest-first from the backend. `mapUrl` and `characterId` are resolved
 // here against the public catalog, same pattern as buildRankHistory above.
+// Riot's internal queue ids -> display label. Matches are now fetched across
+// every mode (see backend RiotService.getMatchHistory), not just competitive,
+// so each card needs to say which one it was.
+const QUEUE_LABELS = {
+  competitive: 'Competitive',
+  unrated: 'Unrated',
+  spikerush: 'Spike Rush',
+  deathmatch: 'Deathmatch',
+  ggteam: 'Escalation',
+  onefa: 'Replication',
+  snowball: 'Snowball Fight',
+  swiftplay: 'Swiftplay',
+  hurm: 'Team Deathmatch',
+  premier: 'Premier',
+  custom: 'Custom',
+  '': 'Custom',
+};
+
+export function queueLabel(queueId) {
+  if (queueId === null || queueId === undefined) return 'Custom';
+  return QUEUE_LABELS[queueId] || queueId;
+}
+
 export function buildMatchList(rank, catalog) {
   const matches = rank?.matches;
   if (!Array.isArray(matches) || matches.length === 0) return [];
@@ -67,6 +90,7 @@ export function buildMatchList(rank, catalog) {
         date: m.date,
         durationSecs: m.durationSecs,
         mapName: map?.displayName || 'Unknown map',
+        queueLabel: queueLabel(m.queueId),
         teamRed: m.teamRed,
         teamBlue: m.teamBlue,
         won: myTeamData?.won ?? null,

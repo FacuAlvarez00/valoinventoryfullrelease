@@ -34,10 +34,10 @@ export default function InventoryNavbar() {
 
         <div className={styles.accountHeader}>
           {riotAccount ? (
-            <>
-              <div className={styles.accountName}>{riotAccount.name}</div>
-              {riotId && <div className={styles.riotId}>{riotId}</div>}
-            </>
+            <div className={styles.accountName}>
+              {riotAccount.name}
+              {riotId && <span className={styles.riotId}>({riotId})</span>}
+            </div>
           ) : (
             <div className={styles.accountNameSkeleton} aria-label="Loading account" />
           )}

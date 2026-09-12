@@ -25,13 +25,17 @@ export const AuthProvider = ({ children }) => {
       if (savedToken && savedUser) {
         const result = await verifyTokenValidity(savedToken);
 
-        if (result === 'expired') {
+        if (result.status === 'expired') {
           localStorage.removeItem('authToken');
           localStorage.removeItem('user');
         } else {
-          // Preserve the session when the token is valid or the API is temporarily unreachable
+          // Preserve the session when the token is valid or the API is temporarily unreachable.
+          // Prefer the freshly-fetched profile (picks up e.g. a changed
+          // subscriptionTier) over the cached copy, which may be stale.
           setToken(savedToken);
-          setUser(JSON.parse(savedUser));
+          const freshUser = result.user || JSON.parse(savedUser);
+          setUser(freshUser);
+          if (result.user) localStorage.setItem('user', JSON.stringify(result.user));
         }
       }
 
@@ -103,9 +107,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
   };
 
-  // Validate a token against the profile endpoint
+  // Validate a token against the profile endpoint. Returns the fresh user
+  // record too (when available) so callers can resync stale cached data.
   const verifyTokenValidity = async (tokenToVerify) => {
-    if (!tokenToVerify) return 'expired';
+    if (!tokenToVerify) return { status: 'expired' };
 
     try {
       const controller = new AbortController();
@@ -117,10 +122,12 @@ export const AuthProvider = ({ children }) => {
       });
 
       clearTimeout(timeout);
-      return response.status === 401 ? 'expired' : 'valid';
+      if (response.status === 401) return { status: 'expired' };
+      const data = await response.json().catch(() => null);
+      return { status: 'valid', user: data?.success ? data.user : null };
     } catch (error) {
       // Keep the local session during a timeout or temporary network error
-      return 'unreachable';
+      return { status: 'unreachable' };
     }
   };
 
@@ -128,7 +135,7 @@ export const AuthProvider = ({ children }) => {
   const verifyToken = async () => {
     if (!token) return false;
     const result = await verifyTokenValidity(token);
-    return result === 'valid';
+    return result.status === 'valid';
   };
 
   // Make authenticated requests and handle unauthorized responses

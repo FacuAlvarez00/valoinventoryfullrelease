@@ -5,7 +5,7 @@
 
 .inner {
   margin: 0 32px;
-  padding-top: 16px;
+  padding-top: 12px;
 }
 
 .backButton {
@@ -15,7 +15,7 @@
   border: 0;
   background: transparent;
   color: rgba(236, 232, 225, 0.58);
-  padding: 6px 0;
+  padding: 4px 0;
   font-family: var(--vi-font-heading);
   font-size: 11px;
   font-weight: 700;
@@ -36,17 +36,17 @@
 }
 
 .accountHeader {
-  margin: 12px 0 14px;
+  margin: 8px 0 10px;
 }
 
 .accountName {
   overflow: hidden;
   color: var(--vi-white);
   font-family: var(--vi-font-heading);
-  font-size: clamp(26px, 3vw, 36px);
+  font-size: clamp(20px, 2.4vw, 28px);
   font-weight: 800;
   letter-spacing: 1px;
-  line-height: 1;
+  line-height: 1.2;
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
@@ -54,17 +54,22 @@
 
 .accountNameSkeleton {
   width: min(260px, 60vw);
-  height: 36px;
+  height: 28px;
   border-radius: 2px;
   background: rgba(236, 232, 225, 0.08);
   animation: accountNamePulse 1.5s ease-in-out infinite;
 }
 
+/* Inline next to the account name ("NAME (riot#tag)"), same pattern as
+   .cardBannerRiotId on the Home page account cards. */
 .riotId {
-  margin-top: 4px;
+  margin-left: 8px;
   color: rgba(236, 232, 225, 0.48);
+  font-family: var(--vi-font-body);
   font-size: 13px;
   font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .sections {
@@ -127,19 +132,19 @@
 @media (max-width: 560px) {
   .inner {
     margin: 0 14px;
-    padding-top: 14px;
+    padding-top: 10px;
   }
 
   .accountHeader {
-    margin: 12px 0 14px;
+    margin: 8px 0 10px;
   }
 
   .accountName {
-    font-size: 26px;
+    font-size: 20px;
   }
 
   .accountNameSkeleton {
-    height: 28px;
+    height: 24px;
   }
 
   .sections {

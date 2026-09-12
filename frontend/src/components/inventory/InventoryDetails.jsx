@@ -1,11 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { useAuth } from '../../context/AuthContext';
 import LoadingScreen from '../ui/LoadingScreen';
-import { Modal, ModalHeader, ModalBody, TextField, TacticalButton } from '../ui/kit';
 import { calcAccountStats } from '../../utils/pricing';
-import { buildRankHistory, buildMatchList, formatMatchDate, formatMatchDuration } from '../../utils/ranks';
-import { parseRiotAuthInput } from '../../utils/riotAuth';
+import { buildRankHistory, buildMatchList } from '../../utils/ranks';
+import MatchCard from './MatchCard';
+import MatchesModal from './MatchesModal';
+import RankRow from './RankRow';
 import styles from './InventoryDetails.module.css';
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://valoinventory-1.onrender.com';
@@ -32,46 +33,10 @@ function formatPenaltyValue(key, value) {
 }
 
 export default function InventoryDetails() {
-  const { riotAccount, loading, error, catalog, weaponSkins, refreshAccount } = useInventory();
+  const { riotAccount, loading, error, catalog, weaponSkins } = useInventory();
   const { makeAuthenticatedRequest } = useAuth();
   const [copiedUuid, setCopiedUuid] = useState(false);
-
-  // Re-fetch this account from Riot in place (rank/matches included) —
-  // needs a fresh login since Riot's web token is short-lived and there's
-  // no refresh_token in this flow, same paste-the-URL step as adding an
-  // account on Home.
-  const [showRefreshModal, setShowRefreshModal] = useState(false);
-  const [refreshInput, setRefreshInput] = useState({ riotToken: '', riotUrl: '' });
-  const [refreshStatus, setRefreshStatus] = useState('');
-  const [refreshLoading, setRefreshLoading] = useState(false);
-
-  const handleRefreshAccount = async () => {
-    if (!riotAccount?.puuid || !refreshInput.riotToken) return;
-    if (!refreshInput.riotUrl || !refreshInput.riotUrl.includes('playvalorant.com')) {
-      setRefreshStatus('Paste the complete URL containing the ID token.');
-      return;
-    }
-    setRefreshLoading(true);
-    setRefreshStatus('');
-    try {
-      const res = await makeAuthenticatedRequest(`${API_BASE}/api/auth/riot/account/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ puuid: riotAccount.puuid, riotToken: refreshInput.riotToken, url: refreshInput.riotUrl })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setShowRefreshModal(false);
-        setRefreshInput({ riotToken: '', riotUrl: '' });
-        await refreshAccount(riotAccount.puuid);
-      } else {
-        setRefreshStatus(data.message || 'Failed to refresh the account.');
-      }
-    } catch (e) {
-      setRefreshStatus('A network error occurred while refreshing the account.');
-    }
-    setRefreshLoading(false);
-  };
+  const [matchesModalOpen, setMatchesModalOpen] = useState(false);
 
   const handleCopyUuid = () => {
     if (!riotAccount?.puuid) return;
@@ -86,15 +51,47 @@ export default function InventoryDetails() {
     return calcAccountStats(riotAccount, weaponSkins, catalog).totalVP;
   }, [riotAccount, catalog, weaponSkins]);
 
+  // Live rank + recent matches, via the shared harvester session (see
+  // backend/services/riotHarvester.js) — no per-account re-login needed,
+  // unlike the rest of this account's data (skins/loadout/etc, still only
+  // refreshed through the manual flow below). Falls back to the snapshot
+  // saved at the last add/refresh if the harvester session itself is down
+  // (needsHarvesterLogin) or this account was never refreshed since the
+  // harvester shipped.
+  const [liveRank, setLiveRank] = useState(null);
+  const [liveRankState, setLiveRankState] = useState('idle'); // 'idle' | 'loading' | 'live' | 'unavailable'
+
+  useEffect(() => {
+    if (!riotAccount?.puuid) return;
+    let cancelled = false;
+    setLiveRankState('loading');
+    makeAuthenticatedRequest(`${API_BASE}/api/auth/riot/account/${riotAccount.puuid}/live`)
+      .then(res => res.json())
+      .then(data => {
+        if (cancelled) return;
+        if (data.success) {
+          setLiveRank(data.rank);
+          setLiveRankState('live');
+        } else {
+          setLiveRankState('unavailable');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLiveRankState('unavailable');
+      });
+    return () => { cancelled = true; };
+  }, [riotAccount?.puuid]);
+
   // Current rank (most recent act) + recent competitive match list
+  const effectiveRank = liveRank || riotAccount?.rank;
   const rankHistory = useMemo(
-    () => buildRankHistory(riotAccount?.rank, catalog),
-    [riotAccount?.rank, catalog]
+    () => buildRankHistory(effectiveRank, catalog),
+    [effectiveRank, catalog]
   );
   const currentRank = rankHistory[0] || null;
   const matchList = useMemo(
-    () => buildMatchList(riotAccount?.rank, catalog),
-    [riotAccount?.rank, catalog]
+    () => buildMatchList(effectiveRank, catalog),
+    [effectiveRank, catalog]
   );
 
   // Count Radiant and Immortal buddies
@@ -125,15 +122,43 @@ export default function InventoryDetails() {
 
   const bannerArt = equippedCard?.wideArt || equippedCard?.largeArt || DEFAULT_CARD_ART;
 
-  const equippedTitle = useMemo(() => {
+  // The equipped title isn't always in riotAccount.titles (the account's
+  // owned/purchased entitlements) — some equipped titles are Riot-granted
+  // defaults with no explicit entitlement record, confirmed live on a real
+  // account (title equipped, 55 unique owned titles, none matching). Falls
+  // back to the public catalog for those.
+  const [equippedTitle, setEquippedTitle] = useState(null);
+  useEffect(() => {
     const titleId = identity?.PlayerTitleID;
-    if (!titleId || titleId === NO_TITLE_UUID || !riotAccount?.titles?.length) return null;
-    return riotAccount.titles.find(t => t.ItemID === titleId) || null;
+    if (!titleId || titleId === NO_TITLE_UUID) {
+      setEquippedTitle(null);
+      return;
+    }
+    const owned = riotAccount?.titles?.find(t => t.ItemID === titleId);
+    if (owned) {
+      setEquippedTitle(owned);
+      return;
+    }
+    let cancelled = false;
+    fetch(`https://valorant-api.com/v1/playertitles/${titleId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!cancelled && data?.data) {
+          setEquippedTitle({ ItemID: titleId, displayName: data.data.displayName, titleText: data.data.titleText });
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, [identity, riotAccount?.titles]);
 
-  const accountLevel = identity && !identity.HideAccountLevel && identity.AccountLevel > 0
-    ? identity.AccountLevel
-    : null;
+  // riotAccount.accountLevel comes from Riot's own account-xp/v1 (see
+  // RiotService.getAccountXP) and is the reliable source — confirmed live
+  // that identity.AccountLevel from the loadout is always 0 with
+  // HideAccountLevel always true regardless of the account's real privacy
+  // setting, so it's kept only as a defensive fallback, not the primary one.
+  const accountLevel = riotAccount?.accountLevel > 0
+    ? riotAccount.accountLevel
+    : (identity && !identity.HideAccountLevel && identity.AccountLevel > 0 ? identity.AccountLevel : null);
 
   const riotId = riotAccount?.userInfo?.acct
     ? `${riotAccount.userInfo.acct.game_name}#${riotAccount.userInfo.acct.tag_line}`
@@ -228,9 +253,6 @@ export default function InventoryDetails() {
                 <h3 className={styles.cardHeaderTitle}>ACCOUNT INFO</h3>
                 <div className={styles.cardHeaderRight}>
                   <div className={styles.cardHeaderMeta}>Last updated: {formatDate(riotAccount.lastUpdated)}</div>
-                  <button type="button" className={styles.refreshBtn} onClick={() => setShowRefreshModal(true)}>
-                    ↻ Refresh
-                  </button>
                 </div>
               </div>
 
@@ -238,7 +260,7 @@ export default function InventoryDetails() {
                 {/* Left Column */}
                 <div className={styles.col}>
                   <div className={styles.row}>
-                    <span className={styles.rowLabel}>IGN:</span>
+                    <span className={styles.rowLabel}>Riot ID:</span>
                     <span className={styles.rowValue}>{riotId || 'N/A'}</span>
                   </div>
 
@@ -321,74 +343,49 @@ export default function InventoryDetails() {
             </div>
           </div>
 
+          <div className={styles.rankCol}>
+            <div className={styles.sidePanel}>
+              <div className={styles.panelHeader}>
+                <h3 className={styles.panelTitle}>COMPETITIVE HISTORY</h3>
+                {liveRankState === 'live' && <span className={styles.liveBadge}>● Live</span>}
+                {liveRankState === 'unavailable' && riotAccount?.rank && (
+                  <span className={styles.staleBadge} title="Couldn't reach the harvester session — showing the last synced snapshot">Last synced</span>
+                )}
+              </div>
+
+              {!currentRank ? (
+                <p className={styles.panelEmpty}>No competitive history found for this account.</p>
+              ) : (
+                <div className={styles.rankHistoryList}>
+                  {rankHistory.map((r, idx) => (
+                    <RankRow key={r.seasonId} rank={r} current={idx === 0} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className={styles.rightCol}>
             <div className={`${styles.sidePanel} ${styles.sidePanelHistory}`}>
               <div className={styles.panelHeader}>
-                <h3 className={styles.panelTitle}>COMPETITIVE HISTORY</h3>
+                <h3 className={styles.panelTitle}>RECENT MATCHES</h3>
+                {matchList.length > 0 && <span className={styles.cardHeaderMeta}>{matchList.length} shown</span>}
               </div>
 
-              {!currentRank && matchList.length === 0 ? (
-                <p className={styles.panelEmpty}>No competitive history found for this account.</p>
+              {matchList.length === 0 ? (
+                <p className={styles.panelEmpty}>No recent match data found for this account.</p>
               ) : (
                 <>
-                  {currentRank && (
-                    <div className={`${styles.rankRow} ${styles.rankRowCurrent}`}>
-                      {currentRank.tierIcon ? (
-                        <img src={currentRank.tierIcon} alt={currentRank.tierName} className={styles.rankIcon} />
-                      ) : (
-                        <div className={styles.rankIconPlaceholder} />
-                      )}
-                      <div className={styles.rankInfo}>
-                        <div className={styles.rankSeason}>{currentRank.seasonLabel}</div>
-                        <div className={styles.rankTier}>{currentRank.tierName} · {currentRank.rr} RR</div>
-                      </div>
-                      <div className={styles.rankStats}>
-                        {currentRank.games != null && <span>{currentRank.wins}W / {currentRank.games}G</span>}
-                        {currentRank.leaderboardRank > 0 && <span className={styles.rankLeaderboard}>#{currentRank.leaderboardRank}</span>}
-                      </div>
-                    </div>
-                  )}
-
-                  {matchList.length === 0 ? (
-                    <p className={styles.panelEmpty}>No recent match data found for this account.</p>
-                  ) : (
-                    <div className={styles.matchList}>
-                      <div className={styles.matchListHeader}>Recent matches ({matchList.length})</div>
-                      {matchList.map(m => {
-                        const duration = formatMatchDuration(m.durationSecs);
-                        return (
-                          <div key={m.matchId} className={styles.matchCard}>
-                            <div className={styles.matchCardHeader}>
-                              {m.won !== null && (
-                                <span className={m.won ? styles.matchResultWin : styles.matchResultLoss}>
-                                  {m.won ? 'WIN' : 'LOSS'}
-                                </span>
-                              )}
-                              <span className={styles.matchMap}>{m.mapName}</span>
-                              <span className={styles.matchScore}>
-                                {m.teamRed?.roundsWon ?? '?'}<span className={styles.matchScoreSep}>-</span>{m.teamBlue?.roundsWon ?? '?'}
-                              </span>
-                            </div>
-                            <div className={styles.matchCardMeta}>
-                              <span>{formatMatchDate(m.date)}</span>
-                              {duration && <span>{duration}</span>}
-                            </div>
-                            <div className={styles.matchCardStats}>
-                              {m.agentIcon ? (
-                                <img src={m.agentIcon} alt={m.agentName || ''} className={styles.matchAgentIcon} />
-                              ) : (
-                                <div className={styles.matchAgentPlaceholder} />
-                              )}
-                              <span className={styles.matchKda}>{m.kills}/{m.deaths}/{m.assists}</span>
-                              <span className={styles.matchStat}>ACS <b>{m.acs}</b></span>
-                              <span className={styles.matchStat}>ADR <b>{m.adr}</b></span>
-                              <span className={styles.matchStat}>HS <b>{m.hsPercent}%</b></span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <div className={styles.matchList}>
+                    {matchList.map(m => <MatchCard key={m.matchId} match={m} />)}
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.showMoreBtn}
+                    onClick={() => setMatchesModalOpen(true)}
+                  >
+                    Show more
+                  </button>
                 </>
               )}
             </div>
@@ -428,45 +425,12 @@ export default function InventoryDetails() {
           </div>
         )}
 
-        <Modal open={showRefreshModal} onClose={() => !refreshLoading && setShowRefreshModal(false)}>
-          <ModalHeader
-            title="Refresh account"
-            subtitle="Riot's login token expires quickly, so this needs a fresh one each time."
-          />
-          <ModalBody>
-            <TacticalButton
-              as="a"
-              variant="ghost"
-              fullWidth
-              href="https://auth.riotgames.com/authorize?redirect_uri=https%3A%2F%2Fplayvalorant.com%2Fopt_in&client_id=play-valorant-web-prod&response_type=token%20id_token&nonce=1&scope=account%20openid"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ marginBottom: 16 }}
-            >
-              1. Log in with Riot
-            </TacticalButton>
-            <TextField
-              label="2. Paste the resulting URL here"
-              type="text"
-              placeholder="https://playvalorant.com/opt_in#access_token=..."
-              value={refreshInput.riotUrl}
-              onChange={e => setRefreshInput(parseRiotAuthInput(e.target.value))}
-              onPaste={e => {
-                setRefreshInput(parseRiotAuthInput(e.clipboardData.getData('text')));
-                e.preventDefault();
-              }}
-            />
-            {refreshStatus && <p className={styles.refreshStatus}>{refreshStatus}</p>}
-            <TacticalButton
-              fullWidth
-              style={{ marginTop: 16 }}
-              disabled={refreshLoading || !refreshInput.riotToken}
-              onClick={handleRefreshAccount}
-            >
-              {refreshLoading ? 'Refreshing…' : 'Refresh account'}
-            </TacticalButton>
-          </ModalBody>
-        </Modal>
+        <MatchesModal
+          open={matchesModalOpen}
+          onClose={() => setMatchesModalOpen(false)}
+          puuid={riotAccount?.puuid}
+          initialMatches={matchList}
+        />
       </div>
     </>
   );

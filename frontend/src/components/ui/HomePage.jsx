@@ -10,6 +10,7 @@ import { calcAccountStats } from '../../utils/pricing';
 import { parseRiotAuthInput } from '../../utils/riotAuth';
 import usePagination from '../../hooks/usePagination';
 import { PAGE_SIZES } from '../../config/pagination';
+import { getSlotLimit } from '../../config/subscriptionTiers';
 import styles from './HomePage.module.css';
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "https://valoinventory-1.onrender.com";
@@ -29,7 +30,6 @@ export default function HomePage() {
   const [updateUrl, setUpdateUrl] = useState('');
   const [updateStatus, setUpdateStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState(() => localStorage.getItem('filters_searchQuery') || '');
-  const [groupByUser, setGroupByUser] = useState(() => localStorage.getItem('filters_groupByUser') === 'true');
   const [filtersOpen, setFiltersOpen] = useState(() => localStorage.getItem('filters_filtersOpen') === 'true');
   const [sortBy, setSortBy] = useState(() => localStorage.getItem('filters_sortBy') || '');
   const [sortDir, setSortDir] = useState(() => localStorage.getItem('filters_sortDir') || 'desc');
@@ -41,10 +41,11 @@ export default function HomePage() {
   const [showSharesPanel, setShowSharesPanel] = useState(false);
   const [copiedSharePuuid, setCopiedSharePuuid] = useState(null);
   const { refreshAccount, catalog, weaponSkins } = useInventory();
-  const { makeAuthenticatedRequest } = useAuth();
+  const { user, makeAuthenticatedRequest } = useAuth();
+  const slotLimit = getSlotLimit(user?.subscriptionTier);
+  const slotsLeft = Math.max(0, slotLimit - riotAccounts.length);
 
   useEffect(() => { localStorage.setItem('filters_searchQuery', searchQuery); }, [searchQuery]);
-  useEffect(() => { localStorage.setItem('filters_groupByUser', groupByUser); }, [groupByUser]);
   useEffect(() => { localStorage.setItem('filters_filtersOpen', filtersOpen); }, [filtersOpen]);
   useEffect(() => { localStorage.setItem('filters_sortBy', sortBy); }, [sortBy]);
   useEffect(() => { localStorage.setItem('filters_sortDir', sortDir); }, [sortDir]);
@@ -296,16 +297,9 @@ export default function HomePage() {
     let list = [...filteredAccounts];
 
     // Default to most recently updated first
-    if (!sortBy && !groupByUser) {
+    if (!sortBy) {
       list.sort((a, b) =>
         new Date(b.lastUpdated || 0).getTime() - new Date(a.lastUpdated || 0).getTime()
-      );
-    }
-
-    if (groupByUser) {
-      list.sort((a, b) =>
-        (a.nickname || a.name || '').toLowerCase()
-          .localeCompare((b.nickname || b.name || '').toLowerCase())
       );
     }
 
@@ -332,7 +326,7 @@ export default function HomePage() {
   const sharedAccounts = riotAccounts.filter(account => account.isShared);
   const accountsPagination = usePagination(displayedAccounts, {
     pageSize: PAGE_SIZES.accounts,
-    resetKey: `${searchQuery}|${sortBy}|${sortDir}|${groupByUser}`,
+    resetKey: `${searchQuery}|${sortBy}|${sortDir}`,
   });
   const sharedLinksPagination = usePagination(sharedAccounts, {
     pageSize: PAGE_SIZES.sharedLinks,
@@ -417,9 +411,18 @@ export default function HomePage() {
                   onChange={e => setSearchQuery(e.target.value)}
                 />
               </div>
+
+              <span className={styles.slotsInfo}>
+                Slots left:{' '}
+                <span className={slotsLeft === 0 ? styles.slotsInfoLow : styles.slotsInfoValue}>
+                  {slotsLeft}
+                </span>
+                {' '}/ {slotLimit}
+              </span>
+
               <button
                 onClick={() => setFiltersOpen(o => !o)}
-                className={`${styles.filtersToggle} ${(filtersOpen || sortBy || groupByUser) ? styles.filtersToggleActive : ''}`}
+                className={`${styles.filtersToggle} ${(filtersOpen || sortBy) ? styles.filtersToggleActive : ''}`}
               >
                 ⚙ Filters
                 <span className={`${styles.filtersToggleCaret} ${filtersOpen ? styles.filtersToggleCaretOpen : ''}`}>▼</span>
@@ -429,18 +432,6 @@ export default function HomePage() {
             {/* Expandable filter panel */}
             {filtersOpen && (
               <div className={styles.filtersPanel}>
-                <div className={styles.filterRow}>
-                  <span className={styles.filterRowLabel}>Grouping</span>
-                  <button
-                    onClick={() => setGroupByUser(g => !g)}
-                    className={`${styles.chip} ${groupByUser ? styles.chipActive : ''}`}
-                  >
-                    ⇅ Group matching accounts
-                  </button>
-                </div>
-
-                <div className={styles.filterDivider} />
-
                 <div className={styles.filterRow}>
                   <span className={styles.filterRowLabel}>Sort by</span>
                   {[

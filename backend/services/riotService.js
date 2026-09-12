@@ -1,5 +1,5 @@
 const fetch = (...args) => import('node-fetch').then(mod => mod.default(...args));
-const { RIOT_HEADERS, RIOT_ENDPOINTS, RIOT_ENTITLEMENT_IDS } = require('../config/constants');
+const { RIOT_HEADERS, RIOT_ENDPOINTS, RIOT_ENTITLEMENT_IDS, getFreshClientVersion } = require('../config/constants');
 
 class RiotService {
   static async getValorantVersion() {
@@ -77,25 +77,43 @@ class RiotService {
   }
 
   static async getSkins(puuid, entitlementToken, riotToken) {
-    const response = await fetch(`${RIOT_ENDPOINTS.SKINS}/${puuid}/${RIOT_ENTITLEMENT_IDS.SKINS}`, {
-      headers: {
-        ...RIOT_HEADERS,
-        'X-Riot-Entitlements-JWT': entitlementToken,
-        Authorization: `Bearer ${riotToken}`
+    try {
+      const response = await fetch(`${RIOT_ENDPOINTS.SKINS}/${puuid}/${RIOT_ENTITLEMENT_IDS.SKINS}`, {
+        headers: {
+          ...RIOT_HEADERS,
+          'X-Riot-Entitlements-JWT': entitlementToken,
+          Authorization: `Bearer ${riotToken}`
+        }
+      });
+      if (!response.ok) {
+        console.error(`🔫 [RiotService] Error fetching skins entitlements: HTTP ${response.status}`);
+        return null;
       }
-    });
-    return response.json();
+      return response.json();
+    } catch (error) {
+      console.error('🔫 [RiotService] Error fetching skins entitlements:', error);
+      return null;
+    }
   }
 
   static async getLoadout(puuid, entitlementToken, riotToken) {
-    const response = await fetch(`${RIOT_ENDPOINTS.LOADOUT}/${puuid}/playerloadout`, {
-      headers: {
-        ...RIOT_HEADERS,
-        'X-Riot-Entitlements-JWT': entitlementToken,
-        Authorization: `Bearer ${riotToken}`
+    try {
+      const response = await fetch(`${RIOT_ENDPOINTS.LOADOUT}/${puuid}/playerloadout`, {
+        headers: {
+          ...RIOT_HEADERS,
+          'X-Riot-Entitlements-JWT': entitlementToken,
+          Authorization: `Bearer ${riotToken}`
+        }
+      });
+      if (!response.ok) {
+        console.error(`🎒 [RiotService] Error fetching loadout: HTTP ${response.status}`);
+        return null;
       }
-    });
-    return response.json();
+      return response.json();
+    } catch (error) {
+      console.error('🎒 [RiotService] Error fetching loadout:', error);
+      return null;
+    }
   }
 
   // Account level (XP), straight from Riot — replaces the old HenrikDev proxy
@@ -137,6 +155,13 @@ class RiotService {
       const response = await fetch(url, {
         headers: {
           ...RIOT_HEADERS,
+          // Confirmed live (via the sibling ValoInventory project): this
+          // endpoint 500s (INTERNAL_UNHANDLED_SERVER_ERROR) with the stale
+          // hardcoded version in RIOT_HEADERS but works with a fresh one —
+          // unlike most other pd.*.a.pvp.net calls, mmr/v1 actually
+          // validates X-Riot-ClientVersion. The fallback chain below (see
+          // getRankHistory) still applies in case this stops being enough.
+          'X-Riot-ClientVersion': await getFreshClientVersion(),
           'X-Riot-Entitlements-JWT': entitlementToken,
           Authorization: `Bearer ${riotToken}`
         }
@@ -244,9 +269,16 @@ class RiotService {
   // Match id list (no result/score — that's a separate match-details call
   // per id, see getMatchDetails below). Same sliding-window pagination cap
   // as competitiveupdates. https://valapidocs.techchrism.me/endpoint/match-history
-  static async getMatchHistory(puuid, entitlementToken, riotToken, shard, startIndex, endIndex, queue = 'competitive') {
+  // `queue` defaults to null (no filter) — omitting the query param entirely
+  // returns matches across every mode (competitive, unrated, deathmatch,
+  // spike rush, etc.), not just competitive. Confirmed live: an account that
+  // hasn't queued competitive recently showed 0 "recent matches" even with
+  // plenty of games played in other modes — this endpoint was silently
+  // filtered down to competitive-only the whole time.
+  static async getMatchHistory(puuid, entitlementToken, riotToken, shard, startIndex, endIndex, queue = null) {
     try {
-      const url = `https://pd.${shard}.a.pvp.net/match-history/v1/history/${puuid}?startIndex=${startIndex}&endIndex=${endIndex}&queue=${queue}`;
+      const queueParam = queue ? `&queue=${queue}` : '';
+      const url = `https://pd.${shard}.a.pvp.net/match-history/v1/history/${puuid}?startIndex=${startIndex}&endIndex=${endIndex}${queueParam}`;
       const response = await fetch(url, {
         headers: {
           ...RIOT_HEADERS,
@@ -262,11 +294,16 @@ class RiotService {
     }
   }
 
-  // The N most recent competitive match ids, newest first (Riot already
-  // returns it in that order).
-  static async getRecentMatchIds(puuid, entitlementToken, riotToken, shard, limit = 10) {
-    const data = await this.getMatchHistory(puuid, entitlementToken, riotToken, shard, 0, limit, 'competitive');
-    return (data?.History || []).map(h => h.MatchID);
+  // One page of match ids, newest first (Riot already returns it in that
+  // order) — plus Riot's own `Total`, so callers can tell whether there's
+  // another page without guessing. `queue` defaults to null (every mode);
+  // pass e.g. 'competitive' to filter to just that queue.
+  static async getMatchIdsPage(puuid, entitlementToken, riotToken, shard, startIndex = 0, count = 14, queue = null) {
+    const data = await this.getMatchHistory(puuid, entitlementToken, riotToken, shard, startIndex, startIndex + count, queue);
+    return {
+      matchIds: (data?.History || []).map(h => h.MatchID),
+      total: data?.Total ?? null
+    };
   }
 
   // Full match detail blob for one match — raw, unprocessed. Straight from
@@ -330,6 +367,11 @@ class RiotService {
     return {
       matchId: matchDetails.matchInfo.matchId,
       date: new Date(matchDetails.matchInfo.gameStartMillis).toISOString(),
+      // Now that match history is fetched across every mode (see
+      // getMatchHistory above), the mode isn't implied by "this list" anymore
+      // — carry it through so the UI can label each card (deathmatch has no
+      // rounds, so ACS/ADR/HS below are honestly 0 for those).
+      queueId: matchDetails.matchInfo.queueID || null,
       mapUrl: matchDetails.matchInfo.mapId,
       durationSecs: matchDetails.matchInfo.gameLengthMillis
         ? Math.round(matchDetails.matchInfo.gameLengthMillis / 1000)
@@ -349,17 +391,31 @@ class RiotService {
     };
   }
 
-  // Recent competitive matches, fully summarized for this account — id list
-  // first, then match-details in parallel for each (capped at `limit`, kept
-  // small since it's an N+1: one Riot call per match on top of the id list).
-  static async getRecentMatchSummaries(puuid, entitlementToken, riotToken, shard, limit = 10) {
-    const matchIds = await this.getRecentMatchIds(puuid, entitlementToken, riotToken, shard, limit);
+  // One page of fully-summarized matches — id list for that page first, then
+  // match-details in parallel for each (an N+1: one Riot call per match on
+  // top of the id list, so `count` is kept modest — this is what backs the
+  // Details "Show more" pagination, 14 matches per page).
+  static async getMatchSummariesPage(puuid, entitlementToken, riotToken, shard, startIndex = 0, count = 14) {
+    const { matchIds, total } = await this.getMatchIdsPage(puuid, entitlementToken, riotToken, shard, startIndex, count);
     const details = await Promise.all(
       matchIds.map(id => this.getMatchDetails(id, entitlementToken, riotToken, shard))
     );
-    return details
+    const matches = details
       .map(d => d ? this.summarizeMatchForPlayer(d, puuid) : null)
       .filter(Boolean);
+    return {
+      matches,
+      total,
+      hasMore: total !== null ? startIndex + matchIds.length < total : matchIds.length === count
+    };
+  }
+
+  // First page only, matches-array shape — what addRiotAccount/refreshAccount
+  // and the live-rank endpoint store/return; the paginated "Show more" flow
+  // in Details calls getMatchSummariesPage directly instead.
+  static async getRecentMatchSummaries(puuid, entitlementToken, riotToken, shard, limit = 14) {
+    const page = await this.getMatchSummariesPage(puuid, entitlementToken, riotToken, shard, 0, limit);
+    return page.matches;
   }
 
   // Active penalties/restrictions (queue bans, comms restrictions, etc.) for
@@ -389,14 +445,23 @@ class RiotService {
   }
 
   static async getBuddies(puuid, entitlementToken, riotToken) {
-    const response = await fetch(`${RIOT_ENDPOINTS.BUDDIES}/${puuid}/${RIOT_ENTITLEMENT_IDS.BUDDIES}`, {
-      headers: {
-        ...RIOT_HEADERS,
-        'X-Riot-Entitlements-JWT': entitlementToken,
-        Authorization: `Bearer ${riotToken}`
+    try {
+      const response = await fetch(`${RIOT_ENDPOINTS.BUDDIES}/${puuid}/${RIOT_ENTITLEMENT_IDS.BUDDIES}`, {
+        headers: {
+          ...RIOT_HEADERS,
+          'X-Riot-Entitlements-JWT': entitlementToken,
+          Authorization: `Bearer ${riotToken}`
+        }
+      });
+      if (!response.ok) {
+        console.error(`🐶 [RiotService] Error fetching buddies entitlements: HTTP ${response.status}`);
+        return null;
       }
-    });
-    return response.json();
+      return response.json();
+    } catch (error) {
+      console.error('🐶 [RiotService] Error fetching buddies entitlements:', error);
+      return null;
+    }
   }
 
   static async getBuddyDetails(itemIDs) {
@@ -455,25 +520,43 @@ class RiotService {
 
 
   static async getBattlePasses(puuid, entitlementToken, riotToken) {
-    const response = await fetch(`${RIOT_ENDPOINTS.BATTLE_PASSES}/${puuid}/${RIOT_ENTITLEMENT_IDS.BATTLE_PASSES}`, {
-      headers: {
-        ...RIOT_HEADERS,
-        'X-Riot-Entitlements-JWT': entitlementToken,
-        Authorization: `Bearer ${riotToken}`
+    try {
+      const response = await fetch(`${RIOT_ENDPOINTS.BATTLE_PASSES}/${puuid}/${RIOT_ENTITLEMENT_IDS.BATTLE_PASSES}`, {
+        headers: {
+          ...RIOT_HEADERS,
+          'X-Riot-Entitlements-JWT': entitlementToken,
+          Authorization: `Bearer ${riotToken}`
+        }
+      });
+      if (!response.ok) {
+        console.error(`🎫 [RiotService] Error fetching battle pass entitlements: HTTP ${response.status}`);
+        return null;
       }
-    });
-    return response.json();
+      return response.json();
+    } catch (error) {
+      console.error('🎫 [RiotService] Error fetching battle pass entitlements:', error);
+      return null;
+    }
   }
 
   static async getCards(puuid, entitlementToken, riotToken) {
-    const response = await fetch(`${RIOT_ENDPOINTS.CARDS}/${puuid}/${RIOT_ENTITLEMENT_IDS.CARDS}`, {
-      headers: {
-        ...RIOT_HEADERS,
-        'X-Riot-Entitlements-JWT': entitlementToken,
-        Authorization: `Bearer ${riotToken}`
+    try {
+      const response = await fetch(`${RIOT_ENDPOINTS.CARDS}/${puuid}/${RIOT_ENTITLEMENT_IDS.CARDS}`, {
+        headers: {
+          ...RIOT_HEADERS,
+          'X-Riot-Entitlements-JWT': entitlementToken,
+          Authorization: `Bearer ${riotToken}`
+        }
+      });
+      if (!response.ok) {
+        console.error(`🃏 [RiotService] Error fetching card entitlements: HTTP ${response.status}`);
+        return null;
       }
-    });
-    return response.json();
+      return response.json();
+    } catch (error) {
+      console.error('🃏 [RiotService] Error fetching card entitlements:', error);
+      return null;
+    }
   }
 
   static async getSprays(puuid, entitlementToken, riotToken) {
@@ -486,38 +569,61 @@ class RiotService {
         }
       });
 
+      if (!response.ok) {
+        console.error(`🎨 [RiotService] Error fetching spray entitlements: HTTP ${response.status}`);
+        return null;
+      }
+
       const data = await response.json();
       return data;
     } catch (error) {
       console.error('Failed to load sprays:', error);
-      throw error;
+      return null;
     }
   }
 
   static async getTitles(puuid, entitlementToken, riotToken) {
-    const response = await fetch(`${RIOT_ENDPOINTS.TITLES}/${puuid}/${RIOT_ENTITLEMENT_IDS.TITLES}`, {
-      headers: {
-        ...RIOT_HEADERS,
-        'X-Riot-Entitlements-JWT': entitlementToken,
-        Authorization: `Bearer ${riotToken}`
-      }
-    });
+    try {
+      const response = await fetch(`${RIOT_ENDPOINTS.TITLES}/${puuid}/${RIOT_ENTITLEMENT_IDS.TITLES}`, {
+        headers: {
+          ...RIOT_HEADERS,
+          'X-Riot-Entitlements-JWT': entitlementToken,
+          Authorization: `Bearer ${riotToken}`
+        }
+      });
 
-    const data = await response.json();
-    return data;
+      if (!response.ok) {
+        console.error(`🏷️ [RiotService] Error fetching title entitlements: HTTP ${response.status}`);
+        return null;
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('🏷️ [RiotService] Error fetching title entitlements:', error);
+      return null;
+    }
   }
 
   static async getAgents(puuid, entitlementToken, riotToken) {
-    const response = await fetch(`${RIOT_ENDPOINTS.AGENTS}/${puuid}/${RIOT_ENTITLEMENT_IDS.AGENTS}`, {
-      headers: {
-        ...RIOT_HEADERS,
-        'X-Riot-Entitlements-JWT': entitlementToken,
-        Authorization: `Bearer ${riotToken}`
-      }
-    });
+    try {
+      const response = await fetch(`${RIOT_ENDPOINTS.AGENTS}/${puuid}/${RIOT_ENTITLEMENT_IDS.AGENTS}`, {
+        headers: {
+          ...RIOT_HEADERS,
+          'X-Riot-Entitlements-JWT': entitlementToken,
+          Authorization: `Bearer ${riotToken}`
+        }
+      });
 
-    const data = await response.json();
-    return data;
+      if (!response.ok) {
+        console.error(`🧑‍🤝‍🧑 [RiotService] Error fetching agent entitlements: HTTP ${response.status}`);
+        return null;
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('🧑‍🤝‍🧑 [RiotService] Error fetching agent entitlements:', error);
+      return null;
+    }
   }
 
   static async getFlex(puuid, entitlementToken, riotToken) {

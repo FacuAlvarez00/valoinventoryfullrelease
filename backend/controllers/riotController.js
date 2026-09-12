@@ -1,5 +1,12 @@
 const RiotService = require('../services/riotService');
+const riotHarvester = require('../services/riotHarvester');
+const { regionToShard } = require('../config/constants');
 const User = require('../models/User');
+
+// Short cache for getLiveRankAndMatches — same 5min TTL the sibling
+// ValoInventory project uses, module-scoped like catalogCache.js's cache.
+const liveRankCache = new Map(); // puuid -> { rank, expiresAt }
+const LIVE_RANK_TTL_MS = 5 * 60 * 1000;
 
 class RiotController {
   static async getSkins(req, res) {
@@ -236,27 +243,27 @@ class RiotController {
       let agentsWithDetails = [];
       let buddiesWithDetails = [];
 
-      if (cardsData.Entitlements && cardsData.Entitlements.length > 0) {
+      if (cardsData?.Entitlements && cardsData.Entitlements.length > 0) {
         const cardIDs = cardsData.Entitlements.map(card => card.ItemID);
         cardsWithDetails = await RiotService.getCardDetails(cardIDs);
       }
 
-      if (spraysData.Entitlements && spraysData.Entitlements.length > 0) {
+      if (spraysData?.Entitlements && spraysData.Entitlements.length > 0) {
         const sprayIDs = spraysData.Entitlements.map(spray => spray.ItemID);
         spraysWithDetails = await RiotService.getSprayDetails(sprayIDs);
       }
 
-      if (titlesData.Entitlements && titlesData.Entitlements.length > 0) {
+      if (titlesData?.Entitlements && titlesData.Entitlements.length > 0) {
         const titleIDs = titlesData.Entitlements.map(title => title.ItemID);
         titlesWithDetails = await RiotService.getTitleDetails(titleIDs);
       }
 
-      if (buddiesData.Entitlements && buddiesData.Entitlements.length > 0) {
+      if (buddiesData?.Entitlements && buddiesData.Entitlements.length > 0) {
         const buddyIDs = buddiesData.Entitlements.map(buddy => buddy.ItemID);
         buddiesWithDetails = await RiotService.getBuddyDetails(buddyIDs);
       }
 
-      if (agentsData.Entitlements && agentsData.Entitlements.length > 0) {
+      if (agentsData?.Entitlements && agentsData.Entitlements.length > 0) {
         const agentIDs = agentsData.Entitlements.map(agent => agent.ItemID);
         agentsWithDetails = await RiotService.getAgentDetails(agentIDs);
       }
@@ -270,18 +277,22 @@ class RiotController {
         });
       }
 
-      // Link the account to the user
+      // Link the account to the user. loadoutData/skinsData/etc. can come
+      // back null (Riot's own endpoint 404ing/erroring — see RiotService) —
+      // null/[] here is the honest "we don't have this yet" state; storing
+      // Riot's raw error body instead (the old bug) silently poisoned the
+      // field so the Loadout page rendered as if nothing were equipped.
       const newAccount = {
         name: accountName,
         puuid,
         nickname,
-        loadout: loadoutData,
+        loadout: loadoutData || null,
         accountLevel,
         rank,
         penalties,
-        skins: skinsData.Entitlements || [],
+        skins: skinsData?.Entitlements || [],
         buddies: buddiesWithDetails,
-        battlePasses: battlePassesData.Entitlements || [],
+        battlePasses: battlePassesData?.Entitlements || [],
         cards: cardsWithDetails,
         sprays: spraysWithDetails,
         titles: titlesWithDetails,
@@ -461,45 +472,51 @@ class RiotController {
       let agentsWithDetails = [];
       let buddiesWithDetails = [];
 
-      if (cardsData.Entitlements && cardsData.Entitlements.length > 0) {
+      if (cardsData?.Entitlements && cardsData.Entitlements.length > 0) {
         const cardIDs = cardsData.Entitlements.map(card => card.ItemID);
         cardsWithDetails = await RiotService.getCardDetails(cardIDs);
       }
 
-      if (spraysData.Entitlements && spraysData.Entitlements.length > 0) {
+      if (spraysData?.Entitlements && spraysData.Entitlements.length > 0) {
         const sprayIDs = spraysData.Entitlements.map(spray => spray.ItemID);
         spraysWithDetails = await RiotService.getSprayDetails(sprayIDs);
       }
 
-      if (titlesData.Entitlements && titlesData.Entitlements.length > 0) {
+      if (titlesData?.Entitlements && titlesData.Entitlements.length > 0) {
         const titleIDs = titlesData.Entitlements.map(title => title.ItemID);
         titlesWithDetails = await RiotService.getTitleDetails(titleIDs);
       }
 
-      if (buddiesData.Entitlements && buddiesData.Entitlements.length > 0) {
+      if (buddiesData?.Entitlements && buddiesData.Entitlements.length > 0) {
         const buddyIDs = buddiesData.Entitlements.map(buddy => buddy.ItemID);
         buddiesWithDetails = await RiotService.getBuddyDetails(buddyIDs);
       }
 
-      if (agentsData.Entitlements && agentsData.Entitlements.length > 0) {
+      if (agentsData?.Entitlements && agentsData.Entitlements.length > 0) {
         const agentIDs = agentsData.Entitlements.map(agent => agent.ItemID);
         agentsWithDetails = await RiotService.getAgentDetails(agentIDs);
       }
 
-      // Update the linked account
+      // Update the linked account. Each *Data source can come back null when
+      // Riot's endpoint failed for this refresh (see RiotService) — fall back
+      // to whatever was already stored instead of overwriting good data with
+      // null/[] on a transient failure. cards/sprays/titles/agents/buddies
+      // are the resolved *WithDetails arrays, which already default to []
+      // when their source was empty/null, so only fall back when that source
+      // itself failed (as opposed to legitimately being empty).
       account.name = userinfo.preferred_username || userinfo.acct?.game_name || nickname;
       account.nickname = nickname;
-      account.loadout = loadoutData;
+      account.loadout = loadoutData || account.loadout;
       account.accountLevel = accountLevel;
       account.rank = rank;
       account.penalties = penalties;
-      account.skins = skinsData.Entitlements || [];
-      account.buddies = buddiesWithDetails;
-      account.battlePasses = battlePassesData.Entitlements || [];
-      account.cards = cardsWithDetails;
-      account.sprays = spraysWithDetails;
-      account.titles = titlesWithDetails;
-      account.agents = agentsWithDetails;
+      account.skins = skinsData ? (skinsData.Entitlements || []) : account.skins;
+      account.buddies = buddiesData ? buddiesWithDetails : account.buddies;
+      account.battlePasses = battlePassesData ? (battlePassesData.Entitlements || []) : account.battlePasses;
+      account.cards = cardsData ? cardsWithDetails : account.cards;
+      account.sprays = spraysData ? spraysWithDetails : account.sprays;
+      account.titles = titlesData ? titlesWithDetails : account.titles;
+      account.agents = agentsData ? agentsWithDetails : account.agents;
       account.wallet = walletData;
       account.currencyDetails = currencyDetails;
       account.flex = flexData;
@@ -560,6 +577,86 @@ class RiotController {
         success: false,
         message: 'Failed to delete the Riot account'
       });
+    }
+  }
+
+  // Live rank + recent matches for a linked account, via the shared
+  // harvester session (see services/riotHarvester.js) instead of that
+  // account's own token — so this can be called any time the Details page
+  // is opened, not just right after the account owner logs in through Riot.
+  // Short in-memory cache (same 5min TTL the sibling ValoInventory project
+  // uses) so repeated page views don't hammer Riot's rate limit with a full
+  // match-history + up to 10 match-details fetch each time.
+  static async getLiveRankAndMatches(req, res) {
+    const { puuid } = req.params;
+
+    try {
+      const account = req.user.riotAccounts.find(acc => acc.puuid === puuid);
+      if (!account) {
+        return res.status(404).json({ success: false, message: 'Riot account not found' });
+      }
+
+      const cached = liveRankCache.get(puuid);
+      if (cached && Date.now() < cached.expiresAt) {
+        return res.json({ success: true, rank: cached.rank, cached: true });
+      }
+
+      const shard = regionToShard(account.regionInfo?.affinities?.live);
+      const session = await riotHarvester.getHarvesterSession();
+
+      const [rank, recentMatches] = await Promise.all([
+        RiotService.getRankHistory(puuid, session.entitlementsToken, session.accessToken, shard),
+        RiotService.getRecentMatchSummaries(puuid, session.entitlementsToken, session.accessToken, shard)
+      ]);
+      rank.matches = recentMatches;
+
+      liveRankCache.set(puuid, { rank, expiresAt: Date.now() + LIVE_RANK_TTL_MS });
+
+      // Persist too, so it's still there (if a bit stale) even if the
+      // harvester session dies before the next view.
+      account.rank = rank;
+      await req.user.save();
+
+      res.json({ success: true, rank });
+    } catch (err) {
+      if (err instanceof riotHarvester.HarvesterLoginRequiredError) {
+        return res.status(503).json({ success: false, message: err.message, needsHarvesterLogin: true });
+      }
+      console.error('Failed to fetch live rank/matches:', err);
+      res.status(500).json({ success: false, message: 'Failed to fetch live rank/matches' });
+    }
+  }
+
+  // One page of match history for "Show more" in the Details matches modal
+  // (14 per page by default). Same harvester session as getLiveRankAndMatches,
+  // no per-page cache — each page is its own distinct request, nothing to
+  // dedupe, and the modal's own 5-page cap already bounds how many of these
+  // one view can trigger.
+  static async getMatchesPage(req, res) {
+    const { puuid } = req.params;
+    const startIndex = Math.max(0, parseInt(req.query.startIndex, 10) || 0);
+    const count = Math.min(28, Math.max(1, parseInt(req.query.count, 10) || 14));
+
+    try {
+      const account = req.user.riotAccounts.find(acc => acc.puuid === puuid);
+      if (!account) {
+        return res.status(404).json({ success: false, message: 'Riot account not found' });
+      }
+
+      const shard = regionToShard(account.regionInfo?.affinities?.live);
+      const session = await riotHarvester.getHarvesterSession();
+
+      const page = await RiotService.getMatchSummariesPage(
+        puuid, session.entitlementsToken, session.accessToken, shard, startIndex, count
+      );
+
+      res.json({ success: true, ...page });
+    } catch (err) {
+      if (err instanceof riotHarvester.HarvesterLoginRequiredError) {
+        return res.status(503).json({ success: false, message: err.message, needsHarvesterLogin: true });
+      }
+      console.error('Failed to fetch matches page:', err);
+      res.status(500).json({ success: false, message: 'Failed to fetch matches page' });
     }
   }
 

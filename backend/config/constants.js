@@ -9,8 +9,39 @@ const COOKIE_OPTIONS = {
 
 const RIOT_HEADERS = {
   'X-Riot-ClientPlatform': 'ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQyLjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp9',
+  // Static fallback — deliberately stale. Don't use it directly for
+  // match/rank fetches, see getFreshClientVersion() below: confirmed live
+  // that mmr/v1/players returns 500 (INTERNAL_UNHANDLED_SERVER_ERROR) with
+  // this old version while match-history/match-details tolerate it — but
+  // best not to rely on that staying true forever.
   'X-Riot-ClientVersion': 'B312378013F36E38'
 };
+
+let cachedClientVersion = null; // { value, fetchedAt }
+const CLIENT_VERSION_TTL_MS = 6 * 60 * 60 * 1000; // 6h
+
+// The real, current Valorant client version, via valorant-api.com (public,
+// no key, a static mirror of game content — not a stats API). Cached 6h so
+// it's not fetched on every Riot call; falls back to the hardcoded string
+// above if the fetch fails, instead of breaking everything.
+async function getFreshClientVersion() {
+  const now = Date.now();
+  if (cachedClientVersion && now - cachedClientVersion.fetchedAt < CLIENT_VERSION_TTL_MS) {
+    return cachedClientVersion.value;
+  }
+  try {
+    const res = await fetch('https://valorant-api.com/v1/version');
+    const data = await res.json();
+    const version = data?.data?.riotClientVersion;
+    if (version) {
+      cachedClientVersion = { value: version, fetchedAt: now };
+      return version;
+    }
+  } catch {
+    // falls through to the hardcoded fallback below
+  }
+  return RIOT_HEADERS['X-Riot-ClientVersion'];
+}
 
 const RIOT_ENDPOINTS = {
   USER_INFO: 'https://auth.riotgames.com/userinfo',
@@ -48,10 +79,34 @@ const RIOT_ENTITLEMENT_IDS = {
   FLEX: '03a572de-4234-31ed-d344-ababa488f981'
 };
 
+// The rest of RIOT_ENDPOINTS is hardcoded to the `na` shard (pre-existing
+// tech debt). Maps a Riot region name ('na'/'eu'/'ap'/'kr'/'latam'/'br'/...,
+// as returned in regionInfo.affinities.live and already stored per account —
+// see riotController.js) to the real pd.{shard}.a.pvp.net shard. Ported from
+// D:\valomanager\src\lib\riot\constants.ts (regionToShard).
+function regionToShard(region) {
+  switch ((region || '').toUpperCase()) {
+    case 'EU':
+      return 'eu';
+    case 'AP':
+      return 'ap';
+    case 'KR':
+      return 'kr';
+    case 'LAS':
+    case 'LATAM':
+    case 'BR':
+    case 'NA':
+    default:
+      return 'na';
+  }
+}
+
 module.exports = {
   JWT_SECRET,
   COOKIE_OPTIONS,
   RIOT_HEADERS,
   RIOT_ENDPOINTS,
-  RIOT_ENTITLEMENT_IDS
+  RIOT_ENTITLEMENT_IDS,
+  regionToShard,
+  getFreshClientVersion
 };

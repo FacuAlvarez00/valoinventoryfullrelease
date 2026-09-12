@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import HarvesterAdminModal from './HarvesterAdminModal';
 import styles from './AppHeader.module.css';
 
 export default function AppHeader() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [harvesterModalOpen, setHarvesterModalOpen] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -81,6 +83,24 @@ export default function AppHeader() {
                   </button>
                 </div>
 
+                {user.isAdmin && (
+                  <div className={styles.menuSection}>
+                    <span className={styles.menuSectionLabel}>Admin</span>
+                    <button
+                      type="button"
+                      className={styles.menuItem}
+                      role="menuitem"
+                      onClick={() => { setMenuOpen(false); setHarvesterModalOpen(true); }}
+                    >
+                      <span>
+                        <strong>Riot harvester session</strong>
+                        <small>Powers live rank/matches for every account</small>
+                      </span>
+                      <span className={styles.menuArrow} aria-hidden="true">→</span>
+                    </button>
+                  </div>
+                )}
+
                 <div className={styles.logoutSection}>
                   <button type="button" className={styles.logoutButton} role="menuitem" onClick={handleLogout}>
                     Sign out
@@ -91,6 +111,10 @@ export default function AppHeader() {
           </div>
         )}
       </div>
+
+      {user?.isAdmin && (
+        <HarvesterAdminModal open={harvesterModalOpen} onClose={() => setHarvesterModalOpen(false)} />
+      )}
     </header>
   );
 }

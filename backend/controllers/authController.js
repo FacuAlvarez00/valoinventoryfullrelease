@@ -42,7 +42,12 @@ class AuthController {
       res.cookie('token', token, COOKIE_OPTIONS);
       res.json({
         success: true,
-        user: { username: user.username, email: user.email },
+        user: {
+          username: user.username,
+          email: user.email,
+          subscriptionTier: user.subscriptionTier,
+          isAdmin: user.isAdmin
+        },
         token
       });
     } catch (err) {
@@ -89,7 +94,12 @@ class AuthController {
       res.cookie('token', token, COOKIE_OPTIONS);
       res.json({
         success: true,
-        user: { username: user.username, email: user.email },
+        user: {
+          username: user.username,
+          email: user.email,
+          subscriptionTier: user.subscriptionTier,
+          isAdmin: user.isAdmin
+        },
         token
       });
     } catch (err) {

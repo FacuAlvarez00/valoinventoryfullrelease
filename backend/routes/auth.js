@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const AuthController = require('../controllers/authController');
 const RiotController = require('../controllers/riotController');
+const HarvesterController = require('../controllers/harvesterController');
 const authMiddleware = require('../middleware/auth');
+const adminOnly = require('../middleware/adminOnly');
 
 // Authentication routes
 router.post('/register', AuthController.register);
@@ -27,6 +29,18 @@ router.post('/riot/test-region-info', RiotController.testRegionInfo);
 router.post('/riot/account', authMiddleware, RiotController.addRiotAccount);
 router.post('/riot/account/refresh', authMiddleware, RiotController.refreshAccount);
 router.delete('/riot/account/:puuid', authMiddleware, RiotController.removeRiotAccount);
+// Live rank + recent matches for a linked account, via the shared harvester
+// session — no per-account re-login needed, see riotController.getLiveRankAndMatches.
+router.get('/riot/account/:puuid/live', authMiddleware, RiotController.getLiveRankAndMatches);
+// One page of match history (?startIndex=&count=) for "Show more" in the
+// Details matches modal — see riotController.getMatchesPage.
+router.get('/riot/account/:puuid/matches', authMiddleware, RiotController.getMatchesPage);
+
+// Shared harvester session (one Riot account whose session serves live
+// rank/matches for any linked account) — admin-only, it's a global resource,
+// see harvesterController.js.
+router.get('/riot-harvester/status', authMiddleware, adminOnly, HarvesterController.getStatus);
+router.put('/riot-harvester', authMiddleware, adminOnly, HarvesterController.bootstrap);
 
 // Diagnostic route
 router.get('/test', (req, res) => {

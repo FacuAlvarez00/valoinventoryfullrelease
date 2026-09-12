@@ -47,10 +47,9 @@
 
 .detailsGrid {
   display: grid;
-  /* leftCol keeps the same relative width it had when the right side was
-     two separate 1fr columns (1.6 : 1+1) — now that they're one merged
-     column it needs 2fr, not 1fr, to occupy the same share of the row. */
-  grid-template-columns: 1.6fr 2fr;
+  /* Three columns: account info (narrower than its old 1.6fr share),
+     rank + rank history, and recent matches + penalties. */
+  grid-template-columns: 1.1fr 0.9fr 1.3fr;
   gap: 20px;
 }
 
@@ -59,8 +58,23 @@
   flex-direction: column;
 }
 
-/* Competitive History (3/4) stacked above Penalties (1/4) instead of the
-   two living side by side. This needs an explicit height, not just capped
+/* Single panel taking the whole column — kept the same fixed height as
+   rightCol (see below) so all three columns line up. */
+.rankCol {
+  display: flex;
+  flex-direction: column;
+  height: 700px;
+  min-height: 0;
+}
+
+.rankCol .sidePanel {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Recent matches (3/4) stacked above Penalties (1/4) instead of the two
+   living side by side. This needs an explicit height, not just capped
    children: grid sizes an auto row to whichever column's content is
    tallest, so once real match cards made this column taller than leftCol,
    the whole row grew to fit it and Penalties — sharing that inflated
@@ -96,6 +110,25 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.liveBadge {
+  color: var(--vi-green);
+  font-family: var(--vi-font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.staleBadge {
+  color: rgba(236, 232, 225, 0.4);
+  font-family: var(--vi-font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: help;
 }
 
 .panelTitle {
@@ -182,15 +215,45 @@
   font-weight: 700;
 }
 
-.matchListHeader {
-  margin-top: 20px;
-  margin-bottom: 8px;
-  color: rgba(236, 232, 225, 0.42);
+.rankHistoryList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.rankHistoryList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rankHistoryList::-webkit-scrollbar-thumb {
+  background: var(--vi-border);
+  border-radius: 3px;
+}
+
+.showMoreBtn {
+  flex-shrink: 0;
+  margin-top: 4px;
+  padding: 8px 0;
+  border-radius: 2px;
+  border: 1px solid var(--vi-border);
+  background: transparent;
+  color: rgba(236, 232, 225, 0.6);
   font-family: var(--vi-font-heading);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 1.4px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s ease-out, color 0.2s ease-out;
+}
+
+.showMoreBtn:hover {
+  border-color: var(--vi-red);
+  color: var(--vi-red);
 }
 
 .matchList {
@@ -276,6 +339,13 @@
   font-size: 11px;
 }
 
+.matchQueue {
+  color: rgba(236, 232, 225, 0.65);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
 .matchCardStats {
   display: flex;
   align-items: center;
@@ -308,6 +378,30 @@
 .matchStat b {
   color: rgba(236, 232, 225, 0.85);
   font-weight: 700;
+}
+
+.matchModalList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.matchModalList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.matchModalList::-webkit-scrollbar-thumb {
+  background: var(--vi-border);
+  border-radius: 3px;
+}
+
+.matchModalError {
+  margin: 8px 0 0;
+  color: var(--vi-red);
+  font-size: 12px;
 }
 
 .penaltyList {
@@ -346,9 +440,14 @@
   word-break: break-word;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1300px) {
   .detailsGrid {
     grid-template-columns: 1fr;
+  }
+
+  .rankCol,
+  .rightCol {
+    height: auto;
   }
 }
 
@@ -478,28 +577,6 @@
   gap: 12px;
 }
 
-.refreshBtn {
-  background: rgba(255, 70, 84, 0.1);
-  border: 1px solid var(--vi-red);
-  border-radius: 2px;
-  color: var(--vi-red);
-  font-size: 12px;
-  font-weight: 700;
-  font-family: var(--vi-font-heading);
-  padding: 4px 10px;
-  cursor: pointer;
-  transition: all 0.2s ease-out;
-}
-
-.refreshBtn:hover {
-  background: rgba(255, 70, 84, 0.18);
-}
-
-.refreshStatus {
-  margin: 8px 0 0;
-  color: var(--vi-red);
-  font-size: 12px;
-}
 
 .grid {
   display: grid;

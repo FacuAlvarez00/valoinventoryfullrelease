@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { InventoryProvider, useInventory } from "./context/InventoryContext";
 import { AuthPage } from "./components/auth";
-import { HomePage, LandingPage, PageWrapper, LoadingScreen, AppHeader } from "./components/ui";
+import { HomePage, LandingPage, PageWrapper, LoadingScreen, AppHeader, Footer } from "./components/ui";
 import appStyles from "./App.module.css";
 import { WeaponDetail } from "./components/weapons";
 import { MySkins } from './components/inventory';
@@ -320,6 +320,7 @@ function AppContent() {
         onWeaponSelect={setSelectedWeapon}
       />
 
+      <Footer />
     </div>
   );
 }
