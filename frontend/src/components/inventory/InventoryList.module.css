@@ -213,17 +213,33 @@
   }
 }
 
-/* ---- Grids ---- */
+/* ---- Grids ----
 
-/* Fixed-size columns keep cards from stretching when only a few items exist. */
+   auto-fill with a FIXED track size (the old `200px`/`280px` here) only ever
+   grows the grid from the left: browsers fit as many fixed columns as
+   possible, then dump every leftover pixel as dead space after the last
+   column — nothing distributes it back to center the block or pad the
+   right edge. Two visible symptoms followed directly from that:
+     1. Left margin (the .page padding) and right margin (page padding +
+        whatever didn't fit) never match on any page whose item count
+        doesn't divide evenly into full rows.
+     2. Every section has a different card width (200 vs 280px, buddies vs
+        agents vs...), so each one leaves a different-sized leftover gap —
+        the mismatch called out was real, not per-page inconsistency, it's
+        the same bug producing a different-looking symptom per grid.
+   `minmax(Npx, 1fr)` fixes both at once: still as many Npx-or-wider columns
+   as fit, but the 1fr makes every column share the remainder evenly, so the
+   row always stretches flush to the container's own padding on both sides
+   — the same idiom already used correctly by .gridBP below, InventorySkins
+   and InventoryDashboard's grids. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 200px);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 20px;
 }
 
 .gridWide {
-  grid-template-columns: repeat(auto-fill, 280px);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 
 .gridBP {

@@ -326,7 +326,9 @@
 
 .inventoryGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 180px);
+  /* minmax(.., 1fr) instead of a fixed 180px — see InventoryList.module.css's
+     .grid for why a fixed auto-fill track leaves an uneven right margin. */
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 20px;
   padding: 20px 40px;
 }
